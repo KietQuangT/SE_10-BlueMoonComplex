@@ -1,0 +1,53 @@
+,Thuộc Epic,Tên Feature ,Mô tả tóm tắt
+0,EP-01,FE-001: Tài khoản riêng và đăng nhập,"Mỗi thành viên Ban có tài khoản riêng, đăng nhập bằng mật khẩu."
+1,EP-01,FE-002: Hồ sơ và mật khẩu,Tự sửa hồ sơ cá nhân và đổi mật khẩu khi cần.
+2,EP-01,FE-003: Bảo mật và quyền truy cập,"Dữ liệu cư dân, hộ và thanh toán chỉ đến người có quyền."
+3,EP-01,FE-004: Truy vết thao tác,Biết thành viên nào trong Ban đã thực hiện từng thao tác.
+4,EP-01,FE-005: Định danh VNeID,Đăng nhập bằng VNeID để định danh và đồng bộ cư dân.
+5,EP-01,FE-006: Truy cập không cần cài app,Sử dụng dịch vụ mà không phải cài thêm ứng dụng.
+6,EP-01,FE-007: Giao diện dễ sử dụng,"Giao diện đơn giản, thao tác dễ hiểu và phù hợp nhiều lứa tuổi."
+7,EP-02,FE-008: Hồ sơ hộ và nhân khẩu,"Thêm, sửa, xóa hồ sơ hộ, căn hộ và các thành viên cư trú."
+8,EP-02,FE-009: Tự cập nhật hộ gia đình,"Tự xem, đăng ký và sửa thông tin của mình và thành viên trong hộ."
+9,EP-02,FE-010: Xác nhận trước khi sửa hộ,Gửi thông báo xác nhận với hộ trước khi thay đổi thông tin của họ.
+10,EP-02,FE-011: Biến động và lịch sử cư trú,"Ghi nhận sinh, mất, chuyển đến/đi, tạm trú/vắng và lịch sử."
+11,EP-02,FE-012: Khai báo cư trú trực tuyến,Khai báo tạm trú/vắng trực tuyến cho hộ và khách cư trú.
+12,EP-02,FE-013: Tra cứu hộ và định danh,"Tìm hộ, nhân khẩu theo tên, căn hộ, số hộ khẩu hoặc định danh."
+13,EP-02,FE-014: Báo trước khách tới thăm,Báo trước thông tin khách cho Ban quản trị và bảo vệ.
+14,EP-02,FE-015: Thông tin liên hệ hàng xóm,Xem thông tin cơ bản và điện thoại của hàng xóm.
+15,EP-03,FE-016: Phân loại khoản thu,"Tạo khoản thu, phân biệt phí bắt buộc và đóng góp tự nguyện."
+16,EP-03,FE-017: Tính phí theo diện tích,"Tính theo m²; dịch vụ 2.500–16.500đ/m², phí quản lý tùy thời điểm."
+17,EP-03,FE-018: Lập kỳ thu hàng loạt,Lập danh sách khoản phải thu và hạn nộp cho toàn bộ hộ trong một lần.
+18,EP-03,FE-019: Đóng góp theo đợt,"Ghi nhận từng đợt quyên góp, người đóng và số tiền tự nguyện."
+19,EP-03,FE-020: Phí dịch vụ định kỳ,"Quản lý khoản thu điện, nước, internet và gửi xe theo kỳ."
+20,EP-04,FE-021: Ghi nhận thanh toán,"Lưu hộ, khoản thu, người đóng, số tiền, ngày đóng và phần còn thiếu."
+21,EP-04,"FE-022: Thanh toán QR, ngân hàng",Thanh toán trực tuyến bằng mã QR hoặc ngân hàng.
+22,EP-04,FE-023: Liên kết ví điện tử,Liên kết ví điện tử để thanh toán các khoản phí.
+23,EP-04,FE-024: Thanh toán tự động,Thiết lập thanh toán phí tự động hàng tháng.
+24,EP-04,FE-025: Xác nhận và biên lai,Nhận xác nhận thanh toán hoàn tất kèm biên lai điện tử.
+25,EP-04,FE-026: Công nợ và lịch sử hộ,"Lọc khoản đã/chưa đóng, xem cách tính và lịch sử thanh toán của hộ."
+26,EP-04,FE-027: Khoản chi và vận hành,"Ghi nhận, tính toán và kiểm soát khoản chi, chi phí vận hành, bảo trì."
+27,EP-04,FE-028: Đối chiếu thu chi,Tự động cập nhật và đối chiếu số liệu thu chi.
+28,EP-05,FE-029: Thông báo chung và theo hộ,Gửi thông báo chung hoặc từng hộ qua kênh cư dân theo dõi.
+29,EP-05,FE-030: Nhắc phí đến hạn,"Nhắc hạn, khoản chưa đóng kèm QR, nhưng không thông báo quá nhiều."
+30,EP-05,"FE-031: Cảnh báo sự cố, bảo trì","Được báo kịp thời khi cắt điện, nước, bảo trì hoặc có sự cố."
+31,EP-05,"FE-032: Hỏi đáp, phản hồi, đánh giá","Hỏi đáp, góp ý và đánh giá với Ban quản trị qua hệ thống."
+32,EP-05,FE-033: Phản ánh và tiến độ,"Báo sự cố, khiếu nại, xem tiến độ và người chịu trách nhiệm."
+33,EP-05,FE-034: Tài sản chung,"Theo dõi số lượng và tình trạng thang máy, cầu thang, phòng chung."
+34,EP-05,FE-035: Đăng ký dịch vụ sửa chữa,"Xem, đăng ký dịch vụ sửa chữa và theo dõi công tác bảo trì."
+35,EP-05,FE-036: Gửi xe và thông báo xe,"Đăng ký gửi xe và nhận thông báo an ninh, sự cố, vi phạm liên quan xe."
+36,EP-05,FE-037: Mượn dụng cụ theo giờ,"Đăng ký mượn xe đẩy, thang, búa, máy khoan dùng chung theo khung giờ."
+37,EP-05,FE-038: Yêu cầu xem camera,Xem lại camera hành lang khi có mất mát tài sản.
+38,EP-05,FE-039: Phối hợp thông tin sự cố,"Có kênh liên lạc giữa công an, bảo vệ và cư dân để xử lý sự cố."
+39,EP-05,FE-040: Giấy tờ và thủ tục số,"Số hóa giấy tờ, làm thủ tục qua ứng dụng và giảm bước trung gian."
+40,EP-06,"FE-041: Thống kê thu chi, công nợ","Tổng hợp thu chi, đã thu, còn thiếu và tỷ lệ đóng theo khoảng thời gian."
+41,EP-06,"FE-042: Báo cáo đóng góp, bàn giao","Báo cáo từng quỹ, đợt đóng góp và lập biên bản giao nhận tiền."
+42,EP-06,"FE-043: Công khai thu chi, quỹ",Xem công khai thu chi và việc sử dụng quỹ bảo trì.
+43,EP-06,FE-044: Báo cáo cư trú,"Báo cáo nhân khẩu thực tế, biến động, tạm trú/vắng và người nước ngoài."
+44,EP-06,"FE-045: Báo cáo tài chính, thuế","Xuất doanh thu, bảng kê hóa đơn và sổ sách theo kỳ, định dạng yêu cầu."
+45,EP-06,FE-046: Tính và kê khai thuế,Tự tính thuế phải đóng và xuất chi tiết các khoản kê khai.
+46,EP-06,FE-047: Hóa đơn điện tử,"Tạo, ký, gửi hóa đơn chịu thuế; hóa đơn đã phát hành không bị sửa/xóa."
+47,EP-06,FE-048: Hồ sơ khiếu nại,"Cung cấp lịch sử phản ánh, khiếu nại để hỗ trợ giải quyết tranh chấp."
+48,EP-06,"FE-049: Phối hợp PCCC, điện nước","Nhận dữ liệu dân cư, tình trạng PCCC và gửi thông báo điện, nước."
+49,EP-06,FE-050: Theo dõi lợi nhuận,Kiểm soát doanh thu và lợi nhuận liên quan đến hoạt động đầu tư.
+50,EP-06,"FE-051: Cảnh báo pháp lý, truy cập","Tự cảnh báo vi phạm, chặn truy cập và kiểm tra sâu hồ sơ khi có vụ việc."
+51,EP-06,FE-052: Hồ sơ thu nhập hộ,Số hóa thông tin thu nhập hộ gia đình phục vụ yêu cầu thuế.

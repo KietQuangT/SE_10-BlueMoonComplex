@@ -1,0 +1,54 @@
+,ID,Nguồn,Nội dung thô,Loại (FR/NFR),Artefact sẽ chuẩn hóa thành,Ghi chú
+0,RAW-01,Ban quản trị,"Muốn quản lý tập trung thông tin hộ gia đình, căn hộ và nhân khẩu thay vì dùng sổ sách và Excel.",FR,Client’s Wish List / Product Backlog,Quản lý thông tin cư dân & hộ gia đình
+1,RAW-02,Ban quản trị,"Muốn thêm mới hồ sơ cư dân, hộ gia đình và cập nhật thông tin khi có thay đổi.",FR,Feature / User Story,Quản lý hồ sơ
+2,RAW-03,Ban quản trị,"Muốn xem danh sách và thông tin chi tiết của các cư dân, hộ gia đình và căn hộ.",FR,Feature / User Story,Xem danh sách chi tiết
+3,RAW-04,Ban quản trị,Muốn sửa và xóa thông tin cư dân khi cần thiết.,FR,Feature / User Story,Chỉnh sửa/xóa hồ sơ
+4,RAW-05,Ban quản trị,"Muốn ghi nhận các biến động nhân khẩu như chuyển đến, chuyển đi, sinh, mất, tạm trú và tạm vắng.",FR,Feature / User Story,Quản lý biến động nhân khẩu
+5,RAW-06,Ban quản trị,Muốn lưu lịch sử biến động nhân khẩu để có thể tra cứu lại.,FR,Feature / User Story,Lưu lịch sử biến động
+6,RAW-07,Ban quản trị,Muốn cư dân xác nhận trước khi Ban quản trị thay đổi thông tin cá nhân hoặc hộ gia đình của họ.,FR,User Story / Acceptance Criteria,Quy trình xác thực thay đổi
+7,RAW-08,Ban quản trị,Muốn sử dụng VNeID để định danh và hỗ trợ đồng bộ thông tin cư dân.,FR,Feature / Product Backlog,Tích hợp định danh điện tử
+8,RAW-09,Ban quản trị,Muốn tạo và quản lý danh mục các khoản thu của chung cư thay cho việc theo dõi thủ công.,FR,Feature / Product Backlog,Quản lý danh mục thu phí
+9,RAW-10,Ban quản trị,Muốn phân biệt khoản thu bắt buộc và khoản đóng góp tự nguyện để quản lý và thống kê riêng.,FR,Feature / Product Backlog,Phân loại khoản thu
+10,RAW-11,Ban quản trị,Muốn hệ thống tự động tính phí dịch vụ và phí quản lý của từng hộ dựa trên diện tích căn hộ.,FR,Feature / User Story,Tính phí tự động
+11,RAW-12,Ban quản trị,Muốn thay đổi đơn giá phí dịch vụ và phí quản lý theo từng thời điểm.,FR,Feature / User Story,Cấu hình đơn giá
+12,RAW-13,Ban quản trị,Muốn tạo danh sách khoản thu cho tất cả các hộ trong một lần.,FR,Feature / User Story,Tạo đợt thu phí hàng loạt
+13,RAW-14,Ban quản trị,Muốn quản lý các khoản đóng góp tự nguyện theo từng đợt quyên góp.,FR,Feature / User Story,Quản lý đóng góp tự nguyện
+14,RAW-15,Ban quản trị,"Muốn ghi nhận mỗi lần hộ gia đình nộp tiền, bao gồm khoản nộp, số tiền và ngày nộp.",FR,Feature / User Story,Ghi nhận thanh toán
+15,RAW-16,Ban quản trị,Muốn theo dõi hộ nào đã đóng phí và hộ nào còn nợ trong từng kỳ thu.,FR,Feature / User Story,Theo dõi công nợ
+16,RAW-17,Ban quản trị,Muốn gửi thông báo thu tiền cho từng hộ mà không phải soạn riêng từng thông báo.,FR,Feature / User Story,Gửi thông báo tự động
+17,RAW-18,Ban quản trị,Muốn gửi thông báo đồng thời tới toàn bộ cư dân.,FR,Feature / User Story,Thông báo hàng loạt
+18,RAW-19,Ban quản trị,Muốn các cư dân được tập hợp trong một nhóm trao đổi để không bỏ sót thông tin từ Ban quản trị.,FR,Feature / Product Backlog,Kênh trao đổi cộng đồng
+19,RAW-20,Ban quản trị,"Muốn tìm kiếm nhanh hộ gia đình hoặc nhân khẩu theo tên, căn hộ hoặc số hộ khẩu.",FR,User Story / Acceptance Criteria,Tính năng tìm kiếm
+20,RAW-21,Ban quản trị,Muốn thống kê danh sách và số lượng cư dân.,FR,Feature / Product Backlog,Báo cáo thống kê nhân khẩu
+21,RAW-22,Ban quản trị,"Muốn xem tổng hợp số tiền đã thu, số tiền còn thiếu và tỷ lệ đóng phí.",FR,Feature / Product Backlog,Báo cáo tài chính thu phí
+22,RAW-23,Ban quản trị,Muốn thống kê các khoản đóng góp theo từng đợt để phục vụ báo cáo.,FR,Feature / Product Backlog,Báo cáo quỹ đóng góp
+23,RAW-24,Ban quản trị,Muốn cung cấp thông tin hộ gia đình và nhân khẩu cho cơ quan chức năng khi được yêu cầu.,FR,Feature / Traceability Matrix,Xuất báo cáo cơ quan chức năng
+24,RAW-25,Ban quản trị,"Muốn có tài khoản riêng và đăng nhập bằng mật khẩu để bảo vệ dữ liệu, phân biệt hoạt động của từng người.",NFR,Product Backlog / NFR,Bảo mật & Phân quyền
+25,RAW-26,Ban quản trị,Muốn xem và chỉnh sửa thông tin tài khoản cá nhân của mình.,FR,User Story,Quản lý tài khoản cá nhân
+26,RAW-27,Ban quản trị,Muốn tự thay đổi mật khẩu khi cần.,FR,User Story,Đổi mật khẩu
+27,RAW-28,Cư dân,"Muốn xem thông tin cá nhân, căn hộ, tình trạng cư trú và các thành viên trong hộ gia đình của mình.",FR,User Story,Cổng thông tin cư dân
+28,RAW-29,Cư dân,Muốn tự cập nhật hoặc đăng ký thông tin của bản thân và các thành viên trong hộ trên hệ thống.,FR,User Story,Tự cập nhật thông tin
+29,RAW-30,Cư dân,"Muốn khai báo hoặc cập nhật thông tin tạm trú, tạm vắng trực tuyến mà không phải gặp trực tiếp Ban quản trị.",FR,User Story,Khai báo tạm trú/tạm vắng online
+30,RAW-31,Cư dân,Muốn xem một số thông tin cơ bản và số điện thoại của hàng xóm.,FR,User Story,Cần xác minh người cung cấp; xem lưu ý bên dưới
+31,RAW-32,Cư dân,"Muốn xem và lọc các khoản phí đã nộp, chưa nộp hoặc còn nợ của hộ gia đình mình.",FR,User Story,Tra cứu phí cá nhân
+32,RAW-33,Cư dân,Muốn thanh toán các khoản phí bằng mã QR hoặc chuyển khoản ngân hàng.,FR,User Story / Acceptance Criteria,Thanh toán trực tuyến
+33,RAW-34,Cư dân,Muốn liên kết ví điện tử hoặc thiết lập thanh toán tự động hằng tháng.,FR,Feature / Product Backlog,Tích hợp thanh toán tự động
+34,RAW-35,Cư dân,"Muốn xem các khoản phí hằng tháng, cách tính phí, hóa đơn chi tiết và lịch sử đóng tiền.",FR,User Story,Xem chi tiết hóa đơn
+35,RAW-36,Cư dân,Muốn nhận xác nhận thanh toán thành công và biên lai điện tử sau khi đóng phí.,FR,User Story / Acceptance Criteria,Biên lai điện tử
+36,RAW-37,Cư dân,Muốn thông tin về các khoản thu và giao dịch của mình được bảo mật.,NFR,Product Backlog / NFR,Bảo mật dữ liệu tài chính
+37,RAW-38,Cư dân,"Muốn nhận thông báo về các khoản phí phải đóng, kỳ hạn và số tiền cần nộp.",FR,User Story,Nhắc phí định kỳ
+38,RAW-39,Cư dân,Muốn hệ thống tiếp tục nhắc các khoản chưa đóng cho đến khi hoàn tất thanh toán.,FR,User Story / Acceptance Criteria,Cơ chế nhắc nợ tự động
+39,RAW-40,Cư dân,"Muốn chỉ nhận những thông báo quan trọng, tránh bị làm phiền bởi quá nhiều thông báo không cần thiết.",NFR,User Story / NFR,Quản lý tùy chọn thông báo
+40,RAW-41,Cư dân,"Muốn nhận thông báo về các hoạt động, sự cố, lịch cắt điện, cắt nước và bảo trì của tòa nhà.",FR,User Story,Thông báo vận hành tòa nhà
+41,RAW-42,Cư dân,"Muốn nhận thông báo qua điện thoại, email, Zalo hoặc cổng thông tin trực tuyến.",NFR,Product Backlog / NFR,Đa kênh thông báo
+42,RAW-43,Cư dân,"Muốn được thông báo các vấn đề về an ninh, sai phạm hoặc sự cố liên quan đến chỗ để xe của căn hộ.",FR,User Story,Thông báo sự cố bãi xe
+43,RAW-44,Cư dân,Muốn xem thông tin thu chi quỹ bảo trì và các khoản tài chính chung của tòa nhà.,FR,User Story,Minh bạch tài chính chung
+44,RAW-45,Cư dân,"Muốn hệ thống có giao diện dễ hiểu, dễ thao tác và sử dụng nhanh chóng.",NFR,Product Backlog / NFR,Trải nghiệm người dùng (UX)
+45,RAW-46,Cư dân,Muốn truy cập các chức năng mà không phải cài đặt thêm ứng dụng.,NFR,Product Backlog / NFR,Nền tảng Web Responsive / PWA
+46,RAW-47,Cư dân,Muốn đăng ký mượn dụng cụ dùng chung của Ban quản trị theo khung giờ.,FR,User Story,Đặt lịch mượn thiết bị chung
+47,RAW-48,Cư dân,Muốn báo trước thông tin khách đến thăm để Ban quản trị và bảo vệ hỗ trợ ra vào.,FR,User Story,Đăng ký khách ra vào
+48,RAW-49,Cư dân,"Muốn báo cáo các sự cố trong chung cư và theo dõi tiến độ xử lý, người chịu trách nhiệm.",FR,User Story,Quản lý phản ánh sự cố (Helpdesk)
+49,RAW-50,Cư dân,Muốn gửi phản ánh hoặc khiếu nại tới Ban quản trị qua cổng thông tin trực tuyến.,FR,User Story,Gửi khiếu nại trực tuyến
+50,RAW-51,Cư dân,Muốn xem lại camera hành lang khi xảy ra mất mát tài sản.,FR,User Story,Tra cứu camera an ninh
+51,RAW-52,Bên liên quan - Cơ quan thuế,"Muốn xem danh sách các loại phí thu nhằm phục vụ kiểm tra, giám sát.",FR,Traceability Matrix / Reporting,Kiểm tra thuế & tài chính
+52,RAW-53,Bên liên quan - Cơ quan chức năng,"Muốn tìm kiếm, xem và xác thực thông tin hộ gia đình, nhân khẩu.",FR,Traceability Matrix / Reporting,Tra cứu hành chính
