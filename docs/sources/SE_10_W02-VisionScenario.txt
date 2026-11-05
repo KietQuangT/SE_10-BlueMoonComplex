@@ -1,0 +1,105 @@
+,ID,Bước quy trình tương lai,Ai thực hiện,Hệ thống hỗ trợ gì,Lợi ích mong muốn,Phạm vi,Nguồn và ghi chú
+0,VIS-01,Đăng nhập bằng tài khoản riêng,Ban quản trị,"Tài khoản riêng, đăng nhập mật khẩu.",Kiểm soát người truy cập.,Chưa chốt,"RAW-01
+ FE-001"
+1,VIS-02,"Tự sửa hồ sơ, đổi mật khẩu",Ban quản trị,Chỉnh hồ sơ và mật khẩu cá nhân.,Chủ động bảo vệ tài khoản.,Chưa chốt,"RAW-02
+ FE-002"
+2,VIS-03,Cấp quyền theo vai trò,Cư dân / BQT,Giới hạn dữ liệu theo quyền.,Bảo mật thông tin cư dân.,Chưa chốt,"RAW-03
+ FE-003"
+3,VIS-04,Kiểm tra người đã thao tác,Ban quản trị,Lịch sử thao tác theo người dùng.,Có căn cứ đối chiếu.,Chưa chốt,"RAW-04
+ FE-004"
+4,VIS-05,Đề xuất định danh VNeID,Ban quản trị,Kết nối VNeID sau khi được duyệt.,Xác minh định danh cư dân.,Chưa chốt,"RAW-05
+ FE-005"
+5,VIS-06,Truy cập không cần cài app,Cư dân,Kênh truy cập không cần cài app.,Giảm trở ngại cài đặt.,Chưa chốt,"RAW-06
+ FE-006"
+6,VIS-07,Thực hiện thao tác đơn giản,Cư dân,Giao diện dễ dùng cho nhiều lứa tuổi.,Giảm khó khăn thao tác.,Chưa chốt,"RAW-07
+ FE-007"
+7,VIS-08,"Quản lý hồ sơ hộ, nhân khẩu",Ban quản trị,Hồ sơ hộ liên kết thành viên.,Thông tin cư dân tập trung.,Chưa chốt,"RAW-08
+ FE-008"
+8,VIS-09,Cư dân tự cập nhật hồ sơ,Cư dân,Nhận yêu cầu sửa thông tin hộ.,Giảm việc gặp trực tiếp.,Chưa chốt,"RAW-09
+ FE-009"
+9,VIS-10,Xác nhận thay đổi hồ sơ hộ,Ban quản trị,Thông báo xác nhận trước khi sửa.,Giảm thay đổi sai thông tin.,Chưa chốt,"RAW-10
+ FE-010"
+10,VIS-11,Ghi nhận biến động cư trú,Ban quản trị,Cập nhật trạng thái và lịch sử.,Dữ liệu cư trú luôn mới.,Chưa chốt,"RAW-11
+ FE-011"
+11,VIS-12,Khai báo cư trú trực tuyến,Cư dân,"Biểu mẫu tạm trú, tạm vắng online.",Khai báo thuận tiện hơn.,Chưa chốt,"RAW-12
+ FE-012"
+12,VIS-13,Tra cứu hộ và nhân khẩu,BQT / Công an,"Tìm theo tên, căn hộ, định danh.","Tra cứu nhanh, đúng quyền.",Chưa chốt,"RAW-13
+ FE-013"
+13,VIS-14,Báo trước khách tới thăm,Cư dân,Gửi thông tin khách cho bảo vệ.,Hỗ trợ đón khách an toàn.,Chưa chốt,"RAW-14
+ FE-014"
+14,VIS-15,Đề xuất chia sẻ liên hệ,Chưa rõ vai trò,Chỉ chia sẻ liên hệ được phép.,Liên lạc hàng xóm thuận tiện.,Chưa chốt,"RAW-15
+ FE-015"
+15,VIS-16,Phân loại các khoản thu,BQT / Kế toán,Tách bắt buộc và tự nguyện.,Tránh nhầm loại khoản thu.,Chưa chốt,"RAW-16
+ FE-016"
+16,VIS-17,Tự tính phí theo diện tích,BQT / Kế toán,Diện tích nhân đơn giá hiệu lực.,Giảm tính tay từng hộ.,Chưa chốt,"RAW-17
+ FE-017"
+17,VIS-18,Lập kỳ thu cho các hộ,BQT / Kế toán,Tạo danh sách thu và hạn nộp.,Giảm nhập lặp hàng tháng.,Chưa chốt,"RAW-18
+ FE-018"
+18,VIS-19,Ghi nhận từng đợt đóng góp,BQT / Kế toán,"Lưu đợt, người đóng, số tiền.",Theo dõi từng quỹ rõ ràng.,Chưa chốt,"RAW-19
+ FE-019"
+19,VIS-20,Lập phí dịch vụ định kỳ,Ban quản trị,"Điện, nước, internet, gửi xe.",Cư dân biết phí từng kỳ.,Chưa chốt,"RAW-20
+ FE-020"
+20,VIS-21,Ghi nhận từng thanh toán,BQT / Kế toán,"Lưu người đóng, ngày, số tiền.",Đối chiếu giao dịch dễ hơn.,Chưa chốt,"RAW-21
+ FE-021"
+21,VIS-22,"Thanh toán QR, ngân hàng",Cư dân / Kế toán,Kênh QR hoặc ngân hàng đã duyệt.,Thanh toán từ xa.,Chưa chốt,"RAW-22
+ FE-022"
+22,VIS-23,Đề xuất thanh toán bằng ví,Cư dân,Kết nối ví được lựa chọn.,Thêm lựa chọn thanh toán.,Chưa chốt,"RAW-23
+ FE-023"
+23,VIS-24,Đề xuất thu tự động hàng tháng,Cư dân,Lịch thu theo ủy quyền đã duyệt.,Giảm quên đóng phí.,Chưa chốt,"RAW-24
+ FE-024"
+24,VIS-25,Nhận xác nhận và biên lai,Cư dân / Kế toán,"Thông báo kết quả, biên lai số.",Có bằng chứng thanh toán.,Chưa chốt,"RAW-25
+ FE-025"
+25,VIS-26,Xem công nợ và lịch sử hộ,Cư dân / BQT,"Lọc đã đóng, chưa đóng, lịch sử.",Biết số tiền còn thiếu.,Chưa chốt,"RAW-26
+ FE-026"
+26,VIS-27,Theo dõi khoản chi vận hành,BQT / Kế toán,"Ghi chi phí, chứng từ được duyệt.",Kiểm soát thu chi rõ ràng.,Chưa chốt,"RAW-27
+ FE-027"
+27,VIS-28,Đối soát số liệu thu chi,Kế toán,So khớp và chỉ ra chênh lệch.,Phát hiện sai lệch số liệu.,Chưa chốt,"RAW-28
+ FE-028"
+28,VIS-29,Gửi thông báo đúng hộ,BQT / Cư dân,Chọn người nhận và kênh gửi.,Nhận tin liên quan kịp thời.,Chưa chốt,"RAW-29
+ FE-029"
+29,VIS-30,"Nhắc khoản đến hạn, còn thiếu",Cư dân / Kế toán,"Nhắc kèm QR, tần suất đã chốt.",Hạn chế quên thanh toán.,Chưa chốt,"RAW-30
+ FE-030"
+30,VIS-31,Nhận cảnh báo sự cố tòa nhà,Cư dân,"Tin cắt điện, nước, bảo trì.",Chủ động trước gián đoạn.,Chưa chốt,"RAW-31
+ FE-031"
+31,VIS-32,"Gửi hỏi đáp, góp ý, đánh giá",Cư dân,Kênh gửi và trả lời phản hồi.,Trao đổi trực tiếp với Ban.,Chưa chốt,"RAW-32
+ FE-032"
+32,VIS-33,"Theo dõi phản ánh, khiếu nại",Cư dân / BQT,"Hiển thị tiến độ, người xử lý.",Rõ trách nhiệm giải quyết.,Chưa chốt,"RAW-33
+ FE-033"
+33,VIS-34,Theo dõi tài sản dùng chung,Ban quản trị,Lưu số lượng và tình trạng.,Chủ động quản lý bảo trì.,Chưa chốt,"RAW-34
+ FE-034"
+34,VIS-35,"Đăng ký sửa chữa, bảo trì",Cư dân / BQT,Tiếp nhận yêu cầu dịch vụ.,Xử lý nhu cầu sửa chữa.,Chưa chốt,"RAW-35
+ FE-035"
+35,VIS-36,"Đăng ký, theo dõi dịch vụ xe",Cư dân / BQT,Hồ sơ xe và thông báo liên quan.,Quản lý nhu cầu gửi xe.,Chưa chốt,"RAW-36
+ FE-036"
+36,VIS-37,Đăng ký mượn dụng cụ,Cư dân,Ghi dụng cụ và khung giờ mượn.,Giảm mua sắm ít sử dụng.,Chưa chốt,"RAW-37
+ FE-037"
+37,VIS-38,Đề xuất xem camera khi mất đồ,Cư dân,Cấp đoạn camera đúng quyền.,Hỗ trợ xác minh mất mát.,Chưa chốt,"RAW-38
+ FE-038"
+38,VIS-39,Phối hợp xử lý sự cố,Bên liên quan,Kênh nhóm theo phạm vi duyệt.,Liên lạc các bên nhanh hơn.,Chưa chốt,"RAW-39
+ FE-039"
+39,VIS-40,Thực hiện thủ tục số,Kế toán,"Nhận, xử lý giấy tờ trực tuyến.",Giảm bước trung gian.,Chưa chốt,"RAW-40
+ FE-040"
+40,VIS-41,Xem thống kê theo kỳ,BQT / Kế toán,"Tổng thu, chi, còn thiếu, tỷ lệ.",Nắm tình hình tài chính.,Chưa chốt,"RAW-41
+ FE-041"
+41,VIS-42,Báo cáo và bàn giao quỹ,BQT / Cơ quan,"Tổng hợp quỹ, biên bản bàn giao.",Minh bạch đóng góp.,Chưa chốt,"RAW-42
+ FE-042"
+42,VIS-43,"Xem thu chi, quỹ công khai",Cư dân,Công bố số liệu được duyệt.,Giám sát quỹ bảo trì.,Chưa chốt,"RAW-43
+ FE-043"
+43,VIS-44,Cung cấp báo cáo cư trú,Công an / UBND,"Xuất dữ liệu theo mẫu, quyền.",Hỗ trợ rà soát nhân khẩu.,Chưa chốt,"RAW-44
+ FE-044"
+44,VIS-45,"Xuất báo cáo tài chính, thuế",Kế toán / Thuế,"Báo cáo, bảng kê đúng mẫu duyệt.",Hỗ trợ đối chiếu số liệu.,Chưa chốt,"RAW-45
+ FE-045"
+45,VIS-46,Đề xuất tính và kê khai thuế,Kế toán / Thuế,Áp dụng quy tắc thuế đã chốt.,Hỗ trợ chuẩn bị kê khai.,Chưa chốt,"RAW-46
+ FE-046"
+46,VIS-47,"Đề xuất ký, gửi hóa đơn số",Cơ quan thuế,"Ký, gửi; khóa sửa/xóa sau phát hành.",Truy vết hóa đơn đã phát hành.,Chưa chốt,"RAW-47
+ FE-047"
+47,VIS-48,Cung cấp hồ sơ khiếu nại,UBND,Xuất lịch sử vụ việc đúng quyền.,Hỗ trợ giải quyết tranh chấp.,Chưa chốt,"RAW-48
+ FE-048"
+48,VIS-49,"Phối hợp PCCC, điện nước",PCCC / Nhà cung cấp,Chia sẻ dữ liệu đúng phạm vi.,"Phối hợp dịch vụ, an toàn.",Chưa chốt,"RAW-49
+ FE-049"
+49,VIS-50,Đề xuất báo cáo nhà đầu tư,Nhà đầu tư,"Doanh thu, lợi nhuận được duyệt.",Theo dõi hoạt động đầu tư.,Chưa chốt,"RAW-50
+ FE-050"
+50,VIS-51,Thẩm định yêu cầu pháp lý,Công an,"Chỉ áp dụng luật, quyền đã chốt.",Xác định phạm vi khả thi.,Chưa chốt,"RAW-51
+ FE-051"
+51,VIS-52,Thẩm định dữ liệu thu nhập,Cơ quan thuế,Chỉ thu thập khi được phê duyệt.,Làm rõ dữ liệu phục vụ thuế.,Chưa chốt,"RAW-52
+ FE-052"
