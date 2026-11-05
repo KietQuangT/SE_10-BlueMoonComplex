@@ -11,6 +11,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select u from User u join fetch u.role where lower(u.username) = lower(:username)")
+    @Query("select u from User u join fetch u.role where u.username = :username")
     Optional<User> findByUsernameForUpdate(@Param("username") String username);
 }
