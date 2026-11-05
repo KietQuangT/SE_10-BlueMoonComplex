@@ -1,0 +1,6 @@
+# HTTP local chưa có TLS. Không sử dụng cấu hình này khi triển khai ra Internet.
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false

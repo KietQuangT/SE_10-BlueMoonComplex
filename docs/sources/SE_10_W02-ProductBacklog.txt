@@ -1,0 +1,104 @@
+,PBI ID,Tiêu đề (Title),Mô tả (Description / User Story),Acceptance Criteria,Ước lượng (Story Point),Ưu tiên (Priority),Giá trị kinh doanh (Business Value),Assignee / Owner,Liên kết / Ghi chú bổ sung
+0,PBI-001,Cấp phát tài khoản ban đầu cho hệ thống,"Là Ban quản trị, tôi muốn tạo và cấp phát tài khoản ban đầu cho các thành viên BQL và Kế toán để họ có thể bắt đầu sử dụng phần mềm quản lý.","• Thành công:
+ Given Ban quản trị nhập email và vai trò hợp lệ,
+ When nhấn tạo tài khoản,
+ Then hệ thống gửi email chứa mật khẩu tạm thời cho người dùng.
+ • Lỗi trùng lặp:
+ Given email đã tồn tại trong hệ thống,
+ When nhấn tạo,
+ Then hệ thống cảnh báo email đã được sử dụng.",3,Must,Bắt buộc để vận hành hệ thống ở phase đầu.,Chưa phân công,"Trace: US-001 -> EP-01 -> FE-001; RAW-01, RAW-02; ASIS-01; VIS-01. Phạm vi v1.0. Không quy định thêm trường dữ liệu cụ thể nếu chưa được chốt."
+1,PBI-002,Cư dân đổi mật khẩu cá nhân,"Là Cư dân, tôi muốn tự thay đổi mật khẩu mặc định bằng mật khẩu cá nhân để bảo vệ an toàn cho dữ liệu nhà mình.","• Đổi thành công:
+ Given Cư dân nhập đúng mật khẩu cũ và mật khẩu mới đủ mạnh,
+ When nhấn lưu,
+ Then hệ thống cập nhật mật khẩu và yêu cầu đăng nhập lại.
+ • Mật khẩu yếu:
+ Given mật khẩu mới dưới 8 ký tự,
+ When nhấn lưu,
+ Then hệ thống báo lỗi yêu cầu độ phức tạp.",3,Must,Bảo mật tài khoản cơ bản cho người dùng cuối.,Chưa phân công,Trace: US-002 -> EP-01 -> FE-002; RAW-02; VIS-02. Phạm vi v1.0. Áp dụng quy tắc mật khẩu có độ khó cao.
+2,PBI-003,Phân quyền hiển thị Menu theo vai trò,"Là Ban quản trị, tôi muốn hệ thống tự động phân quyền chức năng giữa các vai trò (Ban quản trị, Kế toán, Cư dân, Bên liên quan) để tránh thao tác nhầm.","• Hiển thị đúng:
+ Given user đăng nhập với quyền Cư dân,
+ When load màn hình chính,
+ Then chỉ hiển thị menu tương ứng.
+ • Truy cập trái phép:
+ Given Cư dân cố truy cập URL của Ban quản trị,
+ Then hệ thống báo lỗi 403 Forbidden.",5,Must,"Bảo vệ toàn vẹn dữ liệu, tránh lộ lọt tính năng.",Chưa phân công,Trace: US-003 -> EP-01 -> FE-003; RAW-03; VIS-03. Phạm vi v1.0. Giới hạn hiển thị menu theo đúng ma trận quyền.
+3,PBI-004,Vô hiệu hóa tài khoản khi cư dân chuyển đi,"Là Ban quản trị, tôi muốn khóa quyền truy cập ứng dụng của cư dân khi họ bán nhà/chuyển đi để đảm bảo họ không còn đọc được tin tức nội bộ.","• Khóa tài khoản:
+ Given Ban quản trị chọn hồ sơ cư dân đã rời đi,
+ When nhấn 'Vô hiệu hóa',
+ Then tài khoản này lập tức bị logout và không thể đăng nhập lại.",3,Should,Bảo mật thông tin nội bộ của chung cư.,Chưa phân công,Trace: US-004 -> EP-01 -> FE-004; RAW-04; ASIS-01; VIS-04. Phạm vi v1.0.
+4,PBI-005,Đăng nhập bằng tài khoản VNeID,"Là Cư dân, tôi muốn đăng nhập bằng VNeID để không phải nhớ thêm một mật khẩu mới và chứng minh danh tính dễ dàng.","• Liên kết thành công:
+ Given hệ thống kết nối API VNeID,
+ When Cư dân chọn đăng nhập bằng VNeID,
+ Then hệ thống đối chiếu số CCCD và cấp quyền truy cập.",8,Could,Tăng tính tiện ích và xác thực danh tính mức độ cao.,Chưa phân công,Trace: US-005 -> EP-01 -> FE-005; RAW-05; VIS-05. Phạm vi v2.0.
+5,PBI-006,Cư dân xem danh sách thành viên hộ,"Là Cư dân, tôi muốn xem danh sách các thành viên trong gia đình đang được BQL lưu trữ để kiểm tra xem có thiếu sót ai không.","• Thành công:
+ Given Cư dân vào mục 'Hộ gia đình',
+ When màn hình tải xong,
+ Then hiển thị đúng danh sách thành viên đang có trên hệ thống.",3,Must,Minh bạch thông tin cá nhân với người dùng.,Chưa phân công,"Trace: US-008 -> EP-02 -> FE-008; RAW-08, RAW-09, RAW-10; ASIS-02; VIS-08. Phạm vi v1.0."
+6,PBI-007,Cư dân khai báo tạm vắng trực tuyến,"Là Cư dân, tôi muốn nộp biểu mẫu xin tạm vắng ngay trên ứng dụng để không phải xuống phòng BQL trong giờ hành chính.","• Gửi form:
+ Given Cư dân điền form tạm vắng,
+ When nhấn gửi,
+ Then form được lưu vào danh sách chờ duyệt của Ban quản trị.",5,Should,"Giảm thủ tục giấy tờ, tăng tiện ích cho cư dân.",Chưa phân công,"Trace: US-012 -> EP-02 -> FE-012; RAW-11, RAW-12; ASIS-03; VIS-11, VIS-12. Phạm vi v1.0."
+7,PBI-008,Ban quản trị duyệt yêu cầu tạm vắng,"Là Ban quản trị, tôi muốn tiếp nhận, duyệt hoặc từ chối đơn xin tạm vắng của cư dân để chốt danh sách nhân khẩu thực tế.","• Phê duyệt:
+ Given Ban quản trị đang xem đơn tạm vắng,
+ When nhấn 'Duyệt',
+ Then hệ thống đổi trạng thái nhân khẩu thành 'Tạm vắng' và gửi thông báo cho hộ.",5,Should,Số hóa quy trình duyệt hồ sơ nhân khẩu.,Chưa phân công,"Trace: US-013 -> EP-02 -> FE-013; RAW-12, RAW-13; VIS-12, VIS-13. Phạm vi v1.0."
+8,PBI-009,Đăng ký trước thông tin khách đến thăm,"Là Cư dân, tôi muốn điền thông tin và biển số xe của khách đến thăm để gửi cho bên liên quan (Bảo vệ), giúp khách vào cổng nhanh chóng.","• Gửi thông tin:
+ Given Cư dân điền thông tin khách,
+ When lưu lại,
+ Then thông tin được đẩy xuống cho bộ phận an ninh (Bên liên quan).",5,Could,Nâng cao trải nghiệm an ninh và sự chuyên nghiệp.,Chưa phân công,Trace: US-014 -> EP-02 -> FE-014; RAW-14; VIS-14. Phạm vi v1.0.
+9,PBI-010,Ghi nhận trạng thái nhân khẩu 'Đã chuyển đi',"Là Ban quản trị, tôi muốn đánh dấu một người là 'Đã chuyển đi' thay vì xóa hẳn dữ liệu để giữ lại lịch sử lưu trú khi cần đối chiếu.","• Cập nhật trạng thái:
+ Given Ban quản trị chọn một nhân khẩu,
+ When đổi trạng thái thành chuyển đi,
+ Then người này không hiển thị ở danh sách hiện tại nhưng vẫn nằm trong Archive.",3,Must,Bảo toàn dữ liệu theo NFR lưu trữ dài hạn.,Chưa phân công,Trace: US-011 -> EP-02 -> FE-011; RAW-11; VIS-11. Phạm vi v1.0.
+10,PBI-011,Thiết lập đơn giá phí dịch vụ,"Là Kế toán, tôi muốn thiết lập công thức tính phí quản lý (đơn giá x diện tích) để hệ thống tự động nhân số tiền cho hàng nghìn hộ.","• Tính toán đúng:
+ Given Kế toán nhập đơn giá 10.000đ,
+ When hệ thống áp dụng cho hộ có diện tích 50m2,
+ Then hóa đơn được sinh là 500.000đ.",5,Must,Giảm sai sót tính nhẩm của Kế toán.,Chưa phân công,"Trace: US-017 -> EP-03 -> FE-017; RAW-17; ASIS-05; VIS-17, VIS-18. Phạm vi v1.0. Áp dụng cho từng loại phí riêng biệt."
+11,PBI-012,Tạo đợt đóng góp quỹ tự nguyện,"Là Ban quản trị, tôi muốn tạo các đợt quyên góp không bắt buộc để cư dân có thể theo dõi và tự nguyện ủng hộ.","• Đợt thu mở:
+ Given Ban quản trị tạo quỹ 'Tự nguyện',
+ When xuất bản,
+ Then khoản này hiện lên app cư dân nhưng không cộng vào mục Công nợ.",5,Should,Phân bạch rõ ràng phí bắt buộc và đóng góp.,Chưa phân công,Trace: US-019 -> EP-03 -> FE-019; RAW-19; ASIS-04; VIS-19. Phạm vi v1.0.
+12,PBI-013,Cư dân xem chi tiết khoản phí trong tháng,"Là Cư dân, tôi muốn xem chi tiết hóa đơn (phí quản lý, phí rác) được bóc tách rõ ràng để hiểu mình đang trả tiền cho khoản nào.","• Xem chi tiết:
+ Given hóa đơn tháng 10 đã phát hành,
+ When Cư dân bấm vào hóa đơn,
+ Then danh sách khoản phí thành phần hiển thị chi tiết.",3,Must,Đảm bảo sự minh bạch tài chính với người dân.,Chưa phân công,Trace: US-026 -> EP-04 -> FE-026; RAW-26; ASIS-06; VIS-26. Phạm vi v1.0.
+13,PBI-014,Thanh toán phí bằng mã QR VietQR,"Là Cư dân, tôi muốn quét mã QR động được sinh ra trên app để thanh toán chính xác tới từng đồng mà không cần tự gõ số tài khoản.","• Sinh QR chuẩn:
+ Given tổng nợ là 456.789đ,
+ When chọn thanh toán QR,
+ Then mã QR sinh ra chứa đúng STK, số tiền và mã hộ gia đình.",8,Must,"Giảm tỷ lệ chuyển sai tiền, sai cú pháp.",Chưa phân công,"Trace: US-022 -> EP-04 -> FE-022; RAW-22, RAW-23; VIS-22, VIS-23. Phạm vi v1.0."
+14,PBI-015,Kế toán xác nhận giao dịch thủ công,"Là Kế toán, tôi muốn có nút xác nhận 'Đã thanh toán' bằng tay cho những hộ đóng tiền mặt để cập nhật giảm nợ.","• Gạch nợ thủ công:
+ Given Kế toán nhận tiền mặt từ hộ A01,
+ When tìm hộ A01 và nhấn 'Đã thu tiền',
+ Then công nợ hộ A01 giảm tương ứng, trạng thái Đã đóng.",5,Must,Xử lý các case ngoại lệ không thể tự động hóa.,Chưa phân công,"Trace: US-021 -> EP-04 -> FE-021; RAW-21; ASIS-07, ASIS-08; VIS-21, VIS-25. Phạm vi v1.0."
+15,PBI-016,"Gửi thông báo cắt điện, nước khẩn cấp","Là Ban quản trị, tôi muốn gửi thông báo khẩn cấp (Push Notification) đến cư dân để họ chuẩn bị khi có lịch cắt điện hoặc nước đột xuất.","• Gửi push:
+ Given Ban quản trị soạn thông báo khẩn,
+ When nhấn gửi,
+ Then thông báo xuất hiện trên điện thoại của cư dân.",5,Should,Đảm bảo truyền thông nhanh nhạy trong vận hành.,Chưa phân công,"Trace: US-031 -> EP-05 -> FE-031; RAW-29, RAW-31; ASIS-09; VIS-29, VIS-31. Phạm vi v1.0."
+16,PBI-017,Cư dân gửi phản ánh sự cố tòa nhà,"Là Cư dân, tôi muốn chụp ảnh và gửi phản ánh (ví dụ bóng đèn hỏng) qua app để Ban quản trị nắm được và phân công sửa chữa.","• Nộp phản ánh:
+ Given Cư dân chụp ảnh đèn hỏng,
+ When gửi phản ánh,
+ Then Ban quản trị nhận được ticket kèm hình ảnh.",5,Must,Tạo kênh liên lạc chính thức 2 chiều.,Chưa phân công,"Trace: US-032 -> EP-05 -> FE-032; RAW-32, RAW-33; ASIS-10; VIS-32, VIS-33. Phạm vi v1.0."
+17,PBI-018,Cập nhật tiến độ xử lý phản ánh,"Là Ban quản trị, tôi muốn chuyển trạng thái phản ánh từ 'Mới' sang 'Đang xử lý' và 'Đã hoàn thành' để cư dân theo dõi.","• Đổi trạng thái:
+ Given một ticket đang 'Mới',
+ When Ban quản trị chọn 'Đang xử lý',
+ Then hệ thống thông báo cho Cư dân về tiến độ.",3,Should,Nâng cao chất lượng dịch vụ vận hành.,Chưa phân công,Trace: US-033 -> EP-05 -> FE-033; RAW-33; VIS-33. Phạm vi v1.0.
+18,PBI-019,Đăng ký mượn trang thiết bị dùng chung,"Là Cư dân, tôi muốn đăng ký mượn xe đẩy hoặc thang gấp của tòa nhà qua app để biết trước đồ có sẵn hay không.","• Đặt lịch:
+ Given xe đẩy đang trống,
+ When Cư dân book lúc 14h-15h,
+ Then hệ thống giữ chỗ cho ca mượn đó.",5,Could,Quản lý tài sản dùng chung hiệu quả.,Chưa phân công,Trace: US-037 -> EP-05 -> FE-037; RAW-37; VIS-37. Phạm vi v1.0.
+19,PBI-020,Nhắc nhở tự động các khoản nợ quá hạn,"Là Kế toán, tôi muốn hệ thống tự động gửi tin nhắn nhắc nhở nợ hàng tháng để giảm tải công việc giục nợ thủ công.","• Auto-remind:
+ Given cấu hình nhắc nợ,
+ When đến hạn quét,
+ Then hệ thống gửi cảnh báo cho các hộ còn nợ.",5,Should,Tối ưu hóa quy trình thu hồi công nợ.,Chưa phân công,Trace: US-030 -> EP-05 -> FE-030; RAW-30; VIS-30. Phạm vi v1.0.
+20,PBI-021,Xuất báo cáo tỷ lệ thu phí hàng tháng,"Là Kế toán, tôi muốn hệ thống tự động xuất Excel tỷ lệ thu được/chưa thu được trong tháng để báo cáo tài chính.","• Xuất Excel:
+ Given Kế toán chọn tháng 10,
+ When nhấn Xuất,
+ Then file Excel tải về chứa đủ tổng thu, tổng nợ, tỷ lệ %.",5,Must,Báo cáo nhanh chóng tình hình tài chính.,Chưa phân công,Trace: US-041 -> EP-06 -> FE-041; RAW-41; VIS-41. Phạm vi v1.0. Kênh báo cáo chuyên dụng cho kế toán.
+21,PBI-022,Xuất danh sách lưu trú chuẩn,"Là Ban quản trị, tôi muốn xuất danh sách nhân khẩu định dạng theo đúng chuẩn để nộp cho cơ quan chức năng khi được yêu cầu.","• Xuất mẫu chuẩn:
+ Given Ban quản trị chọn 'Báo cáo lưu trú',
+ When tải xuống,
+ Then file có sẵn các cột chuẩn thông tin nhân khẩu.",3,Should,Giúp BQL làm việc với chính quyền dễ dàng.,Chưa phân công,Trace: US-044 -> EP-06 -> FE-044; RAW-44; VIS-44. Phạm vi v1.0.
+22,PBI-023,Tiếp nhận dữ liệu cư trú phục vụ thanh tra,"Là Bên liên quan, tôi muốn truy xuất hệ thống để nhận các báo cáo lưu trú và khiếu nại đã được phê duyệt từ BQL để giám sát, thanh tra.","• Truy xuất dữ liệu:
+ Given Bên liên quan đăng nhập,
+ When chọn mục Báo cáo,
+ Then chỉ hiển thị các dữ liệu đã được BQL xác thực và đóng gói.",5,Must,Tạo luồng kết nối minh bạch với cơ quan chính quyền.,Chưa phân công,"Trace: US-048 -> EP-06 -> FE-048; RAW-44, RAW-48; VIS-44, VIS-48. Phạm vi v1.0. Không cấp quyền xem dữ liệu thô."
