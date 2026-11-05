@@ -36,6 +36,22 @@ class AuditServiceTest {
         assertThat(log.getChanges()).isEqualTo("{\"oldName\":\"A\"}");
     }
 
+    @Test void bootstrapCoActorNullVaActionCoDinh() {
+        service.recordBootstrap("42", Map.of("source", "local"));
+        AuditLog log = saved.get(0);
+        assertThat(log.getActorUserId()).isNull();
+        assertThat(log.getAction()).isEqualTo("BOOTSTRAP_ADMIN");
+        assertThat(log.getEntityType()).isEqualTo("User");
+        assertThat(log.getEntityId()).isEqualTo("42");
+        assertThat(log.getChanges()).isEqualTo("{\"source\":\"local\"}");
+    }
+
+    @Test void bootstrapVanTuChoiKhoaPii() {
+        assertThatThrownBy(() -> service.recordBootstrap("42", Map.of("passwordHash", "secret")))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(saved).isEmpty();
+    }
+
     @ParameterizedTest @NullAndEmptySource @ValueSource(strings = {"  "})
     void tuChoiActionRong(String action) {
         assertThatThrownBy(() -> service.record(1, action, "Role", "1", null))
