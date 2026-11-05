@@ -1,0 +1,11 @@
+ID | Bước quy trình hiện tại | Ai thực hiện | Công cụ hiện tại | Đầu vào | Đầu ra | Pain Point | Nguồn / ghi chú
+ASIS-01 | Các thành viên Ban dùng chung file Excel để quản lý công việc. | Ban quản trị | File Excel chung | Dữ liệu quản lý | File chung cập nhật | Muốn xác định ai đã thực hiện thao tác. | Wishlist!E14 (1.1)
+ASIS-02 | Ban tra cứu hộ, nhân khẩu trong sổ và giấy tờ cư dân cung cấp. | Ban quản trị | Sổ hộ khẩu, giấy tờ | Hồ sơ hộ, nhân khẩu | Thông tin được tra cứu | Phải lục sổ để biết thành viên đang ở. | Wishlist!E14 (5.1), E51
+ASIS-03 | Cư dân gặp trực tiếp Ban để cập nhật biến động nhân khẩu. | Cư dân / BQT | Gặp trực tiếp | Biến động cư trú | Thông tin gửi Ban | Cư dân muốn khai báo từ xa. | Wishlist!E11 (1.1)
+ASIS-04 | Các khoản thu được theo dõi bằng Excel và công cụ thủ công. | BQT / Kế toán | Excel, thủ công | Khoản phí, đóng góp | Danh sách theo dõi | Tốn thời gian, dễ nhầm lẫn khi tổng hợp. | Wishlist!E24
+ASIS-05 | Ban tính phí dịch vụ, quản lý cho từng hộ bằng tay mỗi tháng. | Ban quản trị | Tính tay | Diện tích, đơn giá | Số tiền từng hộ | Muốn tránh sai sót và việc tính lặp. | Wishlist!E14 (3.1–3.4)
+ASIS-06 | Ban soạn từng thông báo thu tiền cho các hộ. | Ban quản trị | Chưa nêu công cụ | Khoản phải thu | Thông báo từng hộ | Soạn riêng từng thư tốn công. | Wishlist!E14 (3.6)
+ASIS-07 | Kế toán in, phát thông báo và hóa đơn giấy. | Kế toán | Giấy, in thủ công | Khoản thu từng hộ | Thông báo, hóa đơn | Muốn thay việc in phát bằng thông báo số. | Wishlist!E27 (3)
+ASIS-08 | Kế toán theo dõi khoản phải thu và hạn đóng bằng nhiều file Excel. | Kế toán | Nhiều file Excel | Khoản thu, hạn nộp | Danh sách theo dõi | Muốn tập trung giao dịch và số còn thiếu. | Wishlist!E47
+ASIS-09 | Cư dân xuống sảnh đọc bảng tin giấy của tòa nhà. | Cư dân | Bảng tin tại sảnh | Thông báo tòa nhà | Thông tin đọc tại sảnh | Phải xuống sảnh để nhận tin. | Wishlist!E12
+ASIS-10 | Chưa mô tả cách xử lý phản ánh, dịch vụ và báo cáo hiện tại. | BQT / Bên liên quan | Chưa xác nhận | Chưa xác nhận | Chưa xác nhận | Thiếu dữ liệu để mô tả đúng hiện trạng. | E10, E13, E31, E40: cần xác nhận

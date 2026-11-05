@@ -1,0 +1,25 @@
+# Bí mật và cấu hình môi trường local (chỉ .env.example được commit)
+.env
+.env.*
+!.env.example
+.mcp.json
+
+# Build
+**/target/
+
+# IDE và file sinh ra trên máy cá nhân
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+.DS_Store
+*.log
+backups/
+
+# Harness và agent cục bộ của Sơn (Claude Code): hook, skill, agent, handoff, settings, workspace, ghi chú
+# AGENTS.md là hướng dẫn chung của nhóm nên vẫn được commit.
+.claude/
+CLAUDE.local.md
+_agents_workspace/

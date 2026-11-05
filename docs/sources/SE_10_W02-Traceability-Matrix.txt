@@ -1,0 +1,56 @@
+,RAW ID,Epic,Feature,User Story,Acceptance Criteria,Ghi chú
+0,RAW-01,EP-01,FE-011,US-001,"Thành công: Given Ban quản trị ở màn hình thêm mới hộ gia đình, When điền đầy đủ các trường bắt buộc (Mã căn hộ, Tên chủ hộ, SĐT) và nhấn Lưu, Then hệ thống tạo mới hồ sơ.
+ Thất bại: Given bỏ trống Mã căn hộ, When nhấn Lưu, Then hệ thống báo lỗi đỏ 'Không được để trống'.",Đã hoàn thiện liên kết
+1,RAW-02,EP-01,FE-011,US-002,"Cập nhật: Given Ban quản trị chọn một hồ sơ cư dân hiện có, When cập nhật 'Số điện thoại' và nhấn Lưu, Then hệ thống lưu dữ liệu mới.
+ Quyền hạn: Given Kế toán cố gắng sửa hồ sơ cư dân, When truy cập, Then nút Cập nhật bị vô hiệu hóa.",Đã hoàn thiện liên kết
+2,RAW-03,EP-01,FE-011,US-003,"Xem chi tiết: Given Ban quản trị click vào dòng Căn hộ A01, When hệ thống tải dữ liệu, Then hiển thị chi tiết toàn bộ thành viên và diện tích căn hộ.",Đã hoàn thiện liên kết
+3,RAW-04,EP-01,FE-012,US-004,"Xóa mềm: Given Ban quản trị chọn xóa hồ sơ, When xác nhận xóa, Then hệ thống chuyển trạng thái nhân khẩu thành 'Đã chuyển đi' và giữ lại lịch sử.",Đã hoàn thiện liên kết
+4,RAW-05,EP-01,FE-013,US-005,"Biến động: Given Ban quản trị điền form Khai báo biến động, When chọn loại 'Chuyển đến' và lưu, Then hệ thống cập nhật tổng số nhân khẩu thực tế.",Đã hoàn thiện liên kết
+5,RAW-06,EP-01,FE-013,US-006,"Tra cứu lịch sử: Given Ban quản trị mở tab Lịch sử cư trú, When tải dữ liệu, Then hiển thị danh sách người đã từng ở, ngày đến, ngày đi.",Đã hoàn thiện liên kết
+6,RAW-07,EP-01,FE-014,US-007,"Xác thực chéo: Given Ban quản trị đổi SĐT chủ hộ, When nhấn lưu, Then hệ thống gửi mã OTP xác nhận đến SĐT cũ của Cư dân trước khi áp dụng.",Đã bổ sung luồng xác thực mới
+7,RAW-08,EP-01,FE-015,US-008,"Định danh VNeID: Given Cư dân tại màn hình đăng nhập, When chọn 'Đăng nhập VNeID', Then hệ thống gọi API đối chiếu số CCCD và cấp quyền truy cập.",Đã thiết kế chức năng tích hợp
+8,RAW-09,EP-03,FE-031,US-009,"Danh mục: Given Ban quản trị tạo khoản thu 'Phí rác thải', When chọn loại 'Phí bắt buộc' và lưu, Then khoản phí xuất hiện trong danh mục thu của tháng tới.",Đã hoàn thiện liên kết
+9,RAW-10,EP-03,FE-031,US-010,"Phân loại quỹ: Given Ban quản trị tạo quỹ 'Ủng hộ', When đánh dấu 'Tự nguyện', Then khoản này hiển thị tách biệt, không tính vào công nợ bắt buộc.",Đã hoàn thiện liên kết
+10,RAW-11,EP-03,FE-032,US-011,"Tính tự động: Given Kế toán cấu hình phí là 12.000đ/m2, When chốt công nợ tháng, Then hệ thống nhân 12.000đ với diện tích từng căn hộ để ra hóa đơn.",Đã hoàn thiện liên kết
+11,RAW-12,EP-03,FE-032,US-012,"Đổi đơn giá: Given Kế toán đổi đơn giá phí từ 100k lên 120k, When tính phí tháng mới, Then áp dụng 120k mà không làm sai lệch lịch sử tháng cũ.",Đã hoàn thiện liên kết
+12,RAW-13,EP-03,FE-033,US-013,"Khởi tạo hàng loạt: Given Kế toán chọn kỳ thu tháng 10, When nhấn 'Khởi tạo bảng kê', Then hệ thống sinh ra hóa đơn hàng loạt cho tất cả các hộ.",Đã hoàn thiện liên kết
+13,RAW-14,EP-03,FE-036,US-014,"Quản lý quỹ: Given cư dân chuyển khoản cho đợt quỹ khuyến học, When Kế toán gạch nợ vào quỹ này, Then tổng quỹ tăng thêm và cấp biên lai riêng.",Đã hoàn thiện liên kết
+14,RAW-15,EP-03,FE-034,US-015,"Thu tiền mặt: Given Kế toán nhận tiền mặt 1 triệu từ hộ B02, When nhấn 'Thu tiền', Then hệ thống trừ 1 triệu vào công nợ B02 và ghi nhận ngày giờ.",Đã hoàn thiện liên kết
+15,RAW-16,EP-03,FE-035,US-016,"Lọc nợ: Given Kế toán mở báo cáo công nợ, When lọc trạng thái 'Còn nợ', Then bảng dữ liệu hiển thị danh sách các hộ chưa đóng đủ tiền.",Đã hoàn thiện liên kết
+16,RAW-17,EP-04,FE-041,US-017,"Gửi tự động: Given hóa đơn tháng đã chốt, When Kế toán nhấn 'Gửi thông báo', Then hệ thống đẩy thông báo đến tài khoản App của từng chủ hộ.",Đã hoàn thiện liên kết
+17,RAW-18,EP-05,FE-051,US-018,"Gửi toàn khu: Given Ban quản trị soạn thông báo chung, When chọn gửi 'Tất cả', Then 100% Cư dân nhận được push notification trên thiết bị.",Đã thiết kế chức năng gửi Mass
+18,RAW-19,EP-05,FE-052,US-019,"Kênh trao đổi: Given Ban quản trị tạo Kênh trao đổi nội bộ, When Cư dân tham gia, Then họ có thể chat và thảo luận trực tiếp với BQL trên App.",Đã thiết kế tính năng Community
+19,RAW-20,EP-07,FE-071,US-020,"Tìm kiếm siêu tốc: Given Ban quản trị nhập 'B05' vào ô tìm kiếm, When gõ xong, Then hệ thống trả về ngay lập tức hồ sơ căn hộ B05.",Đã hoàn thiện liên kết
+20,RAW-21,EP-07,FE-072,US-021,"Thống kê dân: Given Ban quản trị truy cập Dashboard, When trang load, Then hệ thống hiển thị biểu đồ phân bổ số lượng nhân khẩu thường trú.",Đã hoàn thiện liên kết
+21,RAW-22,EP-07,FE-073,US-022,"Báo cáo tài chính: Given Kế toán xem báo cáo quý 3, When xem widget tổng hợp, Then hiển thị Tổng phải thu, Tổng đã thu và Tỷ lệ thu hồi nợ (%).",Đã hoàn thiện liên kết
+22,RAW-23,EP-07,FE-074,US-023,"Báo cáo quỹ: Given Ban quản trị xuất báo cáo Quỹ Trung Thu, When mở file, Then file có danh sách các hộ đóng góp và tổng tiền chuẩn xác.",Đã hoàn thiện liên kết
+23,RAW-24,EP-07,FE-075,US-024,"Xuất file CA: Given Cơ quan chức năng yêu cầu danh sách cư trú, When Ban quản trị xuất báo cáo, Then hệ thống sinh file theo Form chuẩn nhà nước.",Đã hoàn thiện liên kết
+24,RAW-25,EP-06,FE-061,US-025,"Khóa Brute-force: Given người dùng nhập sai mật khẩu 5 lần, When nhấn Đăng nhập, Then hệ thống khóa tài khoản 15 phút để bảo mật.",Đã hoàn thiện liên kết
+25,RAW-26,EP-06,FE-062,US-026,"Sửa Profile: Given Cư dân ở màn hình Hồ sơ, When thay đổi ảnh đại diện và lưu, Then ảnh mới được cập nhật trên toàn hệ thống.",Đã hoàn thiện liên kết
+26,RAW-27,EP-06,FE-062,US-027,"Đổi Pass: Given Kế toán yêu cầu đổi mật khẩu, When nhập đúng mật khẩu cũ và mới đủ mạnh, Then hệ thống lưu và yêu cầu đăng nhập lại.",Đã hoàn thiện liên kết
+27,RAW-28,EP-02,FE-021,US-028,"Cổng cư dân: Given Cư dân đăng nhập App, When mở tab Cá nhân, Then thấy đủ thông tin diện tích căn hộ và các thành viên gia đình mình.",Đã chuyển hóa thành User Story
+28,RAW-29,EP-02,FE-022,US-029,"Cư dân tự cập nhật: Given Cư dân chỉnh sửa SĐT bản thân, When nhấn lưu, Then hệ thống cập nhật và báo cho BQL biết về sự thay đổi.",Đã chuyển hóa thành User Story
+29,RAW-30,EP-02,FE-023,US-030,"Khai báo online: Given Cư dân điền form xin tạm vắng online, When gửi đi, Then form được đưa vào danh sách chờ duyệt của BQL.",Đã chuyển hóa thành User Story
+30,RAW-31,EP-02,FE-024,US-031,"Liên hệ hàng xóm: Given Cư dân xem hồ sơ căn hộ kế bên, When nhấn xem SĐT, Then SĐT chỉ hiển thị nếu chủ hộ đó đã bật chia sẻ công khai.",Đã xử lý logic bảo mật riêng tư
+31,RAW-32,EP-04,FE-042,US-032,"Lọc phí cá nhân: Given Cư dân vào tab Tài chính, When chọn bộ lọc 'Chưa nộp', Then màn hình chỉ hiển thị các hóa đơn còn nợ của nhà mình.",Đã chuyển hóa thành User Story
+32,RAW-33,EP-04,FE-043,US-033,"Thanh toán QR: Given Cư dân chọn thanh toán hóa đơn tháng 10, When ấn 'Quét QR', Then hệ thống sinh mã VietQR chứa đúng số tiền và nội dung CK.",Đã chuyển hóa thành User Story
+33,RAW-34,EP-04,FE-044,US-034,"Auto-pay: Given Cư dân bật chức năng 'Thanh toán tự động', When đến ngày mùng 5 hàng tháng, Then hệ thống tự động trừ tiền từ thẻ đã liên kết.",Đã chuyển hóa thành User Story
+34,RAW-35,EP-04,FE-045,US-035,"Xem chi tiết: Given Cư dân nhấn vào hóa đơn tổng, When mở ra, Then hóa đơn được bóc tách chi tiết thành phí quản lý, phí gửi xe, phí rác.",Đã chuyển hóa thành User Story
+35,RAW-36,EP-04,FE-046,US-036,"Biên lai số: Given Cư dân thanh toán thành công, When kiểm tra lịch sử, Then có thể tải xuống file PDF biên lai thu tiền có chữ ký số.",Đã chuyển hóa thành User Story
+36,RAW-37,EP-06,FE-065,US-037,"Mã hóa giao dịch: Given Kế toán xuất dữ liệu thanh toán, When mở file, Then toàn bộ thông tin số thẻ tín dụng của Cư dân đều bị che mờ (masking).",Đã xử lý NFR thành User Story
+37,RAW-38,EP-04,FE-041,US-038,"Thông báo phí: Given hệ thống phát hành hóa đơn mới, When đẩy noti, Then thiết bị của Cư dân hiển thị 'Bạn có hóa đơn tháng mới cần thanh toán'.",Đã hoàn thiện liên kết
+38,RAW-39,EP-05,FE-053,US-039,"Nhắc nợ liên tục: Given cư dân quá hạn đóng phí 5 ngày, When hệ thống chạy job lúc 8h sáng, Then tự động gửi 1 tin nhắc nhở mỗi ngày cho đến khi đóng đủ.",Đã chuyển hóa thành User Story
+39,RAW-40,EP-05,FE-054,US-040,"Tùy chọn Noti: Given Cư dân vào Cài đặt thông báo, When tắt mục 'Tin tức cộng đồng', Then Cư dân sẽ chỉ nhận các tin khẩn cấp và tin thu phí.",Đã chuyển hóa thành User Story
+40,RAW-41,EP-05,FE-055,US-041,"Tin vận hành khẩn: Given Ban quản trị gửi tin báo cắt điện, When phát hành, Then tin nhắn hiển thị cờ Đỏ (Khẩn cấp) ưu tiên trên màn hình Cư dân.",Đã chuyển hóa thành User Story
+41,RAW-42,EP-05,FE-056,US-042,"Đa kênh Noti: Given Ban quản trị gửi thông báo cháy, When hệ thống xử lý, Then tin báo được gửi đồng thời qua App Push, SMS và Zalo ZNS.",Đã xử lý NFR thành User Story
+42,RAW-43,EP-05,FE-057,US-043,"Sự cố bãi xe: Given Bảo vệ phát hiện rò rỉ xăng xe máy, When báo cho BQL gửi Noti, Then hệ thống tự động tìm và gửi tin đích danh cho chủ chiếc xe đó.",Đã chuyển hóa thành User Story
+43,RAW-44,EP-07,FE-076,US-044,"Minh bạch quỹ: Given Cư dân mở tab Báo cáo chung, When xem Quỹ bảo trì, Then hiển thị số dư hiện tại và các hạng mục BQL đã chi dùng trong tháng.",Đã chuyển hóa thành User Story
+44,RAW-45,EP-06,FE-066,US-045,"Trải nghiệm UX: Given người lớn tuổi (Cư dân) thao tác thanh toán, When sử dụng, Then có thể hoàn thành luồng thanh toán trong tối đa 3 lần chạm màn hình.",Đã xử lý NFR thành User Story
+45,RAW-46,EP-06,FE-067,US-046,"PWA Web App: Given Cư dân truy cập URL qua Safari trên iPhone, When sử dụng, Then giao diện tự co giãn (Responsive) và hoạt động mượt mà không cần cài App.",Đã xử lý NFR thành User Story
+46,RAW-47,EP-05,FE-058,US-047,"Mượn đồ chung: Given Cư dân đặt mượn xe đẩy siêu thị, When chọn khung giờ 14h-15h, Then hệ thống khóa khung giờ đó không cho căn hộ khác đặt trùng.",Đã chuyển hóa thành User Story
+47,RAW-48,EP-02,FE-025,US-048,"Báo trước khách: Given Cư dân điền biển số xe khách đến thăm, When khách tới cổng, Then Bảo vệ (Bên liên quan) đối chiếu thông tin khớp và mở barie.",Đã chuyển hóa thành User Story
+48,RAW-49,EP-05,FE-059,US-049,"Báo cáo sự cố: Given Cư dân gửi ticket báo hỏng đèn hành lang, When kỹ thuật xử lý xong, Then BQL cập nhật trạng thái ticket thành 'Đã hoàn thành'.",Đã chuyển hóa thành User Story
+49,RAW-50,EP-05,FE-060,US-050,"Khiếu nại: Given Cư dân nộp khiếu nại về vệ sinh, When đánh dấu 'Ẩn danh', Then Ban quản trị nhận được nội dung nhưng không xem được tên người gửi.",Đã chuyển hóa thành User Story
+50,RAW-51,EP-05,FE-068,US-051,"Tra cứu camera: Given Cư dân báo mất đồ lúc 14h, When BQL cấp quyền truy xuất, Then Cư dân chỉ được phép xem video hành lang tầng mình từ 13h-15h.",Đã chuyển hóa thành User Story
+51,RAW-52,EP-07,FE-075,US-052,"Báo cáo thuế: Given Cơ quan Thuế (Bên liên quan) yêu cầu xuất dữ liệu, When Kế toán trích xuất, Then hệ thống cung cấp file chứa đầy đủ mã số thuế và doanh thu.",Đã hoàn thiện liên kết
+52,RAW-53,EP-07,FE-075,US-053,"Xác thực hành chính: Given Cơ quan chức năng tra cứu dữ liệu, When họ xuất báo cáo từ BQL, Then hệ thống sinh bản ghi khớp 100% với giấy tờ pháp lý.",Đã hoàn thiện liên kết

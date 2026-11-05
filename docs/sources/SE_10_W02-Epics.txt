@@ -1,0 +1,20 @@
+,ID,Title,Epic Owner,Description,Business value,Acceptance Criteria,Dependency & Relationship,Constraints/Assumptions,Priority,Child user stories
+0,EP-01,"Tài khoản, truy cập và bảo mật",Ban quản trị (đề xuất),"Tài khoản riêng, mật khẩu, phân quyền, truy vết và cách truy cập phù hợp cư dân.",Bảo vệ dữ liệu và giảm trở ngại sử dụng.,"Given có tài khoản riêng, When đăng nhập và thao tác, Then truy cập đúng quyền và lưu người thao tác.",Hỗ trợ EP-02 đến EP-06.,"Chốt quyền, VNeID, kênh truy cập và tiêu chí dễ dùng.",Chưa xác nhận,"US-001, US-002, US-003
+ US-004, US-005, US-006
+ US-007"
+1,EP-02,Hộ gia đình và cư trú,Ban quản trị (đề xuất),"Hồ sơ hộ, nhân khẩu, tự cập nhật, khai báo và lịch sử biến động cư trú.","Dữ liệu tập trung, giảm tìm sổ và gặp trực tiếp.","Given có hồ sơ hộ, When cập nhật rồi tra cứu, Then liên kết đúng hộ, lưu lịch sử biến động và trả dữ liệu đúng quyền.","Dùng EP-01; cấp dữ liệu hộ cho EP-03, EP-04, EP-06.","Chốt duyệt sửa, xóa, khách tới thăm và chia sẻ liên hệ.",Chưa xác nhận,"US-008, US-009, US-010
+ US-011, US-012, US-013
+ US-014, US-015"
+2,EP-03,Khoản thu và kỳ thu,BQT / Kế toán (đề xuất),"Phân loại phí, tính theo diện tích, lập kỳ thu và ghi nhận đợt đóng góp.","Giảm tính tay, tách rõ bắt buộc và tự nguyện.","Given có diện tích, giá và hộ, When lập kỳ thu, Then tính phí m², lập danh sách, tách bắt buộc/tự nguyện.",Nhận hộ từ EP-02; cấp khoản phải thu cho EP-04.,"Chốt đơn giá, hiệu lực, nguồn điện nước và hộ áp dụng.",Chưa xác nhận,"US-016, US-017, US-018
+ US-019, US-020"
+3,EP-04,Thanh toán và kế toán,BQT / Kế toán (đề xuất),"Giao dịch, thanh toán trực tuyến, biên lai, công nợ, khoản chi và đối soát.","Giao dịch minh bạch, cư dân tự kiểm tra công nợ.","Given khoản thu và đối soát đã chốt, When ghi nhận và đối soát, Then lưu người, ngày, số tiền, biên lai, số còn thiếu và kết quả đối soát.","Dùng EP-01, EP-02, EP-03; cung cấp số liệu cho EP-06.","Chốt QR, ví, tự động thu, chứng từ và đối soát.",Chưa xác nhận,"US-021, US-022, US-023
+ US-024, US-025, US-026
+ US-027, US-028"
+4,EP-05,Thông báo và dịch vụ tòa nhà,Ban quản trị (đề xuất),"Thông báo, nhắc phí, phản ánh, tài sản chung và đăng ký dịch vụ tòa nhà.","Thông tin kịp thời, rõ trách nhiệm xử lý sự cố.","Given quy trình và người nhận đã duyệt, When gửi tin và xử lý yêu cầu, Then tin đúng người, phản ánh có tiến độ/người xử lý, dịch vụ đúng quy trình.","Dùng EP-01, EP-02; nhắc phí từ EP-03, EP-04.","Chốt kênh, tần suất, SLA, camera và mượn dụng cụ.",Chưa xác nhận,"US-029, US-030, US-031
+ US-032, US-033, US-034
+ US-035, US-036, US-037
+ US-038, US-039, US-040"
+5,EP-06,Báo cáo và cung cấp thông tin,BQT / Kế toán (đề xuất),"Báo cáo tài chính, cư trú, thuế, quỹ và thông tin cho bên có thẩm quyền.","Dễ tổng hợp, minh bạch và cung cấp đúng phạm vi.","Given kỳ, mẫu, quyền nhận đã duyệt, When xuất báo cáo, Then đúng kỳ, đúng mẫu và chỉ chia sẻ dữ liệu được phép.",Nhận dữ liệu từ EP-02 đến EP-05; dùng quyền EP-01.,"Chốt mẫu, thuế, hóa đơn, quyền cơ quan và phạm vi mở rộng.",Chưa xác nhận,"US-041, US-042, US-043
+ US-044, US-045, US-046
+ US-047, US-048, US-049
+ US-050, US-051, US-052"

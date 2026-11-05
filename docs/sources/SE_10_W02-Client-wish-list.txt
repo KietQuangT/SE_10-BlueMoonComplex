@@ -1,0 +1,105 @@
+RAW ID | Nguồn | Mong muốn thô / nhu cầu | Loại | Artefact hướng tới | Phạm vi | Ghi chú / mức chắc chắn
+RAW-01 | Ban quản trị | Muốn mỗi thành viên Ban có tài khoản riêng, đăng nhập bằng mật khẩu. | FR | EP-01 / FE-001 | Chưa chốt | Wishlist!E14
+ Chốt cấp tài khoản.
+RAW-02 | Ban quản trị | Muốn tự sửa hồ sơ cá nhân và đổi mật khẩu khi cần. | FR | EP-01 / FE-002 | Chưa chốt | Wishlist!E14
+ Chốt quy tắc mật khẩu.
+RAW-03 | Cư dân / BQT | Muốn dữ liệu cư dân, hộ và thanh toán chỉ đến người có quyền. | NFR | EP-01 / FE-003 | Chưa chốt | Wishlist!E6,E14,E45
+ Chốt ma trận quyền.
+RAW-04 | Ban quản trị | Muốn biết thành viên nào trong Ban đã thực hiện từng thao tác. | FR | EP-01 / FE-004 | Chưa chốt | Wishlist!E14
+ Chốt thời hạn lưu vết.
+RAW-05 | Ban quản trị | Muốn đăng nhập bằng VNeID để định danh và đồng bộ cư dân. | FR | EP-01 / FE-005 | Chưa chốt | Wishlist!E18
+ Chốt tích hợp VNeID.
+RAW-06 | Cư dân | Muốn sử dụng dịch vụ mà không phải cài thêm ứng dụng. | Constraint | EP-01 / FE-006 | Chưa chốt | Wishlist!E3
+ Chốt kênh truy cập.
+RAW-07 | Cư dân | Muốn giao diện đơn giản, thao tác dễ hiểu và phù hợp nhiều lứa tuổi. | NFR | EP-01 / FE-007 | Chưa chốt | Wishlist!E5,E6,E15,E65
+ Chốt tiêu chí dễ dùng.
+RAW-08 | Ban quản trị | Muốn thêm, sửa, xóa hồ sơ hộ, căn hộ và các thành viên cư trú. | FR | EP-02 / FE-008 | Chưa chốt | Wishlist!E14,E16,E17,E19,E20,E22,E24,E51
+ Chốt xóa và xác nhận.
+RAW-09 | Cư dân | Muốn tự xem, đăng ký và sửa thông tin của mình và thành viên trong hộ. | FR | EP-02 / FE-009 | Chưa chốt | Wishlist!E5,E9,E11,E13,E43,E65
+ Chốt quyền sửa của hộ.
+RAW-10 | Ban quản trị | Muốn gửi thông báo xác nhận với hộ trước khi thay đổi thông tin của họ. | FR | EP-02 / FE-010 | Chưa chốt | Wishlist!E18
+ Chốt luồng xác nhận.
+RAW-11 | Ban quản trị | Muốn ghi nhận sinh, mất, chuyển đến/đi, tạm trú/vắng và lịch sử. | FR | EP-02 / FE-011 | Chưa chốt | Wishlist!E14,E16,E24,E34,E38,E48
+ Chốt trường dữ liệu.
+RAW-12 | Cư dân | Muốn khai báo tạm trú/vắng trực tuyến cho hộ và khách cư trú. | FR | EP-02 / FE-012 | Chưa chốt | Wishlist!E5,E11
+ Chốt duyệt khai báo.
+RAW-13 | BQT / Công an | Muốn tìm hộ, nhân khẩu theo tên, căn hộ, số hộ khẩu hoặc định danh. | FR | EP-02 / FE-013 | Chưa chốt | Wishlist!E8,E14,E17,E34,E40,E45,E48
+ Chốt quyền cơ quan.
+RAW-14 | Cư dân | Muốn báo trước thông tin khách cho Ban quản trị và bảo vệ. | FR | EP-02 / FE-014 | Chưa chốt | Wishlist!E13
+ Chốt quy trình khách.
+RAW-15 | Chưa rõ vai trò | Muốn xem thông tin cơ bản và điện thoại của hàng xóm. | FR | EP-02 / FE-015 | Chưa chốt | Wishlist!E9
+ Chốt vai trò, đồng ý.
+RAW-16 | BQT / Kế toán | Muốn tạo khoản thu, phân biệt phí bắt buộc và đóng góp tự nguyện. | FR | EP-03 / FE-016 | Chưa chốt | Wishlist!E14,E16,E24,E27,E35,E47
+ Chốt danh mục phí.
+RAW-17 | BQT / Kế toán | Muốn tính theo m²; dịch vụ 2.500–16.500đ/m², phí quản lý tùy thời điểm. | FR | EP-03 / FE-017 | Chưa chốt | Wishlist!E14,E16,E24,E30,E35
+ Chốt hiệu lực đơn giá.
+RAW-18 | BQT / Kế toán | Muốn lập danh sách khoản phải thu và hạn nộp cho toàn bộ hộ trong một lần. | FR | EP-03 / FE-018 | Chưa chốt | Wishlist!E14,E27,E35,E47
+ Chốt hộ được áp dụng.
+RAW-19 | BQT / Kế toán | Muốn ghi nhận từng đợt quyên góp, người đóng và số tiền tự nguyện. | FR | EP-03 / FE-019 | Chưa chốt | Wishlist!E14,E27,E35,E40
+ Số tiền do người đóng.
+RAW-20 | Ban quản trị | Muốn quản lý khoản thu điện, nước, internet và gửi xe theo kỳ. | FR | EP-03 / FE-020 | Chưa chốt | Wishlist!E26,E36,E41
+ Chốt nguồn và đơn giá.
+RAW-21 | BQT / Kế toán | Muốn lưu hộ, khoản thu, người đóng, số tiền, ngày đóng và phần còn thiếu. | FR | EP-04 / FE-021 | Chưa chốt | Wishlist!E14,E16,E47,E58
+ Chốt sửa giao dịch.
+RAW-22 | Cư dân / Kế toán | Muốn thanh toán trực tuyến bằng mã QR hoặc ngân hàng. | FR | EP-04 / FE-022 | Chưa chốt | Wishlist!E5,E6,E11,E12,E28,E36
+ Chốt ngân hàng, đối soát.
+RAW-23 | Cư dân | Muốn liên kết ví điện tử để thanh toán các khoản phí. | FR | EP-04 / FE-023 | Chưa chốt | Wishlist!E5
+ Chốt đơn vị ví.
+RAW-24 | Cư dân | Muốn thiết lập thanh toán phí tự động hàng tháng. | FR | EP-04 / FE-024 | Chưa chốt | Wishlist!E5
+ Chốt ủy quyền, lỗi thu.
+RAW-25 | Cư dân / Kế toán | Muốn nhận xác nhận thanh toán hoàn tất kèm biên lai điện tử. | FR | EP-04 / FE-025 | Chưa chốt | Wishlist!E6,E11,E14,E27,E47,E58
+ Chốt chứng từ hợp lệ.
+RAW-26 | Cư dân / BQT | Muốn lọc khoản đã/chưa đóng, xem cách tính và lịch sử thanh toán của hộ. | FR | EP-04 / FE-026 | Chưa chốt | Wishlist!E4,E6,E11,E12,E14,E36,E47,E49,E65
+ Chốt trạng thái thu.
+RAW-27 | BQT / Kế toán | Muốn ghi nhận, tính toán và kiểm soát khoản chi, chi phí vận hành, bảo trì. | FR | EP-04 / FE-027 | Chưa chốt | Wishlist!E4,E27,E31,E32,E35,E51,E58
+ Chốt chứng từ, duyệt chi.
+RAW-28 | Kế toán | Muốn tự động cập nhật và đối chiếu số liệu thu chi. | FR | EP-04 / FE-028 | Chưa chốt | Wishlist!E28,E30,E32,E58
+ Chốt quy tắc đối soát.
+RAW-29 | BQT / Cư dân | Muốn gửi thông báo chung hoặc từng hộ qua kênh cư dân theo dõi. | FR | EP-05 / FE-029 | Chưa chốt | Wishlist!E5,E11,E14,E18,E19,E22,E27,E36,E43,E50,E65
+ Chốt kênh và người nhận.
+RAW-30 | Cư dân / Kế toán | Muốn nhắc hạn, khoản chưa đóng kèm QR, nhưng không thông báo quá nhiều. | FR | EP-05 / FE-030 | Chưa chốt | Wishlist!E6,E7,E11,E14,E27,E31,E36,E47
+ Chốt tần suất, tránh phiền.
+RAW-31 | Cư dân | Muốn được báo kịp thời khi cắt điện, nước, bảo trì hoặc có sự cố. | FR | EP-05 / FE-031 | Chưa chốt | Wishlist!E4,E12,E13,E36,E41
+ Chốt mức khẩn, kênh.
+RAW-32 | Cư dân | Muốn hỏi đáp, góp ý và đánh giá với Ban quản trị qua hệ thống. | FR | EP-05 / FE-032 | Chưa chốt | Wishlist!E12,E43,E50,E65
+ Chốt thời hạn trả lời.
+RAW-33 | Cư dân / BQT | Muốn báo sự cố, khiếu nại, xem tiến độ và người chịu trách nhiệm. | FR | EP-05 / FE-033 | Chưa chốt | Wishlist!E12,E13,E43,E44,E65
+ Chốt luồng xử lý.
+RAW-34 | Ban quản trị | Muốn theo dõi số lượng và tình trạng thang máy, cầu thang, phòng chung. | FR | EP-05 / FE-034 | Chưa chốt | Wishlist!E25,E51
+ Chốt danh mục tài sản.
+RAW-35 | Cư dân / BQT | Muốn xem, đăng ký dịch vụ sửa chữa và theo dõi công tác bảo trì. | FR | EP-05 / FE-035 | Chưa chốt | Wishlist!E13,E36,E51
+ Chốt dịch vụ, quy trình.
+RAW-36 | Cư dân / BQT | Muốn đăng ký gửi xe và nhận thông báo an ninh, sự cố, vi phạm liên quan xe. | FR | EP-05 / FE-036 | Chưa chốt | Wishlist!E13,E26,E36,E48
+ Chốt dữ liệu, phí xe.
+RAW-37 | Cư dân | Muốn đăng ký mượn xe đẩy, thang, búa, máy khoan dùng chung theo khung giờ. | FR | EP-05 / FE-037 | Chưa chốt | Wishlist!E10
+ Chốt mượn, trả, trùng giờ.
+RAW-38 | Cư dân | Muốn xem lại camera hành lang khi có mất mát tài sản. | FR | EP-05 / FE-038 | Chưa chốt | Wishlist!E21
+ Chốt quyền, thời hạn lưu.
+RAW-39 | Bên liên quan | Muốn có kênh liên lạc giữa công an, bảo vệ và cư dân để xử lý sự cố. | FR | EP-05 / FE-039 | Chưa chốt | Wishlist!E18,E38,E41
+ Chốt nhóm, kênh trao đổi.
+RAW-40 | Kế toán | Muốn số hóa giấy tờ, làm thủ tục qua ứng dụng và giảm bước trung gian. | FR | EP-05 / FE-040 | Chưa chốt | Wishlist!E42
+ Chốt thủ tục, kênh.
+RAW-41 | BQT / Kế toán | Muốn tổng hợp thu chi, đã thu, còn thiếu và tỷ lệ đóng theo khoảng thời gian. | FR | EP-06 / FE-041 | Chưa chốt | Wishlist!E14,E27,E31,E32,E39,E47,E49
+ Chốt kỳ, công thức tỷ lệ.
+RAW-42 | BQT / Cơ quan | Muốn báo cáo từng quỹ, đợt đóng góp và lập biên bản giao nhận tiền. | FR | EP-06 / FE-042 | Chưa chốt | Wishlist!E14,E40
+ Chốt mẫu bàn giao.
+RAW-43 | Cư dân | Muốn xem công khai thu chi và việc sử dụng quỹ bảo trì. | FR | EP-06 / FE-043 | Chưa chốt | Wishlist!E4,E43
+ Chốt mức công khai.
+RAW-44 | Công an / UBND | Muốn báo cáo nhân khẩu thực tế, biến động, tạm trú/vắng và người nước ngoài. | FR | EP-06 / FE-044 | Chưa chốt | Wishlist!E8,E14,E34,E38,E40,E41,E44,E45,E48,E51
+ Chốt mẫu, quyền nhận.
+RAW-45 | Kế toán / Thuế | Muốn xuất doanh thu, bảng kê hóa đơn và sổ sách theo kỳ, định dạng yêu cầu. | FR | EP-06 / FE-045 | Chưa chốt | Wishlist!E31,E32,E33,E39,E44,E48,E52,E61,E62
+ Chốt định dạng báo cáo.
+RAW-46 | Kế toán / Thuế | Muốn tự tính thuế phải đóng và xuất chi tiết các khoản kê khai. | FR | EP-06 / FE-046 | Chưa chốt | Wishlist!E33,E39
+ Chốt quy tắc thuế.
+RAW-47 | Cơ quan thuế | Muốn tạo, ký, gửi hóa đơn chịu thuế; hóa đơn đã phát hành không bị sửa/xóa. | FR | EP-06 / FE-047 | Chưa chốt | Wishlist!E27,E31,E44,E61,E62
+ Chốt thuế, ký, kết nối.
+RAW-48 | UBND | Muốn cung cấp lịch sử phản ánh, khiếu nại để hỗ trợ giải quyết tranh chấp. | FR | EP-06 / FE-048 | Chưa chốt | Wishlist!E44
+ Chốt quyền cung cấp.
+RAW-49 | PCCC / Nhà cung cấp | Muốn nhận dữ liệu dân cư, tình trạng PCCC và gửi thông báo điện, nước. | FR | EP-06 / FE-049 | Chưa chốt | Wishlist!E41
+ Chốt dữ liệu, đầu mối.
+RAW-50 | Nhà đầu tư | Muốn kiểm soát doanh thu và lợi nhuận liên quan đến hoạt động đầu tư. | FR | EP-06 / FE-050 | Chưa chốt | Wishlist!E39
+ Chốt phạm vi nhà đầu tư.
+RAW-51 | Công an | Muốn tự cảnh báo vi phạm, chặn truy cập và kiểm tra sâu hồ sơ khi có vụ việc. | FR | EP-06 / FE-051 | Chưa chốt | Wishlist!E39
+ Chốt luật, thẩm quyền.
+RAW-52 | Cơ quan thuế | Muốn số hóa thông tin thu nhập hộ gia đình phục vụ yêu cầu thuế. | FR | EP-06 / FE-052 | Chưa chốt | Wishlist!E45
+ Chốt căn cứ, dữ liệu.
