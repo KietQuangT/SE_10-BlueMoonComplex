@@ -11,10 +11,18 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -25,27 +33,32 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 public class SecurityConfig {
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, CsrfTokenRepository csrfTokenRepository, SecurityContextRepository contextRepository) throws Exception {
         http.cors(Customizer.withDefaults())
-            .csrf(Customizer.withDefaults())
+            .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository))
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
             .logout(logout -> logout.disable())
             .requestCache(cache -> cache.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**", "/api/v1/system/info").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                .requestMatchers("/api/v1/auth/me", "/api/v1/auth/logout").authenticated()
                 .anyRequest().denyAll())
+            .securityContext(context -> context.securityContextRepository(contextRepository))
             .exceptionHandling(errors -> errors
                 .authenticationEntryPoint((request, response, exception) -> problem(response, 401, "Chưa xác thực"))
                 .accessDeniedHandler((request, response, exception) -> problem(response, 403, "Không có quyền truy cập")));
         return http.build();
     }
 
-    // Ngăn tài khoản/mật khẩu tự sinh của Spring; module identity sẽ thay bean này.
-    @Bean
-    UserDetailsService noUsersYet() {
-        return username -> { throw new UsernameNotFoundException("Chưa triển khai module tài khoản"); };
+    @Bean CsrfTokenRepository csrfTokenRepository() { return new HttpSessionCsrfTokenRepository(); }
+    @Bean SecurityContextRepository securityContextRepository() { return new HttpSessionSecurityContextRepository(); }
+    @Bean SessionAuthenticationStrategy sessionAuthenticationStrategy(CsrfTokenRepository repository) {
+        return new CompositeSessionAuthenticationStrategy(List.of(new ChangeSessionIdAuthenticationStrategy(), new CsrfAuthenticationStrategy(repository)));
     }
+    @Bean AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception { return configuration.getAuthenticationManager(); }
 
     @Bean
     PasswordEncoder passwordEncoder() {

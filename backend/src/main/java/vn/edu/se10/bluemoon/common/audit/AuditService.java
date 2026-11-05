@@ -32,6 +32,15 @@ public class AuditService {
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void record(long actorUserId, String action, String entityType, String entityId, Map<String, String> changes) {
+        recordInternal(actorUserId, action, entityType, entityId, changes);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void recordBootstrap(String entityId, Map<String, String> changes) {
+        recordInternal(null, "BOOTSTRAP_ADMIN", "User", entityId, changes);
+    }
+
+    private void recordInternal(Long actorUserId, String action, String entityType, String entityId, Map<String, String> changes) {
         require(action, "action");
         require(entityType, "entityType");
         if (entityId != null && entityId.length() > MAX_FIELD) {
