@@ -10,7 +10,7 @@ flowchart TD
   R --> D[("MySQL: nghiệp vụ, audit, session")]
   B --> X["Adapter dịch vụ ngoài mô phỏng"]
 ```
-Sơ đồ là kiến trúc đích v1; skeleton mới có config, session, health và systeminfo. Repository/bảng nghiệp vụ chỉ tạo trong task có AC đã chốt.
+Sơ đồ là kiến trúc đích v1; hiện có config, session, health, systeminfo, audit và đăng nhập/session/khóa tài khoản của `identity` (S01). Repository/bảng nghiệp vụ khác chỉ tạo trong task có AC đã chốt.
 
 ## Luồng request
 Request → request ID → CORS/security/CSRF → controller validate DTO → service kiểm tra quyền đối tượng và quy tắc → repository trong transaction → DB → response DTO.
@@ -32,11 +32,12 @@ Mỗi module chỉ tạo `api`, `application`, `persistence` và `domain` nếu 
 - Unique key theo kỳ/hộ/loại phí và idempotency key giao dịch là đề xuất cần xác định đúng nghiệp vụ; không thay khóa DB bằng kiểm tra exists đơn thuần.
 
 ## Audit
-`common/audit/AuditService.record(...)` ghi bảng `audit_log` (V2) và bắt buộc chạy trong transaction của thay đổi dữ liệu (`MANDATORY`): rollback thì audit cũng rollback; caller không bắt exception quanh lời gọi. `AuditLog` bất biến, repository chỉ có `save`. Thời điểm lấy từ bean `Clock` (UTC). Từ chối khóa PII thô trong `changes`; caller chỉ được đưa trường đã cho phép (D12). Xem `identity/application/RoleService` làm mẫu (chưa có kiểm tra quyền, S01 thay hoặc xóa).
+`common/audit/AuditService.record(...)` ghi bảng `audit_log` (V2) và bắt buộc chạy trong transaction của thay đổi dữ liệu (`MANDATORY`): rollback thì audit cũng rollback; caller không bắt exception quanh lời gọi. `AuditLog` bất biến, repository chỉ có `save`. Thời điểm lấy từ bean `Clock` (UTC). Từ chối khóa PII thô trong `changes`; caller chỉ được đưa trường đã cho phép (D12). Xem `identity/application/RoleService` làm mẫu (chưa có kiểm tra quyền, không gắn controller; giữ nguyên theo quyết định S01 G1). `recordBootstrap` là đường riêng cho lệnh tạo BQT đầu tiên: actor NULL, action cố định `BOOTSTRAP_ADMIN`. Đăng nhập ghi `LOGIN_SUCCESS`, `LOGIN_FAILED`, `ACCOUNT_LOCKED` cùng transaction (D18).
 
 ## Auth
-Session lưu MySQL, cookie HttpOnly/SameSite=Lax; Secure khi có HTTPS. CSRF áp dụng cho write; frontend phải nhận token qua endpoint bootstrap được xây trong identity rồi gửi `X-CSRF-TOKEN` cùng credentials. Endpoint này chưa tồn tại trong skeleton.
-Session fixation protection khi login; hủy phiên khi đổi mật khẩu/khóa account. Phải kiểm tra trạng thái account để request mới không dùng quyền cũ; kiểm thử nhiều phiên và cookie cũ. Không hứa hủy một request đã bắt đầu trước khi khóa.
+Session lưu MySQL, cookie HttpOnly/SameSite=Lax; Secure khi có HTTPS. CSRF áp dụng cho write; frontend nhận token qua `GET /api/v1/auth/csrf` rồi gửi `X-CSRF-TOKEN` cùng credentials, và lấy token mới sau login và logout (token và session ID đổi). Các endpoint `/api/v1/auth/{csrf,login,logout,me}` đã có (S01); chỉ `csrf` và `login` công khai, còn lại `denyAll`.
+Login đổi session ID (session fixation) và lưu principal là `users.username` đọc từ DB. Mọi lỗi đăng nhập trả cùng một body 401. Khóa theo account (D17, D18) và thời điểm khóa lưu `Instant` UTC; `ADMIN` không bị khóa. Quyền và `status` hiện được nạp lúc login và lưu trong session.
+Còn phải làm: kiểm tra lại trạng thái account mỗi request và hủy phiên khi đổi mật khẩu/khóa account (S03, S04) để request mới không dùng quyền cũ; kiểm thử nhiều phiên và cookie cũ; mở khóa thủ công của BQT (S04). Không hứa hủy một request đã bắt đầu trước khi khóa.
 Không thêm endpoint public bằng wildcard `/api/**`. Cơ quan chỉ lấy gói báo cáo đã duyệt với trường đã cho phép, không đọc bảng thô.
 
 ## Error / logging
