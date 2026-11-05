@@ -8,7 +8,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpSession;
+import tools.jackson.databind.json.JsonMapper;
+import vn.edu.se10.bluemoon.identity.application.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -75,4 +82,72 @@ class AuthApiTest {
         mvc.perform(get("/api/v1/test/admin").with(user("accountant").roles("ACCOUNTANT"))).andExpect(status().isForbidden());
         mvc.perform(get("/api/v1/test/admin").with(user("admin").roles("ADMIN"))).andExpect(status().isOk());
     }
+    @Test void invalidLoginBodiesAreRejected() throws Exception {
+        for (String body : new String[] {"{}", "{\"username\":\"x\"}",
+                "{\"username\":\"" + "x".repeat(101) + "\",\"password\":\"p\"}"}) {
+            mvc.perform(post("/api/v1/auth/login").with(csrf()).contentType("application/json").content(body))
+                    .andExpect(status().isBadRequest());
+        }
+        verifyNoInteractions(attempts);
+    }
+
+    @Test void successfulRolesExposeOnlyFourFields() throws Exception {
+        for (String role : new String[] {"ADMIN", "ACCOUNTANT", "RESIDENT"}) {
+            when(attempts.login(anyString(), anyString())).thenReturn(new LoginAttemptService.Result(
+                    new AuthenticatedUser(1, "canonical", "Test User", role, 42L), true));
+            var result = mvc.perform(post("/api/v1/auth/login").with(csrf()).contentType("application/json")
+                    .content("{\"username\":\"canonical\",\"password\":\"secret\"}"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.role").value(role)).andReturn();
+            var body = JsonMapper.builder().build().readTree(result.getResponse().getContentAsString());
+            assertThat(body.size()).isEqualTo(4);
+            for (String field : new String[] {"passwordHash", "email", "status", "failedLoginCount", "lockedUntil"})
+                assertThat(body.has(field)).isFalse();
+        }
+    }
+
+    @Test void csrfRejectsMissingAndInvalidTokensWithoutCallingLogin() throws Exception {
+        for (var request : new org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder[] {
+                post("/api/v1/auth/login"), post("/api/v1/auth/login").with(csrf().useInvalidToken()),
+                post("/api/v1/auth/logout").with(user("admin")),
+                post("/api/v1/auth/logout").with(user("admin")).with(csrf().useInvalidToken())}) {
+            mvc.perform(request.contentType("application/json").content("{\"username\":\"a\",\"password\":\"b\"}"))
+                    .andExpect(status().isForbidden());
+        }
+        verifyNoInteractions(attempts);
+    }
+
+    @Test void corsPreflightAllowsConfiguredOriginAndRejectsOthers() throws Exception {
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options("/api/v1/auth/login")
+                        .header("Origin", "http://localhost:5173").header("Access-Control-Request-Method", "POST")
+                        .header("Access-Control-Request-Headers", "X-CSRF-TOKEN"))
+                .andExpect(status().isOk());
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options("/api/v1/auth/login")
+                        .header("Origin", "https://untrusted.example").header("Access-Control-Request-Method", "POST")
+                        .header("Access-Control-Request-Headers", "X-CSRF-TOKEN"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test void csrfTokenRotatesOnLoginAndLogout() throws Exception {
+        when(attempts.login(anyString(), anyString())).thenReturn(new LoginAttemptService.Result(
+                new AuthenticatedUser(1, "canonical", "Test", "ADMIN", null), true));
+        var initial = mvc.perform(get("/api/v1/auth/csrf")).andReturn();
+        var session = (MockHttpSession) initial.getRequest().getSession(false);
+        String before = JsonMapper.builder().build().readTree(initial.getResponse().getContentAsString()).get("token").asString();
+        mvc.perform(post("/api/v1/auth/login").session(session).header("X-CSRF-TOKEN", before)
+                .contentType("application/json").content("{\"username\":\"a\",\"password\":\"b\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(post("/api/v1/auth/logout").session(session).header("X-CSRF-TOKEN", before))
+                .andExpect(status().isForbidden());
+        var refreshed = mvc.perform(get("/api/v1/auth/csrf").session(session)).andReturn();
+        String after = JsonMapper.builder().build().readTree(refreshed.getResponse().getContentAsString()).get("token").asString();
+        mvc.perform(post("/api/v1/auth/logout").session(session).header("X-CSRF-TOKEN", after)).andExpect(status().isNoContent());
+        mvc.perform(post("/api/v1/auth/login").header("X-CSRF-TOKEN", after).contentType("application/json")
+                .content("{\"username\":\"a\",\"password\":\"b\"}")).andExpect(status().isForbidden());
+        var fresh = mvc.perform(get("/api/v1/auth/csrf")).andReturn();
+        String token = JsonMapper.builder().build().readTree(fresh.getResponse().getContentAsString()).get("token").asString();
+        mvc.perform(post("/api/v1/auth/login").session((MockHttpSession) fresh.getRequest().getSession(false))
+                .header("X-CSRF-TOKEN", token).contentType("application/json")
+                .content("{\"username\":\"a\",\"password\":\"b\"}")).andExpect(status().isOk());
+    }
+
 }
