@@ -9,7 +9,7 @@ import java.time.ZoneOffset;
 /** D17 stepped lock policy, including unbounded +60 minute levels after level six. */
 public final class LoginLockPolicy {
     private static final long[] INITIAL_MINUTES = {1, 5, 10, 15, 30, 60};
-    private static final LocalDateTime MYSQL_DATETIME_MAX = LocalDateTime.of(9999, 12, 31, 23, 59, 59, 999_999_000);
+    private static final Instant MYSQL_DATETIME_MAX = LocalDateTime.of(9999, 12, 31, 23, 59, 59, 999_999_000).toInstant(ZoneOffset.UTC);
     public static final int INITIAL_FAILURE_THRESHOLD = 5;
     private LoginLockPolicy() {}
 
@@ -25,10 +25,10 @@ public final class LoginLockPolicy {
         }
     }
 
-    public static LocalDateTime lockedUntil(Instant now, int resultingLockLevel) {
+    public static Instant lockedUntil(Instant now, int resultingLockLevel) {
         try {
-            LocalDateTime until = LocalDateTime.ofInstant(now.plus(lockDuration(resultingLockLevel)), ZoneOffset.UTC);
-            if (until.getYear() < 1000) throw new IllegalArgumentException("Thời điểm khóa nhỏ hơn DATETIME UTC tối thiểu");
+            Instant until = now.plus(lockDuration(resultingLockLevel));
+            if (until.isBefore(Instant.parse("1000-01-01T00:00:00Z"))) throw new IllegalArgumentException("Thời điểm khóa nhỏ hơn DATETIME UTC tối thiểu");
             return until.isAfter(MYSQL_DATETIME_MAX) ? MYSQL_DATETIME_MAX : until;
         } catch (ArithmeticException | DateTimeException e) {
             // MySQL DATETIME has a finite representable ceiling; saturating there avoids wraparound.

@@ -37,7 +37,7 @@ public class LoginAttemptService {
         }
 
         Instant now = clock.instant();
-        if (user.getLockedUntil() != null && user.getLockedUntil().toInstant(java.time.ZoneOffset.UTC).isAfter(now)) {
+        if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(now)) {
             return new Result(null, false);
         }
         if (!"ACTIVE".equals(user.getStatus()) || ("RESIDENT".equals(user.getRole().getCode()) && user.getHouseholdId() == null)) {

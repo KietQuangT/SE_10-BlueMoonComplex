@@ -3,8 +3,7 @@ package vn.edu.se10.bluemoon.identity;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.util.TimeZone;
 import org.junit.jupiter.api.Test;
 import vn.edu.se10.bluemoon.identity.application.LoginLockPolicy;
 
@@ -28,11 +27,22 @@ class LoginLockPolicyTest {
     @Test void safelyHandlesLargeLevelAndDatetimeOverflow() {
         assertThat(LoginLockPolicy.lockDuration(Integer.MAX_VALUE).toMinutes()).isEqualTo(128_849_018_520L);
         assertThat(LoginLockPolicy.lockedUntil(Instant.parse("9999-12-31T23:59:59Z"), 1))
-                .isEqualTo(LocalDateTime.of(9999, 12, 31, 23, 59, 59, 999_999_000));
+                .isEqualTo(Instant.parse("9999-12-31T23:59:59.999999Z"));
     }
 
     @Test void lockUntilIsUtc() {
         assertThat(LoginLockPolicy.lockedUntil(Instant.parse("2026-11-05T01:00:00Z"), 1))
-                .isEqualTo(LocalDateTime.of(2026, 11, 5, 1, 1).atOffset(ZoneOffset.UTC).toLocalDateTime());
+                .isEqualTo(Instant.parse("2026-11-05T01:01:00Z"));
+    }
+    @Test void lockComparisonDoesNotDependOnJvmTimezone() {
+        TimeZone original = TimeZone.getDefault();
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+            Instant now = Instant.parse("2026-11-05T12:00:00Z");
+            Instant until = LoginLockPolicy.lockedUntil(now, 1);
+            assertThat(until).isEqualTo(Instant.parse("2026-11-05T12:01:00Z"));
+            assertThat(until.isAfter(now)).isTrue();
+            assertThat(until.isAfter(now.plusSeconds(60))).isFalse();
+        } finally { TimeZone.setDefault(original); }
     }
 }
