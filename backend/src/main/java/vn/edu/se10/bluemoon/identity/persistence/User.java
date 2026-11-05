@@ -9,7 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /** Only maps columns needed by S01; email is deliberately excluded. */
 @Entity
@@ -35,7 +35,7 @@ public class User {
     @Column(name = "lock_level", nullable = false)
     private int lockLevel;
     @Column(name = "locked_until")
-    private LocalDateTime lockedUntil;
+    private Instant lockedUntil;
 
     protected User() {}
 
@@ -48,9 +48,9 @@ public class User {
     public Long getHouseholdId() { return householdId; }
     public int getFailedLoginCount() { return failedLoginCount; }
     public int getLockLevel() { return lockLevel; }
-    public LocalDateTime getLockedUntil() { return lockedUntil; }
+    public Instant getLockedUntil() { return lockedUntil; }
 
     public void failedAttempt() { failedLoginCount++; }
-    public void lock(LocalDateTime until) { lockLevel++; failedLoginCount = 0; lockedUntil = until; }
+    public void lock(Instant until) { lockLevel++; failedLoginCount = 0; lockedUntil = until; }
     public void resetLoginFailures() { failedLoginCount = 0; lockLevel = 0; lockedUntil = null; }
 }

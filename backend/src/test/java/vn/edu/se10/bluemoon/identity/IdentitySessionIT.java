@@ -31,7 +31,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.mock.web.MockHttpSession;
+import jakarta.servlet.http.Cookie;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.ArrayList;
+import java.util.List;
+import vn.edu.se10.bluemoon.identity.persistence.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -40,6 +45,7 @@ import tools.jackson.databind.json.JsonMapper;
 // Runs only with -Pintegration and a dedicated MySQL database.
 @SpringBootTest
 @AutoConfigureMockMvc
+@org.springframework.test.context.TestPropertySource(properties = "logging.level.org.hibernate.SQL=DEBUG")
 @Import(IdentitySessionIT.ClockConfig.class)
 @org.junit.jupiter.api.extension.ExtendWith(org.springframework.boot.test.system.OutputCaptureExtension.class)
 class IdentitySessionIT {
@@ -63,7 +69,8 @@ class IdentitySessionIT {
 
     long userId;
     String username;
-    String sessionId;
+    final List<String> sessionIds = new ArrayList<>();
+    @Autowired UserRepository users;
 
     @BeforeEach void createAccount() {
         clock.now = Instant.parse("2026-11-05T12:00:00Z");
@@ -76,46 +83,35 @@ class IdentitySessionIT {
     }
 
     @AfterEach void deleteAccount() {
-        if (sessionId != null) jdbc.update("DELETE FROM SPRING_SESSION WHERE SESSION_ID = ?", sessionId);
+        for (String id : sessionIds) jdbc.update("DELETE FROM SPRING_SESSION WHERE SESSION_ID = ?", id);
+        sessionIds.clear();
         jdbc.update("DELETE FROM SPRING_SESSION WHERE PRINCIPAL_NAME = ?", username);
         jdbc.update("DELETE FROM audit_log WHERE actor_user_id = ?", userId);
         jdbc.update("DELETE FROM users WHERE id = ?", userId);
     }
 
     @Test void csrfLoginCreatesCanonicalPrincipalAndMeReturnsSafeFields() throws Exception {
-        MvcResult csrf = mvc.perform(get("/api/v1/auth/csrf"))
-                .andExpect(status().isOk()).andReturn();
-        String token = JsonMapper.builder().build().readTree(csrf.getResponse().getContentAsString()).get("token").asString();
-        MockHttpSession session = (MockHttpSession) csrf.getRequest().getSession(false);
-        sessionId = session.getId();
-        String oldSessionId = session.getId();
-
-        mvc.perform(post("/api/v1/auth/login").session(session).header("X-CSRF-TOKEN", token)
-                        .contentType("application/json").content("{\"username\":\"" + username + "\",\"password\":\"test-password-only\"}"))
+        CsrfSession csrf = newCsrfSession();
+        MvcResult login = postLogin(csrf, "test-password-only")
                 .andExpect(status().isOk()).andExpect(jsonPath("$.username").value(username))
                 .andExpect(jsonPath("$.fullName").value("Ke Toan Test"))
                 .andExpect(jsonPath("$.role").value("ACCOUNTANT"))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist())
-                .andExpect(jsonPath("$.email").doesNotExist());
-
-        assertThat(session.getId()).isNotEqualTo(oldSessionId);
-        sessionId = session.getId();
-        mvc.perform(get("/api/v1/auth/me").session(session))
+                .andExpect(jsonPath("$.email").doesNotExist()).andReturn();
+        Cookie newCookie = rememberCookie(login);
+        assertThat(newCookie.getValue()).isNotEqualTo(csrf.cookie().getValue());
+        mvc.perform(get("/api/v1/auth/me").cookie(csrf.cookie())).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/v1/auth/me").cookie(newCookie))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.username").value(username));
-        assertThat(jdbc.queryForObject("SELECT PRINCIPAL_NAME FROM SPRING_SESSION WHERE SESSION_ID = ?", String.class, session.getId()))
+        assertThat(jdbc.queryForObject("SELECT PRINCIPAL_NAME FROM SPRING_SESSION WHERE SESSION_ID = ?", String.class, sessionId(newCookie)))
                 .isEqualTo(username);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id = ? AND action = 'LOGIN_SUCCESS'", Integer.class, userId))
                 .isEqualTo(1);
     }
 
     @Test void failedLoginCountCommitsWith401() throws Exception {
-        MvcResult csrf = mvc.perform(get("/api/v1/auth/csrf")).andExpect(status().isOk()).andReturn();
-        String token = JsonMapper.builder().build().readTree(csrf.getResponse().getContentAsString()).get("token").asString();
-        MockHttpSession session = (MockHttpSession) csrf.getRequest().getSession(false);
-        sessionId = session.getId();
-        mvc.perform(post("/api/v1/auth/login").session(session).header("X-CSRF-TOKEN", token)
-                        .contentType("application/json").content("{\"username\":\"" + username + "\",\"password\":\"wrong\"}"))
-                .andExpect(status().isUnauthorized());
+        CsrfSession csrf = newCsrfSession();
+        postLogin(csrf, "wrong").andExpect(status().isUnauthorized());
         assertThat(jdbc.queryForObject("SELECT failed_login_count FROM users WHERE id = ?", Integer.class, userId)).isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id = ? AND action = 'LOGIN_FAILED'", Integer.class, userId))
                 .isEqualTo(1);
@@ -128,7 +124,7 @@ class IdentitySessionIT {
         assertThat(locked.get("failed_login_count")).isEqualTo(0);
         assertThat(locked.get("lock_level")).isEqualTo(1);
         assertThat(locked.get("locked_until")).isNotNull();
-        assertThat(((java.sql.Timestamp) locked.get("locked_until")).toLocalDateTime()).isEqualTo(LocalDateTime.ofInstant(clock.now.plusSeconds(60), ZoneOffset.UTC));
+        assertThat((LocalDateTime) locked.get("locked_until")).isEqualTo(LocalDateTime.ofInstant(clock.now.plusSeconds(60), ZoneOffset.UTC));
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id = ? AND action = 'LOGIN_FAILED'", Integer.class, userId)).isEqualTo(5);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id = ? AND action = 'ACCOUNT_LOCKED'", Integer.class, userId)).isEqualTo(1);
         int auditRows = jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id = ?", Integer.class, userId);
@@ -163,7 +159,7 @@ class IdentitySessionIT {
         CsrfSession csrf = newCsrfSession();
         String wrong = postLogin(csrf, "wrong").andExpect(status().isUnauthorized()).andReturn().getResponse().getContentAsString();
         int auditBefore = jdbc.queryForObject("SELECT COUNT(*) FROM audit_log", Integer.class);
-        var absent = mvc.perform(post("/api/v1/auth/login").session(csrf.session()).header("X-CSRF-TOKEN", csrf.token())
+        var absent = mvc.perform(post("/api/v1/auth/login").cookie(csrf.cookie()).header("X-CSRF-TOKEN", csrf.token())
                 .contentType("application/json").content("{\"username\":\"missing-" + username + "\",\"password\":\"wrong\"}"))
                 .andExpect(status().isUnauthorized()).andReturn().getResponse().getContentAsString();
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_log", Integer.class)).isEqualTo(auditBefore);
@@ -195,7 +191,7 @@ class IdentitySessionIT {
         }
         var row = jdbc.queryForMap("SELECT status, lock_level, failed_login_count, locked_until FROM users WHERE id=?", userId);
         assertThat(row).containsEntry("status", "ACTIVE").containsEntry("lock_level", level).containsEntry("failed_login_count", 0);
-        assertThat(((java.sql.Timestamp) row.get("locked_until")).toLocalDateTime()).isEqualTo(LocalDateTime.ofInstant(clock.now.plusSeconds(minutes * 60L), ZoneOffset.UTC));
+        assertThat((LocalDateTime) row.get("locked_until")).isEqualTo(LocalDateTime.ofInstant(clock.now.plusSeconds(minutes * 60L), ZoneOffset.UTC));
         String changes = jdbc.queryForObject("SELECT changes FROM audit_log WHERE actor_user_id=? AND action='ACCOUNT_LOCKED'", String.class, userId);
         assertThat(JsonMapper.builder().build().readTree(changes).get("level").asString()).isEqualTo(Integer.toString(level));
         assertThat(JsonMapper.builder().build().readTree(changes).get("minutes").asString()).isEqualTo(Integer.toString(minutes));
@@ -220,6 +216,16 @@ class IdentitySessionIT {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id=?", Integer.class, userId)).isZero();
     }
 
+    @Test void loginLookupLocksOnlyUsers(org.springframework.boot.test.system.CapturedOutput output) {
+        transactions.executeWithoutResult(status -> users.findByUsernameForUpdate(username));
+        String sql = output.getAll().toLowerCase(java.util.Locale.ROOT);
+        var query = java.util.regex.Pattern.compile("select [^\\r\\n]*from users (\\w+)[^\\r\\n]*for update[^\\r\\n]*").matcher(sql);
+        assertThat(query.find()).as("SQL login lookup with FOR UPDATE").isTrue();
+        String statement = query.group();
+        String usersAlias = query.group(1);
+        assertThat(statement).as("FOR UPDATE must name only the users alias").matches(".*for update of " + java.util.regex.Pattern.quote(usersAlias) + "\\s*$");
+    }
+
     @Test void bootstrapAuditRequiresTransaction() {
         assertThatThrownBy(() -> audit.recordBootstrap("test", Map.of())).isInstanceOf(org.springframework.transaction.IllegalTransactionStateException.class);
     }
@@ -229,8 +235,8 @@ class IdentitySessionIT {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE version='5' AND success=1", Integer.class)).isEqualTo(1);
         assertThat(jdbc.queryForMap("SELECT failed_login_count, lock_level FROM users WHERE id=?", userId))
                 .containsEntry("failed_login_count", 0).containsEntry("lock_level", 0);
-        assertThatThrownBy(() -> jdbc.update("UPDATE users SET failed_login_count=-1 WHERE id=?", userId)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
-        assertThatThrownBy(() -> jdbc.update("UPDATE users SET lock_level=-1 WHERE id=?", userId)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.update("UPDATE users SET failed_login_count=-1 WHERE id=?", userId)).isInstanceOf(org.springframework.dao.DataAccessException.class).hasStackTraceContaining("ck_users_failed_login_count");
+        assertThatThrownBy(() -> jdbc.update("UPDATE users SET lock_level=-1 WHERE id=?", userId)).isInstanceOf(org.springframework.dao.DataAccessException.class).hasStackTraceContaining("ck_users_lock_level");
     }
 
 
@@ -266,10 +272,10 @@ class IdentitySessionIT {
     @Test void rejectedCsrfDoesNotChangeCounterOrAudit() throws Exception {
         CsrfSession csrf = newCsrfSession();
         for (String token : new String[] {"", "invalid"}) {
-            mvc.perform(post("/api/v1/auth/login").session(csrf.session()).header("X-CSRF-TOKEN", token)
+            mvc.perform(post("/api/v1/auth/login").cookie(csrf.cookie()).header("X-CSRF-TOKEN", token)
                     .contentType("application/json").content("{\"username\":\"" + username + "\",\"password\":\"wrong\"}"))
                     .andExpect(status().isForbidden());
-            mvc.perform(post("/api/v1/auth/logout").session(csrf.session()).header("X-CSRF-TOKEN", token))
+            mvc.perform(post("/api/v1/auth/logout").cookie(csrf.cookie()).header("X-CSRF-TOKEN", token))
                     .andExpect(status().isForbidden());
         }
         assertThat(jdbc.queryForObject("SELECT failed_login_count FROM users WHERE id=?", Integer.class, userId)).isZero();
@@ -306,24 +312,33 @@ class IdentitySessionIT {
         postLogin(csrf, "test-password-only").andExpect(status().isUnauthorized());
         jdbc.update("UPDATE users SET locked_until=NULL WHERE id=?", userId);
         postLogin(csrf, "test-password-only").andExpect(status().isOk());
-        assertThat(output.getAll()).doesNotContain(username, "test-password-only", csrf.token(), csrf.session().getId())
+        assertThat(output.getAll()).doesNotContain(username, "test-password-only", csrf.token(), csrf.cookie().getValue())
                 .doesNotContainIgnoringCase("generated security password");
     }
 
     private CsrfSession newCsrfSession() throws Exception {
         MvcResult result = mvc.perform(get("/api/v1/auth/csrf")).andExpect(status().isOk()).andReturn();
         String token = JsonMapper.builder().build().readTree(result.getResponse().getContentAsString()).get("token").asString();
-        MockHttpSession session = (MockHttpSession) result.getRequest().getSession(false);
-        sessionId = session.getId();
-        return new CsrfSession(session, token);
+        return new CsrfSession(rememberCookie(result), token);
+    }
+
+    private Cookie rememberCookie(MvcResult result) {
+        Cookie cookie = result.getResponse().getCookie("SESSION");
+        assertThat(cookie).isNotNull();
+        sessionIds.add(sessionId(cookie));
+        return cookie;
+    }
+
+    private String sessionId(Cookie cookie) {
+        return new String(Base64.getDecoder().decode(cookie.getValue()), StandardCharsets.UTF_8);
     }
 
     private org.springframework.test.web.servlet.ResultActions postLogin(CsrfSession csrf, String password) throws Exception {
-        var actions = mvc.perform(post("/api/v1/auth/login").session(csrf.session()).header("X-CSRF-TOKEN", csrf.token())
+        var result = mvc.perform(post("/api/v1/auth/login").cookie(csrf.cookie()).header("X-CSRF-TOKEN", csrf.token())
                 .contentType("application/json").content("{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}"));
-        sessionId = csrf.session().getId();
-        return actions;
+        if (result.andReturn().getResponse().getCookie("SESSION") != null) rememberCookie(result.andReturn());
+        return result;
     }
 
-    private record CsrfSession(MockHttpSession session, String token) {}
+    private record CsrfSession(Cookie cookie, String token) {}
 }
