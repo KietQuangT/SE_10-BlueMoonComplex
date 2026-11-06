@@ -68,6 +68,19 @@ Lệnh chạy IT cần biến `DB_USER`, `DB_PASSWORD`, `DB_NAME` (`.env` dùng 
 Chưa xác nhận: Windows, máy thứ hai, CI trên remote (chưa push); đối chứng tên logger khi bỏ cấu hình; `org.hibernate.orm.jdbc.bind=TRACE` (sẽ in email, `body`, `password_hash`: không bật); hành vi session cũ; nhánh DB của race test; đăng nhập bằng tài khoản bootstrap qua API và lịch sử shell; EP-01 của Kiệt; K2, K4, K5, K6, K9 (xem khối S02 trong `docs/sprint-1/TASKS.md`). Lệnh bootstrap báo "Dữ liệu không hợp lệ." chung chung kèm stack trace khi mật khẩu bị từ chối (chưa sửa). V6 và một tài khoản ADMIN thử đã nằm trong DB `bluemoon` cục bộ: sửa V6 trước merge thì Sơn tạo lại DB cục bộ.
 Mật khẩu tạm nằm dạng rõ trong `mock_emails.body`, không hết hạn (hệ quả D14). Xem bằng SQL: `SELECT id, recipient_email, subject, status, created_at, body FROM mock_emails ORDER BY id DESC`.
 
+## S05 hộ và nhân khẩu (lát A + B, 06/11/2026)
+
+| Lệnh | Kết quả |
+|---|---|
+| `cd backend && ./mvnw -B -ntp -Pintegration verify` (Sơn chạy 16:27–16:30 +07, JDK 21.0.9, MySQL 8.4 ở 127.0.0.1:3306, macOS, worktree Orca `feat-s05b` sạch ở HEAD 2519f94; commit 16:20:07) | surefire 75 test, 0 lỗi; failsafe 63 test, 0 lỗi, 0 failure (BootstrapIT 3, AccountAtomicityIT 2, AccountProvisioningIT 11, BootstrapAdminIT 7, HouseholdIntegrationIT 5, IdentityCookieIT 1, IdentitySessionIT 23, ResidentIntegrationIT 7, RoleAuditIT 4). Dòng `BUILD SUCCESS` không có trong log đã dán (bị cắt bằng `head -60`): kết luận dựa trên failsafe-summary và surefire report |
+| Flyway | "Current version of schema bluemoon: 6; up to date, no migration necessary" (S05 không thêm migration) |
+| Lần chạy đầu của Sơn | Access denied (mật khẩu DB trong biến môi trường sai), IT không chạy; không phải lỗi code |
+| Verifier tự chạy Maven | KHÔNG chạy được (sandbox không ghi được `target/` ở worktree Orca). Kiểm bằng git/grep và đọc report |
+
+Các dòng `ERROR ... IllegalStateException` trong log là test cố tình làm audit lỗi để kiểm rollback.
+Đã chứng minh trên MySQL thật: CRUD/tra cứu hộ và nhân khẩu có lọc và phân trang ở DB; 409 trùng mã hộ/căn hộ (kể cả khác hoa/thường, đua 8 luồng chỉ một thắng, không lộ giá trị); trùng số giấy tờ toàn hệ thống trong nhóm đang cư trú (đua hai hộ, số của người đã chuyển đi dùng lại được, số của người tạm vắng vẫn tính trùng); chuyển đi đổi trạng thái, ghi 1 dòng `residency_changes` (MOVE_OUT/APPROVED), lần hai 409, đua hai request chỉ một thắng; cư dân chỉ thấy hộ của mình, `householdId` NULL thì 403; audit cùng transaction ở cả 5 action (rollback hai chiều), không PII; đua PATCH số giấy tờ và chuyển đi cùng người (không 500 trong một lần chạy).
+Chưa xác nhận: Windows, máy thứ hai, CI (chưa push); Tuấn đã review và approve theo lời Sơn (chưa có văn bản); deadlock thứ tự khóa chỉ suy luận, chưa tái hiện; test đua nhân khẩu yếu (`isIn(200,409)`); trim mã hộ và số giấy tờ chưa quyết; Quân chưa xác nhận quyền đọc hộ của ACCOUNTANT (A3). IT phải chạy trên DB không có dữ liệu thật hoặc app khác ghi đồng thời (fixture đua ghi vào hộ id nhỏ nhất). Danh sách đầy đủ ở khối S05 trong `docs/sprint-1/TASKS.md`.
+
 ## Chưa xác nhận bằng thực thi
 
 - Máy soạn không có Docker/MySQL nên chưa chạy `docker compose up`, image build, Flyway trên MySQL, health runtime hoặc lưu/xóa JDBC session thực tế.
