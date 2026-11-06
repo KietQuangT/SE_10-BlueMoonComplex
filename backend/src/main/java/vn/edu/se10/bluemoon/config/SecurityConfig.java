@@ -48,6 +48,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                 .requestMatchers("/api/v1/auth/me", "/api/v1/auth/logout").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/accounts").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/households").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/households", "/api/v1/households/*").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/households/*").hasRole("ADMIN")
                 .anyRequest().denyAll())
             .securityContext(context -> context.securityContextRepository(contextRepository))
             .exceptionHandling(errors -> errors

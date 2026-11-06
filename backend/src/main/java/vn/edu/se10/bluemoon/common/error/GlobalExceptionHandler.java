@@ -33,7 +33,12 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(ConflictException.class)
     ProblemDetail conflict(ConflictException exception) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Tài khoản bị trùng thông tin.");
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Thông tin bị trùng.");
+        problem.setProperty("code", exception.code()); return problem;
+    }
+    @ExceptionHandler(NotFoundException.class)
+    ProblemDetail notFoundEntity(NotFoundException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Không tìm thấy tài nguyên.");
         problem.setProperty("code", exception.code()); return problem;
     }
     @ExceptionHandler(AccessDeniedException.class)
