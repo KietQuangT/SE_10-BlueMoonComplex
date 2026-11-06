@@ -1,6 +1,7 @@
 package vn.edu.se10.bluemoon.identity.application;
 
 import java.time.Clock;
+import vn.edu.se10.bluemoon.residency.application.HouseholdLookup;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -18,10 +19,10 @@ public class AccountProvisioningService {
     private static final Set<String> ROLES = Set.of("ADMIN", "ACCOUNTANT", "RESIDENT");
     private final UserRepository users; private final RoleRepository roles; private final AuditService audit;
     private final MockEmailService mail; private final PasswordEncoder encoder;
-    private final TemporaryPasswordGenerator passwords; private final Clock clock;
+    private final TemporaryPasswordGenerator passwords; private final Clock clock; private final HouseholdLookup households;
     public AccountProvisioningService(UserRepository users, RoleRepository roles, AuditService audit, MockEmailService mail,
-                                      PasswordEncoder encoder, TemporaryPasswordGenerator passwords, Clock clock) {
-        this.users=users; this.roles=roles; this.audit=audit; this.mail=mail; this.encoder=encoder; this.passwords=passwords; this.clock=clock;
+                                      PasswordEncoder encoder, TemporaryPasswordGenerator passwords, Clock clock, HouseholdLookup households) {
+        this.users=users; this.roles=roles; this.audit=audit; this.mail=mail; this.encoder=encoder; this.passwords=passwords; this.clock=clock; this.households=households;
     }
     @Transactional
     public CreatedAccount create(CreateAccountCommand request, long actorId) {
@@ -32,7 +33,7 @@ public class AccountProvisioningService {
         Long householdId = request.householdId();
         if (request.role().equals("RESIDENT")) {
             if (householdId == null) throw new BadRequestException("HOUSEHOLD_REQUIRED");
-            if (!users.findHouseholdStatus(householdId).filter("ACTIVE"::equals).isPresent()) throw new BadRequestException("HOUSEHOLD_INVALID");
+            if (!households.findStatus(householdId).filter("ACTIVE"::equals).isPresent()) throw new BadRequestException("HOUSEHOLD_INVALID");
         } else if (householdId != null) throw new BadRequestException("HOUSEHOLD_NOT_ALLOWED");
         if (users.existsByEmail(email)) throw new ConflictException("EMAIL_ALREADY_USED");
         if (users.existsByUsername(request.username())) throw new ConflictException("USERNAME_ALREADY_USED");
