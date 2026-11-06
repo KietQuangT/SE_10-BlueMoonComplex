@@ -9,14 +9,20 @@ Hệ thống quản lý chung cư BlueMoon (v1.0): tài khoản và phân quyề
 | Task | Nội dung | Trạng thái |
 |---|---|---|
 | F00 | Repo, wrapper, hướng dẫn, CI | Xong (PR #4) |
-| F01 | Chốt hợp đồng, quyền và dữ liệu (D13–D18) | Xong theo xác nhận của Sơn; chưa có văn bản của cả nhóm |
+| F01 | Chốt hợp đồng, quyền và dữ liệu (D13–D17) | Xong theo xác nhận của Sơn; chưa có văn bản của cả nhóm |
 | F02 | Nền tảng backend/DB, audit cùng transaction | Xong (PR #4) |
-| **S01** | **Đăng nhập, session, vai trò, audit, chống dò mật khẩu** | **Xong, đang chờ push/PR/review** |
-| **S02** | **Cấp account, email mô phỏng, bootstrap BQT** | **Xong, đang chờ push/PR/review (nhánh `feat/s02-account-provisioning`)** |
-| S03–S15 | Đổi mật khẩu, hộ/nhân khẩu, đơn giá, kỳ thu, thu tiền, báo cáo, backup, hồi quy, bàn giao | Chưa bắt đầu |
+| S01 | Đăng nhập, session, vai trò, audit, chống dò mật khẩu | Xong (PR #5 đã merge) |
+| S02 | Cấp account, email mô phỏng, bootstrap BQT | Xong (PR #6 đã merge) |
+| **S05** | **Hộ, nhân khẩu, chuyển đi, lịch sử biến động** | **Xong, đang chờ PR/CI (nhánh `feat/s05-households-residents`); Tuấn đã review và approve theo lời Sơn** |
+| S03, S04, S06–S15 | Đổi mật khẩu, vô hiệu account, khai báo/duyệt, đơn giá, kỳ thu, thu tiền, báo cáo, backup, hồi quy, bàn giao | Chưa bắt đầu |
 
-**Có thể dùng ngay:** health, metadata, session JDBC, audit, đăng nhập/đăng xuất/xem phiên (`/api/v1/auth/*`), khóa tạm thời khi sai mật khẩu nhiều lần, lệnh tạo BQT đầu tiên (profile `bootstrap`), ADMIN cấp account qua `POST /api/v1/accounts` (kèm email mô phỏng).
-**Chưa có:** tài khoản mặc định, đổi mật khẩu và xóa cờ đổi mật khẩu lần đầu (S03), vô hiệu account và mở khóa thủ công (S04), mọi API nghiệp vụ hộ/phí. Mọi endpoint không khai báo đều bị chặn mặc định (`denyAll`).
+**Có thể dùng ngay:**
+- Health, metadata, session JDBC, audit.
+- Đăng nhập, đăng xuất, xem phiên (`/api/v1/auth/*`) và khóa tạm thời khi sai mật khẩu nhiều lần.
+- Lệnh tạo BQT đầu tiên (profile `bootstrap`); ADMIN cấp account qua `POST /api/v1/accounts` (kèm email mô phỏng).
+- Hộ và nhân khẩu cho ADMIN, chuyển đi, lịch sử biến động, và cư dân xem thành viên hộ mình (`/api/v1/households`, `/api/v1/residents`).
+
+**Chưa có:** tài khoản mặc định; đổi mật khẩu và xóa cờ đổi mật khẩu lần đầu (S03); vô hiệu account, mở khóa thủ công, hủy session theo account (S04); khai báo/duyệt, tạm vắng, quay lại cư trú (S06); mọi API phí và báo cáo. Mọi endpoint không khai báo đều bị chặn mặc định (`denyAll`).
 
 ## Cấu trúc repo
 
@@ -25,7 +31,8 @@ backend/            Spring Boot (Maven Wrapper, Dockerfile)
   src/main/java/vn/edu/se10/bluemoon/
     config/         SecurityConfig (session, CSRF, CORS, quyền), ClockConfig
     common/         audit (AuditService), error, web (request ID)
-    identity/       api / application / persistence: đăng nhập, session, khóa tài khoản, RoleService mẫu
+    identity/       api / application / persistence: đăng nhập, session, khóa tài khoản, cấp account, bootstrap BQT
+    residency/      api / application / persistence: hộ, nhân khẩu, chuyển đi, lịch sử biến động, HouseholdLookup
     systeminfo/     metadata công khai
   src/main/resources/db/migration/   Flyway V1–V6
   src/test/         unit/MVC (verify) và integration (-Pintegration)
@@ -35,7 +42,7 @@ scripts/            dev.sh (docker compose), verify.sh
 compose.yaml        MySQL 8.4 + backend cho môi trường local
 ```
 
-Package theo tính năng: `api` → `application` → `persistence`. Chi tiết và quy ước: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+Package theo tính năng: `api` → `application` → `persistence`. Module không gọi repository của module khác; dùng interface ở `application` (ví dụ `identity` kiểm tra trạng thái hộ qua `HouseholdLookup`). Chi tiết và quy ước: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Khởi động nhanh bằng Docker
 
@@ -64,13 +71,13 @@ cd backend
 ./mvnw spring-boot:run
 ```
 - Không chạy backend trong Docker và trong IDE cùng lúc (cùng cổng 8080). Nếu `.env` đổi `DB_PORT`, đổi tương ứng trong IDE.
-- `.env` chỉ dùng cho Docker Compose và dùng tên `MYSQL_*`; Maven/IDE không tự đọc nó và cần biến `DB_*` như trên.
+- `.env` chỉ dùng cho Docker Compose và dùng tên `MYSQL_*`; Maven/IDE không tự đọc nó và cần biến `DB_*` như trên. `DB_PASSWORD` phải khớp mật khẩu mà volume MySQL đã được tạo.
 - PowerShell: `$env:DB_PASSWORD="..."` và `./mvnw.cmd`. Không dán mật khẩu vào chat, issue hay commit.
 - Profile mặc định là `local`: cookie session không có cờ `Secure` vì chưa có TLS. Không dùng cấu hình này để triển khai ra Internet.
 
 ## Xác thực và phân quyền (S01)
 
-Session lưu trong MySQL (bảng `SPRING_SESSION`), hết hạn sau 30 phút; cookie `SESSION` là HttpOnly, SameSite=Lax. CSRF luôn bật: mọi `POST` cần header `X-CSRF-TOKEN`. CORS chỉ nhận origin cấu hình ở `CORS_ALLOWED_ORIGIN` (mặc định `http://localhost:5173`).
+Session lưu trong MySQL (bảng `SPRING_SESSION`), hết hạn sau 30 phút; cookie `SESSION` là HttpOnly, SameSite=Lax. CSRF luôn bật: mọi `POST`, `PATCH` cần header `X-CSRF-TOKEN`. CORS chỉ nhận origin cấu hình ở `CORS_ALLOWED_ORIGIN` (mặc định `http://localhost:5173`).
 
 Ba vai trò (D13): `ADMIN` (BQT), `ACCOUNTANT` (kế toán), `RESIDENT` (cư dân, gắn đúng một hộ). Vai trò thứ tư dành cho cơ quan chức năng sẽ thêm bằng migration riêng ở task S12.
 
@@ -126,6 +133,36 @@ java -jar target/bluemoon-backend-0.1.0-SNAPSHOT.jar --spring.profiles.active=bo
 
 **Audit:** `LOGIN_SUCCESS`, `LOGIN_FAILED`, `ACCOUNT_LOCKED` ghi cùng transaction với thay đổi dữ liệu (rollback thì audit cũng rollback). `AuditService.recordBootstrap` dành riêng cho lệnh tạo BQT đầu tiên (actor NULL, action cố định `BOOTSTRAP_ADMIN`).
 
+## Hộ, nhân khẩu và biến động (S05)
+
+Tiền tố `/api/v1`. Mọi route chỉ dành cho `ADMIN`, trừ `GET /households/me/residents` (chỉ `RESIDENT`). `ACCOUNTANT` nhận 403 ở mọi route này (quyền đọc hộ của Kế toán chờ Quân xác nhận). Route ghi cần CSRF. Không có route `DELETE`.
+
+| Route | Kết quả |
+|---|---|
+| `POST /households` | 201 hộ mới (`ACTIVE`); body `{householdCode, apartmentCode, areaM2, address?}` |
+| `GET /households` | Trang hộ; lọc `apartmentCode`, `householdCode`, `status` (`ACTIVE` hoặc `INACTIVE`, khớp chính xác); `page` (mặc định 0), `size` (mặc định 20, tối đa 100) |
+| `GET /households/{id}` | Một hộ |
+| `PATCH /households/{id}` | Sửa `areaM2` và `address`; trường vắng hoặc null là giữ nguyên; không sửa được mã hộ và mã căn hộ |
+| `POST /households/{id}/residents` | 201 nhân khẩu mới (`RESIDING`); body `{fullName, identityNumber?, dateOfBirth?, phone?, relationshipToHead?}`; hộ phải `ACTIVE` |
+| `GET /households/{id}/residents` | Trang nhân khẩu; `status` tùy chọn, mặc định là `RESIDING` và `TEMPORARILY_ABSENT` |
+| `GET /residents/{id}`, `PATCH /residents/{id}` | Xem, sửa (không đổi hộ, không đổi trạng thái) |
+| `POST /residents/{id}/move-out` | Chuyển đi; body `{effectiveDate, reason?}` |
+| `GET /households/{id}/residency-changes` | Trang lịch sử biến động |
+| `GET /households/me/residents` | Thành viên hiện tại của hộ mình; hộ lấy từ session, không nhận id từ client |
+
+Trang trả `{content, page, size, totalElements, totalPages}`. Hộ trả `{id, householdCode, apartmentCode, areaM2, address, status, createdAt, updatedAt}`.
+
+**Quy tắc đã chốt (D20, D21):**
+- `areaM2` lớn hơn 0 và tối đa hai chữ số thập phân; quá thì 400, không tự làm tròn. Mã hộ và mã căn hộ do ADMIN nhập, tối đa 50 ký tự, không phân biệt hoa thường, không sửa sau khi tạo; trùng thì 409 `HOUSEHOLD_CONFLICT`, không nêu giá trị trùng.
+- Trạng thái cư trú: `RESIDING`, `TEMPORARILY_ABSENT`, `MOVED_OUT`. Danh sách hiện tại gồm hai trạng thái đầu. Chuyển đi chỉ đổi trạng thái sang `MOVED_OUT` và ghi một dòng `residency_changes` (`MOVE_OUT`, `APPROVED`, người ghi là ADMIN); không xóa bản ghi, không hoàn tác, không tự khóa account, không tự đóng hộ.
+- `effectiveDate` không ở tương lai theo ngày Asia/Ho_Chi_Minh; chuyển đi lần hai trả 409 `RESIDENT_ALREADY_MOVED_OUT`.
+- Số giấy tờ (`identityNumber`) không bắt buộc. Trùng được kiểm ở service, trên toàn hệ thống, giữa các nhân khẩu `RESIDING` và `TEMPORARILY_ABSENT`; người đã chuyển đi không tính. Trùng thì 409 `IDENTITY_NUMBER_ALREADY_USED`, không nêu số. DB cố ý không có UNIQUE cho cột này (xem `docs/DECISIONS.md`, mục "Schema nghiệp vụ", điểm 5).
+- ADMIN thấy đầy đủ thông tin nhân khẩu. Cư dân chỉ thấy `id`, `fullName`, `dateOfBirth`, `relationshipToHead`, `residencyStatus`; không thấy số giấy tờ và số điện thoại. Lịch sử biến động không trả `reason`.
+- Audit cùng transaction: `HOUSEHOLD_CREATED`, `HOUSEHOLD_UPDATED`, `RESIDENT_CREATED`, `RESIDENT_UPDATED`, `RESIDENT_MOVED_OUT`. Audit chỉ ghi id, trạng thái, ngày hiệu lực và tên trường đã đổi, không ghi họ tên, số giấy tờ, số điện thoại, địa chỉ hay lý do.
+- Lỗi có `code`: 400 (`HOUSEHOLD_INVALID`, `INVALID_DATE`, `INVALID_FILTER`, `INVALID_RESIDENT`, `EMPTY_UPDATE`, `VALIDATION`), 404 (`HOUSEHOLD_NOT_FOUND`, `RESIDENT_NOT_FOUND`). Lỗi do bean validation (độ dài, thiếu trường) trả 400 không kèm `code`.
+
+**Giới hạn đã biết:** mã hộ và số giấy tờ chưa được cắt khoảng trắng đầu/cuối (`"H1"` và `"H1 "` là hai giá trị khác nhau); PATCH không xóa được một trường (null là giữ nguyên); mọi thao tác ghi nhân khẩu bị xếp tuần tự toàn cục để chống đua kiểm tra trùng số giấy tờ; chưa có endpoint ghi tạm vắng hay quay lại cư trú (S06); `householdId` nằm trong session nên đổi hộ của account (nếu có sau này) phải hủy session cũ (S04). Danh sách đầy đủ ở khối S05 trong `docs/sprint-1/TASKS.md`.
+
 ## Cơ sở dữ liệu và migration
 
 Flyway tự áp migration khi khởi động; Hibernate chỉ `validate`, không `update/create`.
@@ -134,11 +171,12 @@ Flyway tự áp migration khi khởi động; Hibernate chỉ `validate`, không
 |---|---|
 | V1 | Bảng session JDBC |
 | V2 | Vai trò, tài khoản, `audit_log` |
-| V3 | Hộ và nhân khẩu |
+| V3 | Hộ, nhân khẩu, biến động cư trú (`households`, `residents`, `residency_changes`) |
 | V4 | Email tài khoản, `users.household_id` |
 | V5 | Cột chống dò mật khẩu: `failed_login_count`, `lock_level`, `locked_until` |
+| V6 | Cờ `must_change_password` và bảng `mock_emails` (email mô phỏng) |
 
-Quy tắc: không sửa migration đã merge hoặc đã chạy trên DB của người khác; thêm `V<n>__mo_ta.sql` mới. Nếu đã sửa migration trên DB cục bộ, Flyway báo sai checksum: tạo lại DB cục bộ, không sửa tay `flyway_schema_history`.
+S05 không thêm migration. Phí và vai trò thứ tư bắt đầu từ V7. Quy tắc: không sửa migration đã merge hoặc đã chạy trên DB của người khác; thêm `V<n>__mo_ta.sql` mới. Nếu đã sửa migration trên DB cục bộ, Flyway báo sai checksum: tạo lại DB cục bộ, không sửa tay `flyway_schema_history`.
 
 ## Test và build
 
@@ -147,10 +185,10 @@ cd backend
 ./mvnw -B -ntp verify                    # không cần DB
 ./mvnw -B -ntp -Pintegration verify      # cần MySQL thật và biến DB_*
 ```
-- Lệnh đầu chạy unit/MVC/security (hiện 56 test), đóng gói JAR, không cần DB.
-- Lệnh thứ hai chạy thêm integration (hiện 51 test: `BootstrapIT`, `RoleAuditIT`, `IdentityCookieIT`, `IdentitySessionIT`, `AccountProvisioningIT`, `AccountAtomicityIT`, `BootstrapAdminIT`). Không tự bỏ qua khi thiếu DB. S01 xanh ở cả JVM múi giờ +07 và `TZ=UTC`; S02 chỉ chạy ở +07.
+- Lệnh đầu chạy unit/MVC/security (hiện 75 test), đóng gói JAR, không cần DB.
+- Lệnh thứ hai chạy thêm integration (hiện 63 test: `BootstrapIT`, `RoleAuditIT`, `IdentityCookieIT`, `IdentitySessionIT`, `AccountProvisioningIT`, `AccountAtomicityIT`, `BootstrapAdminIT`, `HouseholdIntegrationIT`, `ResidentIntegrationIT`). Không tự bỏ qua khi thiếu DB. Lần chạy gần nhất (06/11/2026, MySQL 8.4, JDK 21.0.9) xanh cả hai.
 - `BootstrapAdminIT` chạy `java -jar target/...jar` thật nên cần JAR đã được đóng gói (lệnh `verify` làm việc đó).
-- Integration chạy trên DB `bluemoon` đang cấu hình: tự áp migration chưa có, tự thêm rồi xóa tài khoản fixture, và `RoleAuditIT` đổi tên role `ADMIN` rồi khôi phục. Đừng chạy trên DB có người khác đang dùng.
+- Integration chạy trên DB `bluemoon` đang cấu hình: tự áp migration chưa có, tự thêm rồi xóa dữ liệu fixture, và `RoleAuditIT` đổi tên role `ADMIN` rồi khôi phục. `ResidentIntegrationIT` ghi vào hộ có id nhỏ nhất trong một test đua. Đừng chạy trên DB có người khác đang dùng hoặc dữ liệu thật.
 - Ghi lệnh và kết quả vào `docs/VALIDATION.md`. Không dùng cờ bỏ qua test hay enforcer.
 - GitHub CI (`.github/workflows/backend.yml`) dựng MySQL riêng và chạy `./mvnw -B -ntp -Pintegration verify`.
 
@@ -174,7 +212,7 @@ cd backend
 |---|---|
 | [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) | Yêu cầu |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Kiến trúc, quy ước, auth, audit, lỗi |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Quyết định D01–D18 và các điểm chưa xác nhận |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Quyết định D01–D21 và các điểm chưa xác nhận |
 | [`docs/sprint-1/PLAN.md`](docs/sprint-1/PLAN.md) | Kế hoạch Sprint 1 |
 | [`docs/sprint-1/TASKS.md`](docs/sprint-1/TASKS.md) | Checklist và khối bằng chứng từng task |
 | [`docs/VALIDATION.md`](docs/VALIDATION.md) | Lệnh đã chạy và kết quả |
@@ -189,6 +227,7 @@ cd backend
 | `Unresolved compilation problems` | IDE ghi đè `backend/target/`; chạy `./mvnw clean verify` |
 | Cổng 8080 bận | Dừng backend Docker hoặc IDE, chỉ chạy một |
 | Flyway báo sai checksum | Migration đã bị sửa; tạo lại DB cục bộ (không sửa `flyway_schema_history`) |
+| `Access denied for user 'bluemoon'` khi chạy integration | `DB_PASSWORD` không khớp mật khẩu mà volume MySQL đã được tạo; đặt đúng `DB_USER`, `DB_PASSWORD`, `DB_NAME` (không có khoảng trắng sau dấu `=`). Không xóa volume để sửa |
 | Đăng nhập luôn 401 trên DB mới | Chưa có tài khoản; chạy lệnh bootstrap BQT (mục "Tạo BQT đầu tiên") hoặc dùng fixture trong test |
 | Trình duyệt không gửi cookie session | Cookie `Secure` chỉ tắt ở profile `local`; kiểm tra profile đang chạy |
 
