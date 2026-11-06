@@ -1,0 +1,173 @@
+:root {
+  /* Ground & Shell Surfaces — Văn Phú Wayfinding */
+  --surface-ground: #f5f7f6;
+  --surface-panel: #ffffff;
+  --surface-subtle: #edf3f1;
+  --surface-muted: #e4ece9;
+  --surface-rail: #0f222d;
+  --surface-rail-elevated: #162e3c;
+  --surface-rail-hover: #1e3b4c;
+
+  /* Ink & Text (all pairs verified >= 4.5:1 on their target ground) */
+  --text-primary: #0f222d;
+  --text-secondary: #2d4452;
+  --text-muted: #455e6c;
+  --text-on-rail: #ecf2f0;
+  --text-on-rail-muted: #b7c8d0;
+  --text-on-brand: #ffffff;
+
+  /* Brand & Line-Coded Semantic Tokens */
+  --color-brand: #0a6859;
+  --color-brand-hover: #075246;
+  --color-brand-active: #053f36;
+  --color-brand-soft: #e3f5f1;
+  --color-brand-ink: #07473d;
+  --color-brand-rail-accent: #34d399;
+
+  --color-amber: #b45309;
+  --color-amber-soft: #fef3c7;
+  --color-amber-ink: #7c3405;
+
+  --color-danger: #b91c1c;
+  --color-danger-hover: #991b1b;
+  --color-danger-soft: #fee2e2;
+  --color-danger-ink: #7f1d1d;
+
+  --color-info: #1d4e6b;
+  --color-info-soft: #e6f0f6;
+  --color-info-ink: #14394f;
+
+  --color-neutral-soft: #eaf0ee;
+  --color-neutral-ink: #2f4450;
+  --color-neutral-border: #5b7380;
+
+  /* Hairline Borders & Real Elevation */
+  --border-subtle: #cfdad7;
+  --border-strong: #9cb0ab;
+  --border-rail: #223b49;
+  --shadow-raised: 0 2px 6px rgba(15, 34, 45, 0.06);
+  --shadow-overlay: 0 10px 28px rgba(15, 34, 45, 0.14);
+
+  /* Typography — Fixed rem scale (Operate mode, ratio ~1.18) */
+  --font-sans: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.75rem;
+
+  /* Spacing Rhythm */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+
+  /* Radii & Motion */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 160ms;
+  --duration-base: 220ms;
+
+  /* Shell Dimensions */
+  --rail-width: 264px;
+  --topbar-height: 68px;
+  --mobile-nav-height: 62px;
+}
+
+/* Browser Surface Theming */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  background-color: var(--surface-ground);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  caret-color: var(--color-brand);
+  scrollbar-color: var(--border-strong) var(--surface-ground);
+  scrollbar-width: thin;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--surface-ground);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+::selection {
+  background-color: var(--color-brand);
+  color: var(--text-on-brand);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-ground);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 5px;
+  border: 2px solid var(--surface-ground);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+a {
+  color: var(--color-brand-ink);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  color: var(--color-brand);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+.tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

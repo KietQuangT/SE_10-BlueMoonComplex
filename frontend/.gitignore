@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+*.local
+.impeccable/mocks/
+.impeccable/review/
+.impeccable/build/
+.impeccable/decision-payload.json
+.impeccable/surface-brief-body.md
