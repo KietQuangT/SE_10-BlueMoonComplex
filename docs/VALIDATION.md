@@ -97,3 +97,8 @@ Chưa xác nhận: Windows, máy thứ hai, CI (chưa push); Tuấn đã review 
 4. Không có credential/PII thật, migration không phá dữ liệu; PR chỉ có bộ khung và tài liệu.
 
 Chưa tick foundation DoD khi các điều kiện này chưa có bằng chứng. Build unit thành công không chứng minh toàn bộ ứng dụng đã chạy trên MySQL hay Sprint 1 hoàn thành.
+
+### S04 — 06/11/2026
+
+- `cd backend && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./mvnw -B -ntp verify`: 83 test, 0 lỗi, BUILD SUCCESS (JDK 21.0.9). Script `../.claude/bin/mvn-sandbox.sh` không có trong worktree.
+- Không chạy `-Pintegration` theo brief: các test MySQL mới chưa được kiểm chứng. UI thuộc Kiệt, chưa kiểm thử ở đây.

@@ -24,10 +24,27 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AccountApiTest {
     @Autowired MockMvc mvc;
     @MockitoBean AccountProvisioningService service;
+    @MockitoBean AccountManagementService management;
     private static final String BODY = "{\"username\":\"worker\",\"fullName\":\"Test User\",\"email\":\"a@example.test\",\"role\":\"ADMIN\"}";
     private static UsernamePasswordAuthenticationToken principal(String role, boolean change) {
         var user = new AuthenticatedUser(1, "admin", "Admin", role, null, change);
         return UsernamePasswordAuthenticationToken.authenticated(user, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+    }
+    @Test void adminCanManageAccounts() throws Exception {
+        for (String action : List.of("disable", "enable", "unlock")) {
+            mvc.perform(post("/api/v1/accounts/2/" + action).with(authentication(principal("ADMIN", false))).with(csrf()))
+                .andExpect(status().isNoContent());
+        }
+    }
+    @Test void managementRoutesRequireAdminAndCsrf() throws Exception {
+        for (String action : List.of("disable", "enable", "unlock")) {
+            String path = "/api/v1/accounts/2/" + action;
+            mvc.perform(post(path).with(csrf())).andExpect(status().isUnauthorized());
+            mvc.perform(post(path).with(authentication(principal("ADMIN", false)))).andExpect(status().isForbidden());
+            for (String role : List.of("ACCOUNTANT", "RESIDENT"))
+                mvc.perform(post(path).with(authentication(principal(role, false))).with(csrf())).andExpect(status().isForbidden());
+        }
+        verifyNoInteractions(management);
     }
     @Test void accessRequiresAuthenticationCsrfAndAdmin() throws Exception {
         mvc.perform(post("/api/v1/accounts").contentType("application/json").content(BODY)).andExpect(status().isForbidden()).andExpect(jsonPath("$.detail").doesNotExist());
