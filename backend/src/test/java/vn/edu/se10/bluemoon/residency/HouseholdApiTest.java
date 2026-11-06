@@ -25,6 +25,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 @WebMvcTest(HouseholdController.class) @Import(SecurityConfig.class)
 class HouseholdApiTest {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    vn.edu.se10.bluemoon.identity.application.CurrentAccountService currentAccount;
+    @org.junit.jupiter.api.BeforeEach void refreshCurrentAccountForSlice() {
+        org.mockito.Mockito.when(currentAccount.refresh(org.mockito.ArgumentMatchers.anyLong())).thenAnswer(invocation ->
+            (vn.edu.se10.bluemoon.identity.application.AuthenticatedUser) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+    }
+
  @Autowired MockMvc mvc; @MockitoBean HouseholdService service;
  private static final String BODY="{\"householdCode\":\"H1\",\"apartmentCode\":\"A1\",\"areaM2\":20}";
  private static UsernamePasswordAuthenticationToken principal(String role,boolean change){return UsernamePasswordAuthenticationToken.authenticated(new AuthenticatedUser(1,"admin","Admin",role,null,change),null,List.of(new SimpleGrantedAuthority("ROLE_"+role)));}

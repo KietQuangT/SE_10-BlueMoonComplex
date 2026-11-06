@@ -18,6 +18,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import({SecurityConfig.class, SystemInfoService.class, RequestIdFilter.class})
 @TestPropertySource(properties = "app.cors.allowed-origin=http://localhost:5173")
 class SystemInfoApiTest {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    vn.edu.se10.bluemoon.identity.application.CurrentAccountService currentAccount;
+    @org.junit.jupiter.api.BeforeEach void refreshCurrentAccountForSlice() {
+        org.mockito.Mockito.when(currentAccount.refresh(org.mockito.ArgumentMatchers.anyLong())).thenAnswer(invocation ->
+            (vn.edu.se10.bluemoon.identity.application.AuthenticatedUser) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+    }
+
     @Autowired MockMvc mvc;
 
     @Test void moduleMauChiTraThongTinCongKhai() throws Exception {
