@@ -11,7 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
-/** Only maps columns needed by S01; email is deliberately excluded. */
+/** Identity data used for authentication and account provisioning. */
 @Entity
 @Table(name = "users")
 public class User {
@@ -37,7 +37,23 @@ public class User {
     @Column(name = "locked_until")
     private Instant lockedUntil;
 
+    @Column(length = 255) private String email;
+    @Column(name = "must_change_password", nullable = false) private boolean mustChangePassword;
+    @Column(name = "created_at", nullable = false) private Instant createdAt;
+    @Column(name = "updated_at", nullable = false) private Instant updatedAt;
+
     protected User() {}
+
+    public static User create(String username, String fullName, String email, String passwordHash,
+                              Role role, Long householdId, boolean mustChangePassword, Instant now) {
+        User user = new User();
+        user.username = username; user.fullName = fullName; user.email = email; user.passwordHash = passwordHash;
+        user.role = role; user.householdId = householdId; user.mustChangePassword = mustChangePassword;
+        user.status = "ACTIVE"; user.createdAt = now; user.updatedAt = now;
+        return user;
+    }
+    public String getEmail() { return email; }
+    public boolean isMustChangePassword() { return mustChangePassword; }
 
     public Long getId() { return id; }
     public String getUsername() { return username; }

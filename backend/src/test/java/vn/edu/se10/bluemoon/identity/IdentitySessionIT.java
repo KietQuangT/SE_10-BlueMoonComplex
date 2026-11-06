@@ -292,7 +292,7 @@ class IdentitySessionIT {
                 jdbc.update("UPDATE users SET role_id=(SELECT id FROM roles WHERE code=?), household_id=? WHERE id=?", role, household, userId);
                 var result = postLogin(newCsrfSession(), "test-password-only").andExpect(status().isOk()).andReturn();
                 var body = JsonMapper.builder().build().readTree(result.getResponse().getContentAsString());
-                assertThat(body.size()).isEqualTo(4);
+                assertThat(body.size()).isEqualTo(5);
                 assertThat(body.get("role").asString()).isEqualTo(role);
                 for (String field : new String[] {"passwordHash", "email", "status", "failedLoginCount", "lockedUntil"}) assertThat(body.has(field)).isFalse();
             }
