@@ -26,6 +26,16 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Dữ liệu gửi lên không hợp lệ.");
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    ProblemDetail badRequest(BadRequestException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Dữ liệu gửi lên không hợp lệ.");
+        problem.setProperty("code", exception.code()); return problem;
+    }
+    @ExceptionHandler(ConflictException.class)
+    ProblemDetail conflict(ConflictException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Tài khoản bị trùng thông tin.");
+        problem.setProperty("code", exception.code()); return problem;
+    }
     @ExceptionHandler(AccessDeniedException.class)
     ProblemDetail forbidden(AccessDeniedException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Không có quyền truy cập.");

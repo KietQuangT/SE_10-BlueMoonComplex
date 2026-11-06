@@ -30,12 +30,12 @@ class BootstrapIT {
     @Test void flywayV1DenV4VaBangDuocTao() {
         List<String> versions = jdbc.queryForList(
             "SELECT version FROM flyway_schema_history WHERE success = 1 AND version IS NOT NULL", String.class);
-        assertThat(versions).contains("1", "2", "3", "4");
+        assertThat(versions).contains("1", "2", "3", "4", "5", "6");
         List<String> tables = jdbc.queryForList(
             "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE()", String.class);
         // So không phân biệt hoa thường: MySQL với lower_case_table_names=1 (Windows) lưu tên bảng chữ thường.
         assertThat(tables).map(String::toLowerCase).contains("roles", "users", "audit_log", "households", "residents",
-            "residency_changes", "spring_session", "spring_session_attributes");
+            "residency_changes", "mock_emails", "spring_session", "spring_session_attributes");
     }
 
     @Test void sessionLuuVaXoaDuocTrenMysql() {
