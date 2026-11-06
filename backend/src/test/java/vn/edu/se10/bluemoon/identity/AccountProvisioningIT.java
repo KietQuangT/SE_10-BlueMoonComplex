@@ -15,39 +15,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@org.junit.jupiter.api.extension.ExtendWith(org.springframework.boot.test.system.OutputCaptureExtension.class)
-@org.springframework.test.context.TestPropertySource(properties = "logging.level.org.hibernate.SQL=DEBUG")
-class AccountProvisioningIT {
-    @Autowired MockMvc mvc; @Autowired JdbcTemplate jdbc; @Autowired PasswordEncoder encoder; @Autowired org.flywaydb.core.Flyway flyway;
-    String prefix = "s02-" + UUID.randomUUID().toString().substring(0, 8); long adminId; Cookie cookie; String csrf;
-    final List<String> sessionIds = new ArrayList<>();
-    @BeforeEach void setup() throws Exception {
-        jdbc.update("INSERT INTO users (role_id, username, password_hash, full_name, status, created_at, updated_at) VALUES ((SELECT id FROM roles WHERE code='ADMIN'), ?, ?, 'Admin', 'ACTIVE', NOW(6), NOW(6))", prefix, encoder.encode("test-only-pass"));
-        adminId=jdbc.queryForObject("SELECT id FROM users WHERE username=?", Long.class, prefix);
-        var initial=mvc.perform(get("/api/v1/auth/csrf")).andExpect(status().isOk()).andReturn();
-        Cookie first=remember(initial.getResponse().getCookie("SESSION"));
-        String token=JsonMapper.builder().build().readTree(initial.getResponse().getContentAsString()).get("token").asString();
-        var login=mvc.perform(post("/api/v1/auth/login").cookie(first).header("X-CSRF-TOKEN",token).contentType("application/json").content("{\"username\":\""+prefix+"\",\"password\":\"test-only-pass\"}"))
-                .andExpect(status().isOk()).andReturn();
-        cookie=remember(login.getResponse().getCookie("SESSION"));
-        var after=mvc.perform(get("/api/v1/auth/csrf").cookie(cookie)).andExpect(status().isOk()).andReturn();
-        csrf=JsonMapper.builder().build().readTree(after.getResponse().getContentAsString()).get("token").asString();
-    }
-    Cookie remember(Cookie c) { assertThat(c).isNotNull(); sessionIds.add(new String(Base64.getDecoder().decode(c.getValue()), StandardCharsets.UTF_8)); return c; }
-    @AfterEach void cleanup() {
-        for (String id : sessionIds) jdbc.update("DELETE FROM SPRING_SESSION WHERE SESSION_ID=?", id);
-        jdbc.update("DELETE FROM mock_emails WHERE recipient_user_id IN (SELECT id FROM users WHERE username LIKE ?)", prefix+"%");
-        jdbc.update("DELETE FROM audit_log WHERE actor_user_id IN (SELECT id FROM users WHERE username LIKE ?) OR (entity_type='User' AND entity_id IN (SELECT CAST(id AS CHAR) FROM users WHERE username LIKE ?))",prefix+"%",prefix+"%");
-        jdbc.update("DELETE FROM users WHERE username LIKE ?",prefix+"%");
-    }
-    String body(String name, String email, String role, String household) {
-        return "{\"username\":\""+name+"\",\"fullName\":\"Người Kiểm Thử\",\"email\":\""+email+"\",\"role\":\""+role+"\",\"householdId\":"+household+"}";
-    }
-    org.springframework.test.web.servlet.ResultActions create(String body) throws Exception {
-        return mvc.perform(post("/api/v1/accounts").cookie(cookie).header("X-CSRF-TOKEN", csrf).contentType("application/json").content(body));
-    }
+class AccountProvisioningIT extends AccountIntegrationBase {
     @Test void createsAccountEmailAndAuditTogether(org.springframework.boot.test.system.CapturedOutput output) throws Exception {
         String email=prefix+"@example.test";
         var result=create(body(prefix+"-new", "  "+email.toUpperCase(Locale.ROOT)+"  ","ACCOUNTANT","null")).andExpect(status().isCreated()).andExpect(jsonPath("$.email").value(email)).andReturn();
@@ -64,8 +32,9 @@ class AccountProvisioningIT {
         assertThat(result.getResponse().getContentAsString()).doesNotContain(password);
         assertThat(output.getAll()).doesNotContain(password);
         assertThat(jdbc.queryForObject("SELECT changes FROM audit_log WHERE actor_user_id=? AND action='ACCOUNT_CREATED' AND entity_id=?",String.class,adminId,Long.toString(id))).doesNotContain(password,email,prefix+"-new");
-        for (byte[] attribute : jdbc.queryForList("SELECT a.ATTRIBUTE_BYTES FROM SPRING_SESSION_ATTRIBUTES a JOIN SPRING_SESSION s ON s.PRIMARY_ID=a.SESSION_PRIMARY_ID WHERE s.PRINCIPAL_NAME=?",byte[].class,prefix))
-            assertThat(new String(attribute, StandardCharsets.ISO_8859_1)).doesNotContain(password);
+        var attributes = jdbc.queryForList("SELECT a.ATTRIBUTE_BYTES FROM SPRING_SESSION_ATTRIBUTES a JOIN SPRING_SESSION s ON s.PRIMARY_ID=a.SESSION_PRIMARY_ID WHERE s.PRINCIPAL_NAME=?",byte[].class,prefix);
+        assertThat(attributes).isNotEmpty();
+        for (byte[] attribute : attributes) assertThat(new String(attribute, StandardCharsets.ISO_8859_1)).doesNotContain(password);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id=? AND action='ACCOUNT_CREATED' AND entity_id=?",Integer.class,adminId,Long.toString(id))).isEqualTo(1);
         var changes=JsonMapper.builder().build().readTree(jdbc.queryForObject("SELECT changes FROM audit_log WHERE actor_user_id=? AND action='ACCOUNT_CREATED' AND entity_id=?",String.class,adminId,Long.toString(id)));
         assertThat(changes.size()).isEqualTo(1); assertThat(changes.get("role").asString()).isEqualTo("ACCOUNTANT");
@@ -90,6 +59,9 @@ class AccountProvisioningIT {
                 String body=jdbc.queryForObject("SELECT body FROM mock_emails WHERE recipient_user_id=?",String.class,storedId);
                 String password=body.lines().filter(line -> line.startsWith("Mật khẩu tạm: ")).findFirst().orElseThrow().substring("Mật khẩu tạm: ".length());
                 assertThat(encoder.matches(password,(String)stored.get("password_hash"))).isTrue();
+                assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE action='ACCOUNT_CREATED' AND actor_user_id=? AND entity_id=?", Integer.class, adminId, Long.toString(storedId))).isEqualTo(1);
+                String roleChanges=jdbc.queryForObject("SELECT changes FROM audit_log WHERE action='ACCOUNT_CREATED' AND actor_user_id=? AND entity_id=?", String.class, adminId, Long.toString(storedId));
+                assertThat(JsonMapper.builder().build().readTree(roleChanges).get("role").asString()).isEqualTo(role);
                 if (role.equals("RESIDENT")) {
                     String changes=jdbc.queryForObject("SELECT a.changes FROM audit_log a JOIN users u ON a.entity_id=CAST(u.id AS CHAR) WHERE a.action='ACCOUNT_CREATED' AND u.username=?",String.class,username);
                     var json=JsonMapper.builder().build().readTree(changes);
@@ -98,13 +70,32 @@ class AccountProvisioningIT {
             }
             create(body(prefix+"-bad",prefix+"bad@example.test","RESIDENT",Long.toString(Long.MAX_VALUE)))
                     .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("HOUSEHOLD_INVALID"));
+            assertNoBadHouseholdRows();
             jdbc.update("UPDATE households SET status='INACTIVE' WHERE id=?",householdId);
             create(body(prefix+"-bad",prefix+"bad@example.test","RESIDENT",Long.toString(householdId)))
                     .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("HOUSEHOLD_INVALID"));
+            assertNoBadHouseholdRows();
         } finally {
             jdbc.update("UPDATE users SET household_id=NULL WHERE username LIKE ?",prefix+"%");
             jdbc.update("DELETE FROM households WHERE id=?",householdId);
         }
+    }
+    private void assertNoBadHouseholdRows() {
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM users WHERE username=?", Integer.class, prefix+"-bad")).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM mock_emails WHERE recipient_email=?", Integer.class, prefix+"bad@example.test")).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id=? AND action='ACCOUNT_CREATED'", Integer.class, adminId)).isEqualTo(3);
+    }
+    @Test void realAdminRequiresCsrf() throws Exception {
+        mvc.perform(post("/api/v1/accounts").cookie(cookie).contentType("application/json").content(body(prefix+"-csrf",prefix+"csrf@example.test","ADMIN","null"))).andExpect(status().isForbidden());
+        create(body(prefix+"-csrf",prefix+"csrf@example.test","ADMIN","null")).andExpect(status().isCreated());
+    }
+    @Test void duplicateEmailDoesNotAppearInSqlErrorLog(org.springframework.boot.test.system.CapturedOutput output) {
+        String email=prefix+"duplicate@example.test";
+        jdbc.update("INSERT INTO users (role_id,username,password_hash,full_name,status,email,created_at,updated_at) VALUES ((SELECT id FROM roles WHERE code='ADMIN'),?,'hash','Test','ACTIVE',?,NOW(6),NOW(6))",prefix+"-original",email);
+        var role=roles.findByCode("ADMIN").orElseThrow();
+        var duplicate=vn.edu.se10.bluemoon.identity.persistence.User.create(prefix+"-duplicate", "Test", email, "hash", role, null, false, java.time.Instant.now());
+        assertThatThrownBy(() -> users.saveAndFlush(duplicate)).isInstanceOf(org.springframework.dao.DataAccessException.class);
+        assertThat(output.getAll()).doesNotContain(email);
     }
     @Test void mockEmailsBelongToTheirIntendedRecipients() throws Exception {
         for (String suffix : List.of("a","b"))
@@ -133,7 +124,7 @@ class AccountProvisioningIT {
     @Test void migrationDefaultAndConstraintsAreEnforced() {
         flyway.validate();
         org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject("SELECT must_change_password FROM users WHERE id=?",Boolean.class,adminId)).isFalse();
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> jdbc.update("INSERT INTO mock_emails (recipient_user_id,recipient_email,subject,body,status,created_at) VALUES (?,?, 'test','test','OTHER',NOW(6))",adminId,prefix+"@example.test")).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> jdbc.update("INSERT INTO mock_emails (recipient_user_id,recipient_email,subject,body,status,created_at) VALUES (?,?, 'test','test','OTHER',NOW(6))",adminId,prefix+"@example.test")).isInstanceOf(org.springframework.dao.DataAccessException.class).hasStackTraceContaining("ck_mock_emails_status");
         org.assertj.core.api.Assertions.assertThatThrownBy(() -> jdbc.update("INSERT INTO mock_emails (recipient_user_id,recipient_email,subject,body,status,created_at) VALUES (?,?, 'test','test','SIMULATED',NOW(6))",Long.MAX_VALUE,prefix+"@example.test")).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
     }
     @Test void nonAdminRealSessionsCannotCreateAccounts() throws Exception {
@@ -167,19 +158,23 @@ class AccountProvisioningIT {
         var gate=new java.util.concurrent.CountDownLatch(1);
         var ready=new java.util.concurrent.CountDownLatch(8);
         var pool=java.util.concurrent.Executors.newFixedThreadPool(8);
-        var futures=new ArrayList<java.util.concurrent.Future<Integer>>();
+        var futures=new ArrayList<java.util.concurrent.Future<org.springframework.mock.web.MockHttpServletResponse>>();
         try {
             for (int i=0; i<8; i++) {
                 int n=i;
                 futures.add(pool.submit(() -> {
                     ready.countDown(); gate.await();
-                    return create(body(prefix+"-race-"+n,email,"ADMIN","null")).andReturn().getResponse().getStatus();
+                    return create(body(prefix+"-race-"+n,email,"ADMIN","null")).andReturn().getResponse();
                 }));
             }
             assertThat(ready.await(20,java.util.concurrent.TimeUnit.SECONDS)).isTrue();
             gate.countDown();
             var statuses=new ArrayList<Integer>();
-            for (var future:futures) statuses.add(future.get(30,java.util.concurrent.TimeUnit.SECONDS));
+            for (var future:futures) {
+                var response=future.get(30,java.util.concurrent.TimeUnit.SECONDS);
+                statuses.add(response.getStatus());
+                if (response.getStatus()==409) assertThat(JsonMapper.builder().build().readTree(response.getContentAsString()).get("code").asString()).isIn("EMAIL_ALREADY_USED", "ACCOUNT_CONFLICT");
+            }
             assertThat(statuses).containsOnly(201,409);
             assertThat(statuses.stream().filter(status -> status==201).count()).isEqualTo(1);
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM users WHERE email=?",Integer.class,email)).isEqualTo(1);
@@ -219,7 +214,7 @@ class AccountProvisioningIT {
         String email=prefix+"@example.test";
         create(body(prefix+"-one",email,"ADMIN","null")).andExpect(status().isCreated());
         for (String duplicate : List.of(email, email.toUpperCase(Locale.ROOT), "  "+email.toUpperCase(Locale.ROOT)+"  "))
-            create(body(prefix+"-two",duplicate,"ADMIN","null")).andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("EMAIL_ALREADY_USED"));
+            create(body(prefix+"-two",duplicate,"ADMIN","null")).andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("EMAIL_ALREADY_USED")).andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(duplicate.trim())))).andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(email))));
         create(body((prefix+"-one").toUpperCase(Locale.ROOT),prefix+"other@example.test","ADMIN","null")).andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("USERNAME_ALREADY_USED"));
         create(body(prefix+"-three",prefix+"3@example.test","RESIDENT","null")).andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("HOUSEHOLD_REQUIRED"));
         create(body(prefix+"-four",prefix+"4@example.test","ACCOUNTANT","42")).andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("HOUSEHOLD_NOT_ALLOWED"));

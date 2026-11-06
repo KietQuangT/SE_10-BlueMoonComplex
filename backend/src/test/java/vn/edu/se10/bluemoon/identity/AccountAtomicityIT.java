@@ -9,7 +9,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-class AccountAtomicityIT extends AccountProvisioningIT {
+class AccountAtomicityIT extends AccountIntegrationBase {
     @MockitoSpyBean AuditService audit;
     @MockitoSpyBean MockEmailService mail;
     @Test void auditFailureRollsBackAccountAndMail() throws Exception {

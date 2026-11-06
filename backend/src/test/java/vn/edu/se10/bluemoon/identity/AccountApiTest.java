@@ -30,12 +30,13 @@ class AccountApiTest {
         return UsernamePasswordAuthenticationToken.authenticated(user, null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));
     }
     @Test void accessRequiresAuthenticationCsrfAndAdmin() throws Exception {
-        mvc.perform(post("/api/v1/accounts").contentType("application/json").content(BODY)).andExpect(status().isUnauthorized());
-        mvc.perform(post("/api/v1/accounts").with(csrf()).contentType("application/json").content(BODY)).andExpect(status().isUnauthorized());
-        mvc.perform(post("/api/v1/accounts").with(authentication(principal("ADMIN", false))).contentType("application/json").content(BODY)).andExpect(status().isForbidden());
-        mvc.perform(post("/api/v1/accounts").with(authentication(principal("ADMIN", false))).with(csrf().useInvalidToken()).contentType("application/json").content(BODY)).andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/accounts").contentType("application/json").content(BODY)).andExpect(status().isForbidden()).andExpect(jsonPath("$.detail").doesNotExist());
+        mvc.perform(post("/api/v1/accounts").with(csrf()).contentType("application/json").content(BODY)).andExpect(status().isUnauthorized()).andExpect(jsonPath("$.detail").doesNotExist());
+        mvc.perform(post("/api/v1/accounts").with(csrf().useInvalidToken()).contentType("application/json").content(BODY)).andExpect(status().isForbidden()).andExpect(jsonPath("$.detail").doesNotExist());
+        mvc.perform(post("/api/v1/accounts").with(authentication(principal("ADMIN", false))).contentType("application/json").content(BODY)).andExpect(status().isForbidden()).andExpect(jsonPath("$.detail").doesNotExist());
+        mvc.perform(post("/api/v1/accounts").with(authentication(principal("ADMIN", false))).with(csrf().useInvalidToken()).contentType("application/json").content(BODY)).andExpect(status().isForbidden()).andExpect(jsonPath("$.detail").doesNotExist());
         for (String role : List.of("ACCOUNTANT", "RESIDENT"))
-            mvc.perform(post("/api/v1/accounts").with(authentication(principal(role, false))).with(csrf()).contentType("application/json").content(BODY)).andExpect(status().isForbidden());
+            mvc.perform(post("/api/v1/accounts").with(authentication(principal(role, false))).with(csrf()).contentType("application/json").content(BODY)).andExpect(status().isForbidden()).andExpect(jsonPath("$.detail").doesNotExist());
         verifyNoInteractions(service);
     }
     @Test void adminGetsOnlyApprovedFieldsAndExtraFieldsIgnored() throws Exception {
@@ -46,7 +47,7 @@ class AccountApiTest {
         org.assertj.core.api.Assertions.assertThat(tools.jackson.databind.json.JsonMapper.builder().build().readTree(result.getResponse().getContentAsString()).size()).isEqualTo(7);
     }
     @Test void invalidBodiesAreRejectedWithoutCallingService() throws Exception {
-        for (String body : List.of("{}", BODY.replace("worker", "!"), BODY.replace("worker", "x".repeat(101)), BODY.replace("Test User", "   "), BODY.replace("Test User", "Test\\nName"), BODY.replace("\"role\":\"ADMIN\"", "\"role\":\"ADMIN\",\"householdId\":-1"), BODY.replace("Test User", "x".repeat(151)), BODY.replace("a@example.test", "a@localhost"), BODY.replace("a@example.test", "aexample.test"), BODY.replace("a@example.test", "a@@example.test"), BODY.replace("a@example.test", "é@example.test"), BODY.replace("ADMIN", "admin"), BODY.replace("ADMIN", "OTHER"), BODY.replace("a@example.test", "x".repeat(250)+"@example.test")))
+        for (String body : List.of("{}", BODY.replace("worker", "ab"), BODY.replace("worker", "!"), BODY.replace("worker", "x".repeat(101)), BODY.replace("Test User", "   "), BODY.replace("Test User", "Test\\nName"), BODY.replace("\"role\":\"ADMIN\"", "\"role\":\"ADMIN\",\"householdId\":0"), BODY.replace("\"role\":\"ADMIN\"", "\"role\":\"ADMIN\",\"householdId\":-1"), BODY.replace("Test User", "x".repeat(151)), BODY.replace("a@example.test", "a@example."), BODY.replace("a@example.test", "a@localhost"), BODY.replace("a@example.test", "aexample.test"), BODY.replace("a@example.test", "a@@example.test"), BODY.replace("a@example.test", "é@example.test"), BODY.replace("ADMIN", "admin"), BODY.replace("ADMIN", "OTHER"), BODY.replace("a@example.test", "x".repeat(250)+"@example.test")))
             mvc.perform(post("/api/v1/accounts").with(authentication(principal("ADMIN", false))).with(csrf()).contentType("application/json").content(body)).andExpect(status().isBadRequest());
         verifyNoInteractions(service);
     }
