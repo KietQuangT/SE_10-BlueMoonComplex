@@ -5,6 +5,7 @@ import { AppStateProvider } from './state/AppStateContext';
 
 import './styles/tokens.css';
 import './styles/app.css';
+import './styles/utilities.css';
 
 const rootEl = document.getElementById('root');
 if (!rootEl) {

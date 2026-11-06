@@ -64,7 +64,7 @@ export function AuthorityReportsPage() {
       />
 
       <div className="notice-box notice-warning mb-6">
-        <p className="font-semibold">🟡 Giới hạn phạm vi quyền Cơ quan chức năng (NFR-009 / D13)</p>
+        <p className="font-semibold">Giới hạn phạm vi quyền Cơ quan chức năng</p>
         <p className="text-sm mt-1">
           Hệ thống chỉ cung cấp các gói báo cáo đã được phê duyệt. Cơ quan không có quyền truy cập trực tiếp danh bạ nhân khẩu thô, không tra cứu căn hộ tùy ý và không xem thông tin tài chính - công nợ nội bộ của chung cư.
         </p>
@@ -88,7 +88,7 @@ export function AuthorityReportsPage() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="ledger-table">
               <thead>
                 <tr className="border-b border-border bg-ground text-slate text-xs uppercase font-bold">
                   <th className="py-2.5 px-3">Loại báo cáo</th>
@@ -114,14 +114,14 @@ export function AuthorityReportsPage() {
                     <td className="py-3 px-3 text-right space-x-2">
                       <button
                         onClick={() => setSelectedPackage(pkg)}
-                        className="px-3 py-1 border border-border text-slate rounded hover:bg-slate-50 text-xs"
+                        className="btn btn-secondary btn-sm"
                       >
                         Xem gói
                       </button>
                       <button
                         onClick={() => handleDownload(pkg)}
                         disabled={downloading}
-                        className="px-3 py-1 bg-teal-brand text-white font-semibold rounded hover:bg-teal-700 text-xs"
+                        className="btn btn-primary btn-sm"
                       >
                         Tải về
                       </button>
@@ -155,7 +155,7 @@ export function AuthorityReportsPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="ledger-table">
               <thead>
                 <tr className="border-b border-border bg-ground text-slate text-xs uppercase font-bold">
                   {selectedPackage.allowedFields.includes('apartmentCode') && (

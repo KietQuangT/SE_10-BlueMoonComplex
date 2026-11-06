@@ -155,7 +155,7 @@ export function MoveOutPage(): React.ReactElement {
           </form>
           <p className="field-hint">
             Vô hiệu hóa tài khoản là thao tác riêng ở Danh sách tài khoản (M-10); chưa xác định được
-            tài khoản nào thuộc nhân khẩu nào (Q23).
+            tài khoản nào thuộc nhân khẩu nào.
           </p>
         </section>
       ) : (

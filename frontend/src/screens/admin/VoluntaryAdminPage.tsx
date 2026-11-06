@@ -92,7 +92,7 @@ export function VoluntaryAdminPage() {
         <div>
           <button
             onClick={handleOpenCreate}
-            className="px-4 py-2 bg-teal-brand text-white font-semibold rounded hover:bg-teal-700 transition flex items-center gap-2"
+            className="btn btn-primary"
           >
             <span>+ Tạo đợt vận động mới</span>
           </button>
@@ -100,7 +100,7 @@ export function VoluntaryAdminPage() {
       </div>
 
       <div className="notice-box notice-warning mb-6">
-        <p className="font-semibold">🟡 Lưu ý quy tắc nghiệp vụ quan trọng (PBI-012)</p>
+        <p className="font-semibold">Lưu ý quy tắc nghiệp vụ quan trọng</p>
         <p className="text-sm mt-1">
           Các khoản thu tự nguyện (quỹ đền ơn đáp nghĩa, vì người nghèo, khuyến học...) tuyệt đối <strong>không tính vào công nợ bắt buộc</strong> của hộ gia đình. Không tính tiền phạt hoặc chặn quyền lợi nếu cư dân không tham gia.
         </p>
@@ -241,13 +241,13 @@ export function VoluntaryAdminPage() {
                 <button
                   type="button"
                   onClick={() => setCreateModalOpen(false)}
-                  className="px-4 py-2 border border-border text-slate rounded hover:bg-slate-50 text-sm"
+                  className="btn btn-secondary btn-sm"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-teal-brand text-white font-semibold rounded hover:bg-teal-700 text-sm"
+                  className="btn btn-primary btn-sm"
                 >
                   Xuất bản ngay
                 </button>

@@ -6,11 +6,7 @@ export function SkeletonRows({ rows = 4 }: { rows?: number }): React.ReactElemen
     <div className="surface-box" aria-busy="true" aria-live="polite">
       <div className="skeleton-stack">
         {Array.from({ length: rows }).map((_, idx) => (
-          <div
-            key={idx}
-            className="skeleton-line"
-            style={{ width: idx % 2 === 0 ? '92%' : '76%' }}
-          />
+          <div key={idx} className="skeleton-line alt" />
         ))}
       </div>
     </div>

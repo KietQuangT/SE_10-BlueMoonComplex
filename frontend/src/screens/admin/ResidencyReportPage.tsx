@@ -71,7 +71,7 @@ export function ResidencyReportPage() {
           <button
             onClick={handleExport}
             disabled={downloading || filteredResidents.length === 0}
-            className="px-4 py-2 bg-teal-brand text-white font-semibold rounded hover:bg-teal-700 disabled:opacity-50 transition flex items-center gap-2"
+            className="btn btn-primary"
           >
             <span>{downloading ? 'Đang tạo file Excel...' : '⤓ Tải xuống tệp Excel'}</span>
           </button>
@@ -79,7 +79,7 @@ export function ResidencyReportPage() {
       </div>
 
       <div className="notice-box notice-warning mb-6">
-        <p className="font-semibold">🟡 Lưu ý về mẫu chuẩn báo cáo pháp lý (Q17)</p>
+        <p className="font-semibold">Lưu ý về mẫu chuẩn báo cáo pháp lý</p>
         <p className="text-sm mt-1">
           Hiện tại chưa có mẫu danh mục cột chính thức được cơ quan công an địa phương phê duyệt. Giao diện dưới đây hiển thị bản xem trước theo cấu trúc trường hiện có trong hệ thống và chưa cam kết đạt chuẩn pháp lý nhà nước.
         </p>
@@ -143,11 +143,11 @@ export function ResidencyReportPage() {
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-bold text-rail text-sm">Xem trước dữ liệu sẽ xuất ({filteredResidents.length} dòng)</h3>
             <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate font-mono">
-              Placeholder Mẫu cột: chờ chốt (Q17)
+              Placeholder Mẫu cột: chờ chốt
             </span>
           </div>
 
-          <table className="w-full text-left text-sm border-collapse">
+          <table className="ledger-table">
             <thead>
               <tr className="border-b border-border bg-ground text-slate text-xs uppercase font-bold">
                 <th className="py-2.5 px-3">Căn hộ</th>

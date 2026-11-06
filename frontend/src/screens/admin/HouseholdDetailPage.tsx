@@ -125,8 +125,8 @@ export function HouseholdDetailPage(): React.ReactElement {
         )}
       </section>
       <p className="field-hint">
-        Số giấy tờ và số điện thoại mặc định che; quy tắc hiện đầy đủ theo vai trò chờ quyết định (Q3).
-        Tập giá trị trạng thái cư trú chờ chốt (Q1).
+        Số giấy tờ và số điện thoại mặc định che; quy tắc hiện đầy đủ theo vai trò chờ quyết định.
+        Tập giá trị trạng thái cư trú chờ chốt.
       </p>
 
       <h2 className="section-heading">Lịch sử biến động</h2>

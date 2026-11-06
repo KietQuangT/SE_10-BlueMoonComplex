@@ -139,7 +139,7 @@ export function CollectionsPage() {
               <span className="text-xs font-medium text-rail block">
                 {recentReceipt.receivedBy}
               </span>
-              <span className="text-[11px] font-mono text-slate">
+              <span className="text-xs font-mono text-slate">
                 {new Date(recentReceipt.paidAt).toLocaleTimeString('vi-VN')}{' '}
                 {new Date(recentReceipt.paidAt).toLocaleDateString('vi-VN')}
               </span>
@@ -165,7 +165,7 @@ export function CollectionsPage() {
           </div>
           <button
             type="submit"
-            className="px-5 py-2 bg-rail text-white font-semibold rounded hover:bg-slate-800 transition text-sm"
+            className="btn btn-secondary btn-sm"
           >
             Tìm kiếm
           </button>
@@ -198,7 +198,7 @@ export function CollectionsPage() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="ledger-table">
               <thead>
                 <tr className="border-b border-border bg-ground text-slate text-xs uppercase font-bold">
                   <th className="py-2.5 px-3">Căn hộ</th>
@@ -230,7 +230,7 @@ export function CollectionsPage() {
                     <td className="py-3 px-3 text-center">
                       <button
                         onClick={() => handleInitiateCollect(inv)}
-                        className="px-3.5 py-1.5 bg-teal-brand text-white font-semibold rounded hover:bg-teal-700 transition text-xs shadow-sm"
+                        className="btn btn-primary btn-sm"
                       >
                         Đã thu tiền
                       </button>
@@ -290,7 +290,7 @@ export function CollectionsPage() {
                   {formatVnd(selectedInvoice.remaining)}
                 </span>
               </div>
-              <div className="text-[11px] text-slate-500 italic">
+              <div className="text-xs text-slate-500 italic">
                 * Số tiền thu là ô chỉ đọc, bằng số nợ (Thu thiếu/thừa/sửa/hủy: chờ chốt theo Q8).
               </div>
             </div>
@@ -313,7 +313,7 @@ export function CollectionsPage() {
                 type="button"
                 onClick={() => setSelectedInvoice(null)}
                 disabled={isSubmitting}
-                className="px-4 py-2 border border-border text-slate rounded hover:bg-slate-50 text-sm"
+                className="btn btn-secondary btn-sm"
               >
                 Hủy bỏ
               </button>
@@ -321,7 +321,7 @@ export function CollectionsPage() {
                 type="button"
                 onClick={handleConfirmCollect}
                 disabled={isSubmitting}
-                className="px-4 py-2 bg-teal-brand text-white font-semibold rounded hover:bg-teal-700 disabled:opacity-50 text-sm shadow-sm"
+                className="btn btn-primary btn-sm"
               >
                 {isSubmitting ? 'Đang ghi sổ...' : 'Xác nhận Đã thu tiền'}
               </button>

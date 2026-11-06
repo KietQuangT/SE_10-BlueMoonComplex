@@ -91,7 +91,7 @@ export function ReportPackagesPage() {
         <div>
           <button
             onClick={() => setCreateModalOpen(true)}
-            className="px-4 py-2 bg-teal-brand text-white font-semibold rounded hover:bg-teal-700 transition flex items-center gap-2"
+            className="btn btn-primary"
           >
             <span>+ Tạo và phê duyệt gói mới</span>
           </button>
@@ -99,7 +99,7 @@ export function ReportPackagesPage() {
       </div>
 
       <div className="notice-box notice-warning mb-6">
-        <p className="font-semibold">🟡 Nguyên tắc bảo vệ thông tin cư dân (NFR-009)</p>
+        <p className="font-semibold">Nguyên tắc bảo vệ thông tin cư dân</p>
         <p className="text-sm mt-1">
           Cơ quan chức năng tuyệt đối không được truy cập trực tiếp bảng dữ liệu thô. Mọi số liệu cung cấp phải được Ban Quản Trị rà soát, áp dụng whitelist trường và ký xác nhận đóng gói trước khi phát hành.
         </p>
@@ -123,7 +123,7 @@ export function ReportPackagesPage() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="ledger-table">
               <thead>
                 <tr className="border-b border-border bg-ground text-slate text-xs uppercase font-bold">
                   <th className="py-2.5 px-3">Loại báo cáo</th>
@@ -219,7 +219,7 @@ export function ReportPackagesPage() {
                       <div>
                         <span className="font-semibold text-rail">{field.label}</span>
                         {!field.safe && (
-                          <span className="block text-amber-700 font-medium">⚠️ Chú ý: Dữ liệu nhạy cảm</span>
+                          <span className="block text-amber-700 font-medium">Chú ý: Dữ liệu nhạy cảm</span>
                         )}
                       </div>
                     </label>
@@ -231,14 +231,14 @@ export function ReportPackagesPage() {
                 <button
                   type="button"
                   onClick={() => setCreateModalOpen(false)}
-                  className="px-4 py-2 border border-border text-slate rounded hover:bg-slate-50 text-sm"
+                  className="btn btn-secondary btn-sm"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={selectedFields.length === 0}
-                  className="px-4 py-2 bg-teal-brand text-white font-semibold rounded hover:bg-teal-700 disabled:opacity-50 text-sm"
+                  className="btn btn-primary btn-sm"
                 >
                   Tiếp tục phê duyệt
                 </button>

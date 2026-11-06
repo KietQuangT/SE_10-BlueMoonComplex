@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-React 19 + TypeScript + Vite (dev server port 5173, `/api` proxy to `http://localhost:8080`) + CSS custom property tokens following Impeccable Operate conventions.
+React 19 + TypeScript + Vite (dev server port 5173, `/api` proxy to `http://localhost:8080`). Stylesheets: `src/styles/tokens.css` (one token set), `app.css`, `utilities.css`.
 
 ## Users
 
@@ -29,14 +29,14 @@ Hệ thống vận hành nội bộ chuyên biệt cho Ban quản trị chung c�
 
 - Văn phòng Ban quản lý Chung cư BlueMoon thu phí trực tiếp bằng tiền mặt theo mã căn hộ (ví dụ `A01`, `A02`, `B05`) và đối chiếu công nợ cuối tháng; chưa dùng thanh toán trực tuyến hay mã QR ở v1.
 - Cư dân không tự đăng ký tài khoản và không có luồng quên mật khẩu tự phục vụ ở v1: Ban quản trị tạo tài khoản, gán hộ và gửi mật khẩu tạm qua kênh email mô phỏng (`SIMULATED`); lần đăng nhập đầu tiên với cờ `mustChangePassword = true` bị chặn mọi thao tác khác cho tới khi đổi mật khẩu.
-- Giao diện phục vụ song song hai chế độ trong giai đoạn phát triển Sprint 1: kết nối trực tiếp backend Spring Boot (`/api/v1/auth/*`, `POST /api/v1/accounts` đã có trên `main`) và chế độ trình diễn/kiểm thử dựa trên dữ liệu mẫu chuẩn (`mock-data.json`) cho các module backend đang triển khai (S03–S12), kèm nhãn phân biệt minh bạch trạng thái hợp đồng (`✅` API thật, `🗄️` đã có cột DB, `🟡` giả định, `⏸` chờ chốt).
+- Giao diện chạy hai chế độ trong Sprint 1. (1) Backend Spring Boot thật: giao diện đã ghép `/api/v1/auth/*` và `POST /api/v1/accounts`. Từ 06/11/2026 `main` còn có API hộ (`/api/v1/households`) và nhân khẩu (`/households/{id}/residents`, `/residents/{id}`, `/residents/{id}/move-out`, `/households/{id}/residency-changes`, `/households/me/residents`) theo D20, D21; giao diện **chưa ghép** các API này và vẫn dùng dữ liệu mẫu. (2) Chế độ trình diễn dựa trên dữ liệu mẫu (`mock-data.json`) cho phần chưa ghép (S03–S13). Hợp đồng vô hiệu, bật lại và mở khóa account của S04 (`POST /api/v1/accounts/{id}/disable|enable|unlock`, ADMIN, 204) đã được duyệt nhưng chưa vào `main`. Nhãn nội bộ phân biệt trạng thái hợp đồng (API thật, đã có cột DB, giả định, chờ chốt) chỉ hiện ở chế độ DEV hoặc Demo; người dùng thật không thấy.
 
 ## Capabilities and Constraints
 
 - **Phạm vi v1 bắt buộc (24 mã màn hình `M-xx` chia 3 mức A/B/C):**
   - Mức A (8 màn lõi, đầy đủ trạng thái; `M-01`, `M-31`, `M-33` đủ 8 trạng thái; biến thể mobile 360 px cho cư dân): `M-01` Đăng nhập, `M-02` Khung ứng dụng & menu động, `M-03` Hồ sơ & đổi mật khẩu, `M-04` Trang lỗi/phiên hết hạn (401/403/404/500), `M-30` Hộ gia đình của tôi, `M-31` Khai báo tạm vắng, `M-32` Hóa đơn & lịch sử (trang đầu cư dân), `M-33` Chi tiết hóa đơn.
   - Mức B (khung bảng, biểu mẫu, hành động chính + bình thường/rỗng/lỗi): `M-10` Danh sách tài khoản, `M-11` Tạo tài khoản (đã có API `POST /api/v1/accounts`), `M-12` Danh sách hộ, `M-13` Chi tiết hộ, `M-14` Thêm/sửa hộ & nhân khẩu, `M-15` Chuyển đi & lưu trữ, `M-16` Duyệt khai báo tạm vắng.
-  - Mức C (khung "chờ chốt" nêu rõ mục đích, trường giả định `🟡`/`⏸` và câu hỏi mở): `M-17` Đợt đóng góp tự nguyện, `M-18` Báo cáo lưu trú, `M-19` Đóng gói báo cáo cho cơ quan, `M-20` Đơn giá phí, `M-21` Thu tiền mặt, `M-22` Báo cáo tỷ lệ thu, `M-24` Tạo kỳ thu/phát hành hóa đơn, `M-34` Xem đợt đóng góp tự nguyện, `M-40` Báo cáo đã duyệt cho cơ quan.
+  - Mức C (khung "chờ chốt" nêu rõ mục đích, trường giả định và câu hỏi mở, các nhãn này chỉ hiện ở DEV/Demo): `M-17` Đợt đóng góp tự nguyện, `M-18` Báo cáo lưu trú, `M-19` Đóng gói báo cáo cho cơ quan, `M-20` Đơn giá phí, `M-21` Thu tiền mặt, `M-22` Báo cáo tỷ lệ thu, `M-24` Tạo kỳ thu/phát hành hóa đơn, `M-34` Xem đợt đóng góp tự nguyện, `M-40` Báo cáo đã duyệt cho cơ quan.
 - **Tuyệt đối ngoài phạm vi v1 (không vẽ, không tạo nút chờ):** Đăng nhập VNeID, tự đăng ký tài khoản, quên mật khẩu tự phục vụ, thanh toán QR/VietQR, quản lý khách thăm, phản ánh/khiếu nại sự cố, mượn đồ, thông báo khẩn, nhắc nợ tự động, phí gửi xe/điện/nước/internet (thuộc v2.0).
 - **Ràng buộc bảo mật & dữ liệu trên UI:**
   - Server session qua cookie `HttpOnly` (`credentials: 'include'`), tuyệt đối không lưu session/token trong `localStorage` hay `sessionStorage`.
@@ -54,13 +54,13 @@ Hệ thống vận hành nội bộ chuyên biệt cho Ban quản trị chung c�
 ## Evidence on Hand
 
 - Đặc tả màn hình và luồng: bộ tài liệu `ui-wireframe-guide` (`01`–`11`) và dữ liệu giả chuẩn hóa `mock-data.json` (không chứa PII thật).
-- Kiến trúc, yêu cầu và quyết định đã duyệt: `docs/REQUIREMENTS.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` (D01–D19), `docs/sprint-1/TASKS.md`.
-- Hợp đồng API chạy thật trên nhánh `main`: `AuthController` (`/api/v1/auth/{csrf,login,logout,me}`), `AccountController` (`POST /api/v1/accounts`), `MustChangePasswordFilter`, `GlobalExceptionHandler` và schema Flyway `V1`–`V6`.
-- Không có ảnh chụp tòa nhà thật, không có số điện thoại thực của BQL (dùng placeholder được đánh dấu giả định `🟡`), không có chứng nhận mẫu biểu pháp lý.
+- Kiến trúc, yêu cầu và quyết định đã duyệt: `docs/REQUIREMENTS.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` (D01–D21), `docs/sprint-1/TASKS.md`.
+- Hợp đồng API chạy thật trên nhánh `main`: `AuthController` (`/api/v1/auth/{csrf,login,logout,me}`), `AccountController` (`POST /api/v1/accounts`), `HouseholdController`, `ResidentController` (S05), `MustChangePasswordFilter`, `GlobalExceptionHandler` và schema Flyway `V1`–`V6` (S05 và S04 không thêm migration).
+- Không có ảnh chụp tòa nhà thật, không có số điện thoại thực của BQL (giao diện không in số nào cho tới khi Ban quản trị cung cấp), không có chứng nhận mẫu biểu pháp lý.
 
 ## Product Principles
 
-1. **Trung thực với hợp đồng dữ liệu:** Phân biệt rạch ròi tính năng đã ghép API thật (`✅`), đã có bảng DB (`🗄️`), giả định giao diện (`🟡`) và quy tắc chờ chốt (`⏸`); không bao giờ tự tính tiền bằng số thực hoặc tự gán quyền ở client.
+1. **Trung thực với hợp đồng dữ liệu:** Đội phát triển phân biệt rạch ròi tính năng đã ghép API thật, đã có bảng DB, giả định giao diện và quy tắc chờ chốt (nhãn chỉ hiện ở DEV/Demo, không hiện cho người dùng thật); không bao giờ tự tính tiền bằng số thực hoặc tự gán quyền ở client.
 2. **Tách bạch nghĩa vụ và tự nguyện:** Mọi khoản đóng góp tự nguyện luôn mang nhãn khẳng định không cộng vào công nợ bắt buộc của hộ gia đình.
 3. **Ưu tiên cư dân lớn tuổi trên di động và tốc độ bàn thu cuối tháng:** Màn cư dân dùng tốt một tay ở chiều rộng 360 px với thanh điều hướng đáy 3 tab và cỡ chữ dễ đọc; màn BQT/Kế toán ưu tiên tra cứu phân trang nhanh, phím Enter và hộp xác nhận nêu rõ đối tượng + hậu quả.
 4. **An toàn phiên và dữ liệu cá nhân theo mặc định:** Che định danh cá nhân mặc định, giữ lại dữ liệu biểu mẫu khi phiên hết hạn để người dùng không mất công nhập lại, và khóa thao tác bằng hộp xác nhận động từ cụ thể cho mọi hành động khó hoàn tác.

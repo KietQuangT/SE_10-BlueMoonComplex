@@ -89,7 +89,7 @@ export function FeeRatesPage() {
         <div>
           <button
             onClick={handleOpenAdd}
-            className="px-4 py-2 bg-teal-brand text-white font-semibold rounded hover:bg-teal-700 transition flex items-center gap-2"
+            className="btn btn-primary"
           >
             <span>+ Thêm mức đơn giá mới</span>
           </button>
@@ -97,7 +97,7 @@ export function FeeRatesPage() {
       </div>
 
       <div className="notice-box notice-warning mb-6">
-        <p className="font-semibold">🟡 Bất biến lịch sử hóa đơn (PBI-011 / Q7)</p>
+        <p className="font-semibold">Bất biến lịch sử hóa đơn (PBI-011 / Q7)</p>
         <p className="text-sm mt-1">
           Hệ thống không ghi đè lên mức đơn giá cũ. Khi thay đổi đơn giá, một bản ghi mới với ngày hiệu lực mới được tạo. Các hóa đơn đã phát hành trong quá khứ luôn giữ nguyên snapshot diện tích và mức giá tại thời điểm phát hành.
         </p>
@@ -123,7 +123,7 @@ export function FeeRatesPage() {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="ledger-table">
               <thead>
                 <tr className="border-b border-border bg-ground text-slate text-xs uppercase font-bold">
                   <th className="py-2.5 px-3">Mã loại phí</th>
@@ -163,7 +163,7 @@ export function FeeRatesPage() {
             Căn hộ diện tích <strong>50,00 m²</strong> áp dụng đơn giá Phí quản lý <strong>10.000 đ/m²</strong>:{' '}
             <span className="font-mono font-bold text-teal-brand">50,00 × 10.000 đ = 500.000 đ</span>.
           </p>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-xs text-slate-500">
             * Toàn bộ phép nhân được thực hiện phía máy chủ với kiểu số học chính xác (BigDecimal). UI không tự ý làm tròn sai lệch.
           </p>
         </div>
@@ -265,13 +265,13 @@ export function FeeRatesPage() {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 border border-border text-slate rounded hover:bg-slate-50 text-sm"
+                  className="btn btn-secondary btn-sm"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-teal-brand text-white font-semibold rounded hover:bg-teal-700 text-sm"
+                  className="btn btn-primary btn-sm"
                 >
                   Lưu đơn giá
                 </button>

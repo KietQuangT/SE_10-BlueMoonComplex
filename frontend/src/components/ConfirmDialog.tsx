@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -18,6 +18,9 @@ interface ConfirmDialogProps {
  * 2. Consequence sentence
  * 3. Verb-named primary action (never "OK"/"Có")
  * 4. Cancel button + Esc closes + restores focus to trigger
+ *
+ * The <dialog> stays mounted so closing it runs close() and returns focus to the element that
+ * opened it (an unmounted dialog has no ref left to do that). Its body mounts only while open.
  */
 export function ConfirmDialog({
   open,
@@ -29,9 +32,12 @@ export function ConfirmDialog({
   children,
   onConfirm,
   onCancel,
-}: ConfirmDialogProps): React.ReactElement | null {
+}: ConfirmDialogProps): React.ReactElement {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const uid = useId();
+  const titleId = `${uid}-title`;
+  const descId = `${uid}-desc`;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -42,47 +48,50 @@ export function ConfirmDialog({
       if (!dialog.open && typeof dialog.showModal === 'function') {
         dialog.showModal();
       }
-    } else if (dialog.open && typeof dialog.close === 'function') {
+    } else if (dialog.open) {
       dialog.close();
       previousFocusRef.current?.focus();
+      previousFocusRef.current = null;
     }
   }, [open]);
-
-  if (!open) return null;
 
   return (
     <dialog
       ref={dialogRef}
       className="confirm-dialog"
-      aria-labelledby="confirm-dialog-title"
-      aria-describedby="confirm-dialog-desc"
+      aria-labelledby={titleId}
+      aria-describedby={descId}
       onCancel={(e) => {
         e.preventDefault();
         if (!busy) onCancel();
       }}
     >
-      <div className="dialog-body">
-        <h2 id="confirm-dialog-title" className="dialog-title">
-          {title}
-        </h2>
-        <p id="confirm-dialog-desc" className="dialog-consequence">
-          {consequence}
-        </p>
-        {children}
-      </div>
-      <div className="dialog-footer">
-        <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={busy}>
-          Hủy
-        </button>
-        <button
-          type="button"
-          className={`btn ${confirmTone === 'danger' ? 'btn-danger' : 'btn-primary'}`}
-          onClick={onConfirm}
-          disabled={busy}
-        >
-          {busy ? 'Đang xử lý...' : confirmLabel}
-        </button>
-      </div>
+      {open ? (
+        <>
+          <div className="dialog-body">
+            <h2 id={titleId} className="dialog-title">
+              {title}
+            </h2>
+            <p id={descId} className="dialog-consequence">
+              {consequence}
+            </p>
+            {children}
+          </div>
+          <div className="dialog-footer">
+            <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={busy}>
+              Hủy
+            </button>
+            <button
+              type="button"
+              className={`btn ${confirmTone === 'danger' ? 'btn-danger' : 'btn-primary'}`}
+              onClick={onConfirm}
+              disabled={busy}
+            >
+              {busy ? 'Đang xử lý...' : confirmLabel}
+            </button>
+          </div>
+        </>
+      ) : null}
     </dialog>
   );
 }

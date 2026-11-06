@@ -167,7 +167,7 @@ export function CreateAccountPage(): React.ReactElement {
               fieldError('email')
             ) : (
               <span id="acc-email-hint" className="field-hint">
-                Bắt buộc và duy nhất. Cư dân chưa có email thì chưa cấp được (Q21).
+                Bắt buộc và duy nhất. Cư dân chưa có email thì chưa cấp được.
               </span>
             )}
           </div>
@@ -207,7 +207,7 @@ export function CreateAccountPage(): React.ReactElement {
               <option value="ACCOUNTANT">Kế toán</option>
               <option value="ADMIN">Ban quản trị</option>
             </select>
-            <span className="field-hint">Vai trò Cơ quan chức năng chưa có đường cấp (Q19).</span>
+            <span className="field-hint">Vai trò Cơ quan chức năng chưa có đường cấp.</span>
           </div>
           {form.role === 'RESIDENT' ? (
             <div className="form-field span-2">
@@ -253,7 +253,7 @@ export function CreateAccountPage(): React.ReactElement {
         </form>
       </section>
       <p className="field-hint">
-        Nơi xem email mô phỏng cho QA và demo: bảng <code>mock_emails</code> qua SQL, chưa có màn hình (Q24).
+        Nơi xem email mô phỏng cho QA và demo: bảng <code>mock_emails</code> qua SQL, chưa có màn hình.
       </p>
     </>
   );

@@ -290,7 +290,7 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
                 <option value="Đang cư trú">Đang cư trú</option>
                 <option value="Tạm vắng">Tạm vắng</option>
               </select>
-              <span className="field-hint">Tập giá trị chờ chốt (Q1).</span>
+              <span className="field-hint">Tập giá trị chờ chốt.</span>
             </div>
             <div className="form-field span-2 form-actions">
               <button type="submit" className="btn btn-primary">

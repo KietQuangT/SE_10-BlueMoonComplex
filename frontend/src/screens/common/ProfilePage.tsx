@@ -70,7 +70,7 @@ export function ProfilePage(): React.ReactElement {
       <ScreenHeader
         screenCode="M-03"
         title="Hồ sơ cá nhân và đổi mật khẩu"
-        description="Thông tin hồ sơ lấy từ phiên đăng nhập. Việc sửa hồ sơ đang chờ quyết định (Q18)."
+        description="Thông tin hồ sơ lấy từ phiên đăng nhập. Việc sửa hồ sơ đang chờ quyết định."
         contract={tab === 'profile' ? 'api-live' : 'pending-rule'}
         tierLabel="Mức A"
       />
@@ -203,11 +203,11 @@ export function ProfilePage(): React.ReactElement {
               <ul id="pw-rules" className="criteria-list">
                 <li className={lengthOk ? 'met' : ''}>
                   <Icon name={lengthOk ? 'check' : 'info'} size={14} />
-                  Tối thiểu 8 ký tự (PBI-002)
+                  Tối thiểu 8 ký tự
                 </li>
                 <li>
                   <Icon name="info" size={14} />
-                  Quy tắc độ mạnh và độ dài tối đa: chờ chốt (Q14) <ContractBadge kind="pending-rule" />
+                  Quy tắc độ mạnh và độ dài tối đa: chờ chốt <ContractBadge kind="pending-rule" />
                 </li>
               </ul>
               {errors.next ? <span className="field-error">{errors.next}</span> : null}
