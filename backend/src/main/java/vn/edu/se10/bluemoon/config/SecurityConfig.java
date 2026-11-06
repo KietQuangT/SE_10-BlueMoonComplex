@@ -19,9 +19,6 @@ import org.springframework.security.web.authentication.session.ChangeSessionIdAu
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
-import org.springframework.security.web.csrf.CsrfFilter;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
@@ -39,12 +36,7 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, CsrfTokenRepository csrfTokenRepository, SecurityContextRepository contextRepository) throws Exception {
         http.cors(Customizer.withDefaults())
-            .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository).requireCsrfProtectionMatcher(request -> {
-                boolean accountPost = PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/v1/accounts").matches(request);
-                var authentication = SecurityContextHolder.getContext().getAuthentication();
-                if (accountPost && (authentication == null || !authentication.isAuthenticated())) return false;
-                return CsrfFilter.DEFAULT_CSRF_MATCHER.matches(request);
-            }))
+            .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository))
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
             .logout(logout -> logout.disable())

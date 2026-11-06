@@ -44,6 +44,6 @@ app:
     allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
 logging:
   level:
-    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: OFF
+    org.hibernate.orm.jdbc.error: OFF
   pattern:
     level: '%5p [requestId=%X{requestId:-}]'

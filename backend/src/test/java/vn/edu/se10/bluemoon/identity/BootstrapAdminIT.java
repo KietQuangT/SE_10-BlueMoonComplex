@@ -31,13 +31,14 @@ class BootstrapAdminIT {
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM users",Integer.class)).isEqualTo(before);
         } finally { java.nio.file.Files.deleteIfExists(output); }
     }
-    @Test void createsOnlyOneAdminAndAuditsWithoutActor() {
+    @Test void createsOnlyOneAdminAndAuditsWithoutActor(org.springframework.boot.test.system.CapturedOutput output) {
         transactions.executeWithoutResult(tx -> {
             try {
                 jdbc.update("UPDATE users SET role_id=(SELECT id FROM roles WHERE code='ACCOUNTANT') WHERE role_id=(SELECT id FROM roles WHERE code='ADMIN')");
                 String name="bootstrap-"+UUID.randomUUID();
                 char[] password="test-only-pass".toCharArray();
                 assertThat(service.create(name,"Test User",name+"@example.test",password,"test-only-pass".toCharArray())).isTrue();
+                assertThat(output.getAll()).doesNotContain(name, name+"@example.test", "test-only-pass");
                 assertThat(password).containsOnly('\0');
                 assertThat(service.create(name+"x","Test User",name+"x@example.test","test-only-pass".toCharArray(),"test-only-pass".toCharArray())).isFalse();
                 long id=jdbc.queryForObject("SELECT id FROM users WHERE username=?",Long.class,name);
@@ -59,7 +60,7 @@ class BootstrapAdminIT {
         });
     }
     @Test void rejectsInvalidPasswordsWithoutCreatingAnAdmin() {
-        for (String[] values : new String[][] {{"short","short"},{"valid-pass","different"},{"x".repeat(73),"x".repeat(73)}}) {
+        for (String[] values : new String[][] {{"short","short"},{"valid-pass","different"},{"x".repeat(73),"x".repeat(73)},{"é".repeat(37),"é".repeat(37)}}) {
             transactions.executeWithoutResult(tx -> {
                 try {
                     jdbc.update("UPDATE users SET role_id=(SELECT id FROM roles WHERE code='ACCOUNTANT') WHERE role_id=(SELECT id FROM roles WHERE code='ADMIN')");

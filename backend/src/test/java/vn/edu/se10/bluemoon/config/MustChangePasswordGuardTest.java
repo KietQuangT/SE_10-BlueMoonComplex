@@ -33,6 +33,14 @@ class MustChangePasswordGuardTest {
             assertThat(response.getContentAsString()).contains("PASSWORD_CHANGE_REQUIRED");
         }
     }
+    @Test void otherPrincipalPassesThrough() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(UsernamePasswordAuthenticationToken.authenticated("other", null, List.of()));
+        var request = new MockHttpServletRequest("GET", "/missing"); request.setServletPath("/missing");
+        var response = new MockHttpServletResponse(); var chain = new MockFilterChain();
+        filter.doFilter(request, response, chain);
+        assertThat(chain.getRequest()).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
     @Test void unflaggedAndAnonymousRequestsPassThrough() throws Exception {
         assertThat(request("GET","/missing",false,true).getStatus()).isEqualTo(200);
         assertThat(request("GET","/missing",false,false).getStatus()).isEqualTo(200);
