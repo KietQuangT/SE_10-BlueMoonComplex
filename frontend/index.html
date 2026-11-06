@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BlueMoon Complex: quản lý cư trú và thu phí chung cư</title>
+    <meta
+      name="description"
+      content="Hệ thống quản lý cư trú và thu phí của Chung cư BlueMoon cho Ban quản trị, Kế toán và cư dân."
+    />
+    <meta name="theme-color" content="#f2f6fd" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#04060d" media="(prefers-color-scheme: dark)" />
+    <script>
+      // Same rule as src/lib/theme.ts, run before first paint so the page never flashes the wrong theme.
+      (function () {
+        var p = 'auto';
+        try { p = localStorage.getItem('bm-theme') || 'auto'; } catch (e) {}
+        var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.dataset.theme = p === 'light' || p === 'dark' ? p : dark ? 'dark' : 'light';
+      })();
+    </script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Newsreader (headings) and Hanken Grotesk (text): both carry a Vietnamese subset -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:wght@500&family=Hanken+Grotesk:wght@400..700&display=optional"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
