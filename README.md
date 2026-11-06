@@ -12,10 +12,11 @@ Hệ thống quản lý chung cư BlueMoon (v1.0): tài khoản và phân quyề
 | F01 | Chốt hợp đồng, quyền và dữ liệu (D13–D18) | Xong theo xác nhận của Sơn; chưa có văn bản của cả nhóm |
 | F02 | Nền tảng backend/DB, audit cùng transaction | Xong (PR #4) |
 | **S01** | **Đăng nhập, session, vai trò, audit, chống dò mật khẩu** | **Xong, đang chờ push/PR/review** |
-| S02–S15 | Cấp account, đổi mật khẩu, hộ/nhân khẩu, đơn giá, kỳ thu, thu tiền, báo cáo, backup, hồi quy, bàn giao | Chưa bắt đầu |
+| **S02** | **Cấp account, email mô phỏng, bootstrap BQT** | **Xong, đang chờ push/PR/review (nhánh `feat/s02-account-provisioning`)** |
+| S03–S15 | Đổi mật khẩu, hộ/nhân khẩu, đơn giá, kỳ thu, thu tiền, báo cáo, backup, hồi quy, bàn giao | Chưa bắt đầu |
 
-**Có thể dùng ngay:** health, metadata, session JDBC, audit, đăng nhập/đăng xuất/xem phiên (`/api/v1/auth/*`), khóa tạm thời khi sai mật khẩu nhiều lần.
-**Chưa có:** tài khoản mặc định, lệnh tạo BQT đầu tiên và cấp account cư dân (task S02), đổi mật khẩu (S03), vô hiệu account và mở khóa thủ công (S04), mọi API nghiệp vụ hộ/phí. Mọi endpoint không khai báo đều bị chặn mặc định (`denyAll`).
+**Có thể dùng ngay:** health, metadata, session JDBC, audit, đăng nhập/đăng xuất/xem phiên (`/api/v1/auth/*`), khóa tạm thời khi sai mật khẩu nhiều lần, lệnh tạo BQT đầu tiên (profile `bootstrap`), ADMIN cấp account qua `POST /api/v1/accounts` (kèm email mô phỏng).
+**Chưa có:** tài khoản mặc định, đổi mật khẩu và xóa cờ đổi mật khẩu lần đầu (S03), vô hiệu account và mở khóa thủ công (S04), mọi API nghiệp vụ hộ/phí. Mọi endpoint không khai báo đều bị chặn mặc định (`denyAll`).
 
 ## Cấu trúc repo
 
@@ -26,7 +27,7 @@ backend/            Spring Boot (Maven Wrapper, Dockerfile)
     common/         audit (AuditService), error, web (request ID)
     identity/       api / application / persistence: đăng nhập, session, khóa tài khoản, RoleService mẫu
     systeminfo/     metadata công khai
-  src/main/resources/db/migration/   Flyway V1–V5
+  src/main/resources/db/migration/   Flyway V1–V6
   src/test/         unit/MVC (verify) và integration (-Pintegration)
 docs/               kiến trúc, yêu cầu, quyết định, kế hoạch, kiểm chứng
 frontend/           chưa có mã
@@ -76,7 +77,7 @@ Ba vai trò (D13): `ADMIN` (BQT), `ACCOUNTANT` (kế toán), `RESIDENT` (cư dâ
 | Endpoint | Cần đăng nhập | Kết quả |
 |---|---|---|
 | `GET /api/v1/auth/csrf` | không | 200 `{headerName, token}` |
-| `POST /api/v1/auth/login` | không; cần CSRF | 200 `{username, fullName, role, householdId}`; 400 body sai; 401 mọi lỗi đăng nhập; 403 thiếu/sai CSRF |
+| `POST /api/v1/auth/login` | không; cần CSRF | 200 `{username, fullName, role, householdId, mustChangePassword}`; 400 body sai; 401 mọi lỗi đăng nhập; 403 thiếu/sai CSRF |
 | `POST /api/v1/auth/logout` | có; cần CSRF | 204; 401 nếu chưa đăng nhập |
 | `GET /api/v1/auth/me` | có | 200 như login; 401 nếu chưa đăng nhập |
 
@@ -92,9 +93,25 @@ curl -b jar.txt -c jar.txt -s -X POST http://localhost:8080/api/v1/auth/login \
 curl -b jar.txt -c jar.txt -s http://localhost:8080/api/v1/auth/csrf
 curl -b jar.txt -s http://localhost:8080/api/v1/auth/me
 ```
-Lưu ý: DB mới chưa có tài khoản nào (không có tài khoản mặc định, không có trong migration). Lệnh tạo BQT đầu tiên thuộc task S02; các test tự tạo tài khoản fixture.
+Lưu ý: DB mới chưa có tài khoản nào (không có tài khoản mặc định, không có trong migration). Tạo BQT đầu tiên bằng lệnh bootstrap bên dưới; các test tự tạo tài khoản fixture.
 
-**Mọi lỗi đăng nhập trả cùng một body 401** (sai mật khẩu, account không tồn tại, bị khóa, `INACTIVE`, RESIDENT chưa có hộ) để không lộ account tồn tại. Response chỉ có 4 trường; không bao giờ có hash, email, `status` hay cột khóa.
+**Tạo BQT đầu tiên (S02, D16):** chạy một lần trong terminal tương tác, sau khi `./mvnw verify` đã tạo JAR và `DB_*` đã export:
+```bash
+cd backend
+java -jar target/bluemoon-backend-0.1.0-SNAPSHOT.jar --spring.profiles.active=bootstrap
+```
+- Nhập tên đăng nhập, họ tên, email, mật khẩu hai lần (mật khẩu không hiện trên màn hình). Không có tham số dòng lệnh hay biến môi trường cho các giá trị này.
+- Mật khẩu từ 8 ký tự đến 72 byte UTF-8, hai lần nhập phải giống nhau. Nếu sai, lệnh in "Dữ liệu không hợp lệ." kèm stack trace mà không nói quy tắc nào sai (giới hạn đã biết, chưa sửa).
+- Đã có bất kỳ ADMIN (kể cả `INACTIVE`) thì lệnh in "Đã có ADMIN, bỏ qua." và không làm gì. Không có terminal tương tác thì thoát mã khác 0. Trong Docker cần `-it` (chưa kiểm chứng).
+- Chạy bằng `spring-boot:run` không dùng được vì không có console. Audit: `BOOTSTRAP_ADMIN` với actor NULL; tài khoản bootstrap có `must_change_password = FALSE`.
+
+**ADMIN cấp account (S02, D14):** `POST /api/v1/accounts` (cần đăng nhập ADMIN và CSRF), body `{username, fullName, email, role, householdId}`; `role` là `ADMIN`, `ACCOUNTANT` hoặc `RESIDENT` (RESIDENT bắt buộc có `householdId` của hộ `ACTIVE`; vai trò khác không được kèm hộ). 201 `{id, username, fullName, email, role, householdId, emailStatus}` và không có mật khẩu. Lỗi: 400 (`HOUSEHOLD_REQUIRED`, `HOUSEHOLD_INVALID`, `HOUSEHOLD_NOT_ALLOWED` hoặc body sai), 409 (`EMAIL_ALREADY_USED`, `USERNAME_ALREADY_USED`, `ACCOUNT_CONFLICT`). Thiếu hoặc sai CSRF trả 403 trước khi tới bước kiểm tra quyền.
+- Mật khẩu tạm do server sinh, không hết hạn, chỉ nằm trong thư mô phỏng ở bảng `mock_emails`; không có API đọc. Xem bằng SQL: `SELECT id, recipient_email, subject, status, created_at, body FROM mock_emails ORDER BY id DESC`.
+- Account mới có cờ `must_change_password`: đăng nhập được nhưng mọi API ngoài `/auth/{me,csrf,login,logout}`, health và system/info đều trả 403 `code: PASSWORD_CHANGE_REQUIRED` cho tới khi S03 có luồng đổi mật khẩu và xóa cờ.
+- Không bật log Hibernate `org.hibernate.orm.jdbc.bind=TRACE`: nó in email, nội dung thư và hash mật khẩu. Logger `org.hibernate.orm.jdbc.error` đã đặt `OFF` để lỗi trùng khóa không in email.
+- Nâng cấp từ S01 trên DB dev đã có phiên đăng nhập: xóa bảng `SPRING_SESSION` (chỉ môi trường dev) vì `AuthenticatedUser` đã đổi; hành vi với phiên cũ chưa kiểm chứng.
+
+**Mọi lỗi đăng nhập trả cùng một body 401** (sai mật khẩu, account không tồn tại, bị khóa, `INACTIVE`, RESIDENT chưa có hộ) để không lộ account tồn tại. Response có 5 trường (`username`, `fullName`, `role`, `householdId`, `mustChangePassword`); không bao giờ có hash, email, `status` hay cột khóa.
 
 **Chống dò mật khẩu (D17, D18):** khóa theo account, không theo IP.
 | Lần khóa | 1 | 2 | 3 | 4 | 5 | 6 | từ 7 trở đi |
@@ -130,8 +147,9 @@ cd backend
 ./mvnw -B -ntp verify                    # không cần DB
 ./mvnw -B -ntp -Pintegration verify      # cần MySQL thật và biến DB_*
 ```
-- Lệnh đầu chạy unit/MVC/security (hiện 45 test), đóng gói JAR, không cần DB.
-- Lệnh thứ hai chạy thêm integration (hiện 31 test: `BootstrapIT`, `RoleAuditIT`, `IdentityCookieIT`, `IdentitySessionIT`). Không tự bỏ qua khi thiếu DB. Lần S01 xanh ở cả JVM múi giờ +07 và `TZ=UTC`.
+- Lệnh đầu chạy unit/MVC/security (hiện 56 test), đóng gói JAR, không cần DB.
+- Lệnh thứ hai chạy thêm integration (hiện 51 test: `BootstrapIT`, `RoleAuditIT`, `IdentityCookieIT`, `IdentitySessionIT`, `AccountProvisioningIT`, `AccountAtomicityIT`, `BootstrapAdminIT`). Không tự bỏ qua khi thiếu DB. S01 xanh ở cả JVM múi giờ +07 và `TZ=UTC`; S02 chỉ chạy ở +07.
+- `BootstrapAdminIT` chạy `java -jar target/...jar` thật nên cần JAR đã được đóng gói (lệnh `verify` làm việc đó).
 - Integration chạy trên DB `bluemoon` đang cấu hình: tự áp migration chưa có, tự thêm rồi xóa tài khoản fixture, và `RoleAuditIT` đổi tên role `ADMIN` rồi khôi phục. Đừng chạy trên DB có người khác đang dùng.
 - Ghi lệnh và kết quả vào `docs/VALIDATION.md`. Không dùng cờ bỏ qua test hay enforcer.
 - GitHub CI (`.github/workflows/backend.yml`) dựng MySQL riêng và chạy `./mvnw -B -ntp -Pintegration verify`.
@@ -171,7 +189,7 @@ cd backend
 | `Unresolved compilation problems` | IDE ghi đè `backend/target/`; chạy `./mvnw clean verify` |
 | Cổng 8080 bận | Dừng backend Docker hoặc IDE, chỉ chạy một |
 | Flyway báo sai checksum | Migration đã bị sửa; tạo lại DB cục bộ (không sửa `flyway_schema_history`) |
-| Đăng nhập luôn 401 trên DB mới | Chưa có tài khoản; chờ lệnh tạo BQT (S02) hoặc dùng fixture trong test |
+| Đăng nhập luôn 401 trên DB mới | Chưa có tài khoản; chạy lệnh bootstrap BQT (mục "Tạo BQT đầu tiên") hoặc dùng fixture trong test |
 | Trình duyệt không gửi cookie session | Cookie `Secure` chỉ tắt ở profile `local`; kiểm tra profile đang chạy |
 
 ## Dừng và dữ liệu

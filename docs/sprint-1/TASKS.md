@@ -8,7 +8,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 | ☑ | F01 | M | Sơn + Quân + Tuấn | Chốt contract, quyền và dữ liệu; WBS 1.2.1.1–3 | F00 | Ma trận quyền/account–hộ, trường dữ liệu và hợp đồng API có người nhận xác nhận; giải quyết mapping sai. |
 | ☑ | F02 | M | Sơn + Tuấn | Nền tảng backend/DB và luồng mẫu; WBS 1.2.1.2 | F00 | Health/metadata, security boundary, Flyway/session chạy MySQL; teammate cài lại và có kết quả integration. |
 | ☑ | S01 | M | Sơn; Tuấn review | Identity/session/role/audit; WBS 2.1.1.1, 2.1.1.3 | F01,F02 | Đăng nhập đúng/sai, đổi session ID, 401/403, audit write; chốt và test chống brute-force, không mặc định đã có. |
-| ☐ | S02 | M | Sơn + Kiệt | Cấp account và email mô phỏng; WBS 2.1.1.1,2.1.2.3 | S01 | Email trùng bị từ chối; mock email đúng người; bootstrap BQT và cấp cư dân đã thống nhất; không log password. |
+| ☑ | S02 | M | Sơn + Kiệt | Cấp account và email mô phỏng; WBS 2.1.1.1,2.1.2.3 | S01 | Email trùng bị từ chối; mock email đúng người; bootstrap BQT và cấp cư dân đã thống nhất; không log password. |
 | ☐ | S03 | M | Kiệt + Sơn | Đổi mật khẩu, hồ sơ; WBS 2.1.1.2,2.1.2.1 | S01 | Kiểm tra mật khẩu cũ/mới, tối thiểu 8 ký tự; đổi xong các session cũ bị từ chối; DTO không lộ hash. |
 | ☐ | S04 | M | Sơn + Tuấn | Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3 | S01 | Khóa xong request mới với cookie cũ thất bại; thử nhiều session và server role; UI cần test tích hợp để đóng. |
 | ☐ | S05 | L | Sơn + Tuấn | Hộ/nhân khẩu/biến động; WBS 2.2.1.1 | F01,S01 | CRUD/tra cứu, ownership; chuyển đi xóa mềm và audit/lịch sử; validate trường đã chốt, test hộ khác bị chặn. |
@@ -29,7 +29,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 - [x] F01 — Chốt contract, quyền và dữ liệu; WBS 1.2.1.1–3
 - [x] F02 — Nền tảng backend/DB và luồng mẫu; WBS 1.2.1.2
 - [x] S01 — Identity/session/role/audit; WBS 2.1.1.1, 2.1.1.3
-- [ ] S02 — Cấp account và email mô phỏng; WBS 2.1.1.1,2.1.2.3
+- [x] S02 — Cấp account và email mô phỏng; WBS 2.1.1.1,2.1.2.3
 - [ ] S03 — Đổi mật khẩu, hồ sơ; WBS 2.1.1.2,2.1.2.1
 - [ ] S04 — Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3
 - [ ] S05 — Hộ/nhân khẩu/biến động; WBS 2.2.1.1
@@ -129,4 +129,37 @@ Lỗi còn lại, điều chưa kiểm thử:
   - Không có chặn theo IP (không có nguồn dữ liệu); ADMIN không bị khóa nên không có lớp chặn dò mật khẩu ADMIN ở tầng ứng dụng (D17); khóa theo account không trần cho phép khóa lâu mọi account không phải ADMIN cho tới khi S04 có mở khóa thủ công.
   - V5 đã áp lên DB bluemoon cục bộ của Sơn; nếu V5 đổi trước khi merge, Flyway báo sai checksum trên DB đó (Sơn tạo lại DB cục bộ, không sửa tay flyway_schema_history).
 Kết luận: tick theo bằng chứng chạy thật của Sơn (hai lần -Pintegration xanh ở +07 và UTC) và review rủi ro không còn lỗi chặn, kèm các caveat trên; Tuấn review và push/PR còn chờ cổng G2.
+```
+
+### S02 (tick 06/11/2026)
+```text
+Task: S02 (WBS 2.1.1.1, 2.1.2.3) — Cấp account, email mô phỏng, bootstrap BQT
+Commit/PR: nhánh local feat/s02-account-provisioning, HEAD 6e138e4 (2cdef6f, 20f883f, 6e138e4 trên nền main 6e12045). CHƯA push, CHƯA PR, Tuấn CHƯA review.
+Lệnh và kết quả:
+  - Bằng chứng do Sơn chạy (MySQL 8.4.13 ở localhost:3306, JDK 21.0.9, macOS aarch64, JVM +07, `cd backend && ./mvnw -B -ntp -Pintegration verify`, worktree sạch ở 6e138e4; commit 11:38, chạy 11:43–11:44 +07 ngày 06/11/2026; log không in SHA nên khớp commit là suy luận từ thời điểm):
+      surefire 56 test (AccountApiTest 5, MustChangePasswordGuardTest 3, BootstrapSecurityContextTest 1, EmailNormalizerTest 1, TemporaryPasswordGeneratorTest 1, AuthApiTest 9, AuditServiceTest 23, LoginLockPolicyTest 6, UnknownUserTimingTest 1, UserRepositoryQueryTest 1, SystemInfoApiTest 5);
+      failsafe 51 IT (AccountProvisioningIT 11, BootstrapAdminIT 7, AccountAtomicityIT 2, IdentitySessionIT 23, RoleAuditIT 4, IdentityCookieIT 1, BootstrapIT 3); 0 lỗi; BUILD SUCCESS; 35,763 s.
+    Flyway: V5 lên V6 áp thành công ở lần chạy đầu; "Successfully validated 6 migrations"; ddl-auto=validate qua với BOOLEAN.
+  - Lần chạy trước (HEAD 20f883f): failsafe 49/51; AccountAtomicityIT 2 lỗi do cách viết test (stub spy qua proxy `@Transactional(MANDATORY)`), sửa ở 6e138e4, không đổi code sản phẩm.
+  - Bootstrap trong terminal thật (Sơn chạy tay 06/11/2026 12:23–12:28 +07, `java -jar target/bluemoon-backend-0.1.0-SNAPSHOT.jar --spring.profiles.active=bootstrap`, DB bluemoon cục bộ): lần 0 mật khẩu bị từ chối ("Dữ liệu không hợp lệ.", không tạo gì); lần 1 "Đã tạo ADMIN."; lần 2 "Đã có ADMIN, bỏ qua."; mật khẩu không hiện trên terminal. SQL đối chiếu của Sơn: `audit_log` có 1 dòng `BOOTSTRAP_ADMIN` actor NULL changes `{"role":"ADMIN"}`; `users` của tài khoản đó `must_change_password=0`, `status=ACTIVE`. Chưa kiểm: lịch sử shell, đăng nhập bằng tài khoản vừa tạo qua API, chạy không có TTY ngoài test.
+  - Verifier tự chạy `mvn-sandbox.sh -B -ntp verify`: KHÔNG chạy được (sandbox không ghi được target/ trong worktree Orca). Bằng chứng test là log của Sơn, report trong worktree và file jar.
+  - Review rủi ro: C1 (đặt sai tên logger Hibernate, email vào log khi race) và C2 (assertion CHECK sai kiểu exception) sửa ở 20f883f; K1 (tùy biến CSRF) bỏ theo quyết định của Sơn; đã dùng hết 2 vòng sửa, chưa có review lại sau sửa (đóng lỗi dựa vào test xanh và đọc diff). Chi tiết `_agents_workspace/S02/03_review.md`.
+  - Copilot QA (lời Copilot, chưa kiểm chứng): verify 55 test xanh trên 2cdef6f; báo sai là không có test race (có: AccountProvisioningIT.concurrentEmailCreationHasOneWinnerAndDoesNotLogEmail).
+AC:
+  - Email trùng bị từ chối: đạt (AccountProvisioningIT: cùng, khác hoa/thường, có khoảng trắng đều 409 EMAIL_ALREADY_USED, body không chứa email; race 8 luồng đúng một thắng; AccountApiTest; BootstrapAdminIT).
+  - Mock email đúng người: đạt ở mức DB (mockEmailsBelongToTheirIntendedRecipients: hai account, recipient khớp, body chứa mật khẩu của chính nó, mật khẩu A không vào B, SIMULATED). Kiểm tra chéo EP-01 của Kiệt chưa làm.
+  - Bootstrap BQT và cấp cư dân: đạt. Cấp cư dân đủ ca hộ (thiếu, không tồn tại, INACTIVE, nhân sự kèm hộ); BootstrapAdminService qua BootstrapAdminIT; chạy tay trong terminal thật đạt (lần 1 tạo, lần 2 từ chối, audit actor NULL). "Đã thống nhất" theo lời Sơn (D14–D16, D19).
+  - Không log password: đạt trong phạm vi output test (kèm org.hibernate.SQL=DEBUG); không phủ org.hibernate.orm.jdbc.bind=TRACE (sẽ in email, body, password_hash).
+Đầu ra giao cho: Kiệt (EP-01 và M-10/M-11; /auth/login và /auth/me nay có 5 trường gồm mustChangePassword; POST /api/v1/accounts trả 201 không mật khẩu; mock email xem bằng SQL trên bảng mock_emails; lỗi 400/409 có code); S03 (xóa cờ must_change_password, che mock_emails.body khi xóa cờ, hủy mọi session của user khi đổi mật khẩu, thêm endpoint đổi mật khẩu vào danh sách cho phép của MustChangePasswordFilter cùng PR, chốt mật khẩu tối đa ≤ 72 byte); S04 (phủ POST /accounts khi kiểm tra lại quyền, email của account INACTIVE vẫn giữ chỗ); S05 (thay truy vấn native trạng thái hộ trong identity/persistence); S12 (vai trò thứ tư, V7).
+Assumption đã xác nhận: D14–D16 và D19 theo lời Sơn (06/11/2026), Kiệt đồng ý theo lời Sơn, Tuấn không tham gia S02. Chưa có văn bản của Quân, Tuấn, Kiệt.
+Lỗi còn lại, điều chưa kiểm thử:
+  - Chưa push, chưa PR, chưa CI, Tuấn chưa review; chưa có người được xác nhận kiểm tra bảo mật S02. Chưa chạy Windows hay máy thứ hai (đã chạy macOS aarch64).
+  - Lệnh bootstrap báo "Dữ liệu không hợp lệ." chung chung và in stack trace khi mật khẩu bị từ chối, không nói quy tắc nào sai (lỗi dùng được đã thấy ở lần chạy tay đầu); chưa sửa vì đã hết 2 vòng sửa.
+  - Tên logger org.hibernate.orm.jdbc.error đúng ở thực tế nhưng chưa có đối chứng bỏ cấu hình; tắt toàn app làm mất log lỗi SQL của Hibernate.
+  - Hành vi session cũ sau khi đổi AuthenticatedUser chưa kiểm chứng (suy luận: đọc được với mustChangePassword=false); xóa SPRING_SESSION khi nâng cấp.
+  - Race test chưa chứng minh nhánh chặn ở DB có xảy ra; xanh hai lần, chưa đo độ ổn định.
+  - Tồn tại, cố ý không sửa: K2 (race FK hộ trả 409 ACCOUNT_CONFLICT thay vì 400), K4 (race bootstrap in exception có email lúc khởi động thất bại), K5 (JDK 22+ System.console() có thể khác null khi không có TTY), K9 (tab/newline đầu cuối email bị từ chối thay vì cắt).
+  - mock_emails.body chứa mật khẩu tạm dạng rõ, không hết hạn (hệ quả D14); ADMIN mới chưa đổi mật khẩu không bị khóa (D17); xóa cờ trong DB không làm session đang mở hết bị chặn; mọi ADMIN INACTIVE thì bootstrap vẫn từ chối, phải sửa DB tay.
+  - V6 đã áp lên DB bluemoon cục bộ của Sơn, và DB đó có một tài khoản ADMIN thử tạo bằng bootstrap; nếu V6 đổi trước khi merge, Flyway báo sai checksum (Sơn tạo lại DB cục bộ). V6 chưa được Quân, Tuấn, Kiệt xác nhận.
+Kết luận: tick theo bằng chứng chạy thật của Sơn (surefire 56 + failsafe 51 xanh ở 6e138e4, bootstrap chạy tay trong terminal thật, SQL đối chiếu), kèm các caveat trên; Tuấn review và push/PR còn chờ cổng G2.
 ```
