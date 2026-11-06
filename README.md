@@ -1,6 +1,6 @@
 # SE_10 — BlueMoon Complex
 
-Hệ thống quản lý chung cư BlueMoon (v1.0): tài khoản và phân quyền, hộ/nhân khẩu, kỳ thu và thu phí, báo cáo. Monorepo gồm **backend** (Java 21, Spring Boot 4.0.9, Maven, MySQL 8.4) và **frontend** (React 19, TypeScript, Vite).
+Hệ thống quản lý chung cư BlueMoon (v1.0): tài khoản và phân quyền, hộ/nhân khẩu, kỳ thu và thu phí, báo cáo. Repo này là monorepo gồm **backend** (Java 21, Spring Boot 4.0.9, Maven, MySQL 8.4) và **frontend** (React 19, TypeScript, Vite; xem [`frontend/README.md`](frontend/README.md)). Giao diện mới ghép API đăng nhập và tạo tài khoản; phần còn lại chạy bằng dữ liệu mẫu.
 
 > Nguồn sự thật về tiến độ là [`docs/sprint-1/TASKS.md`](docs/sprint-1/TASKS.md). Một task chỉ được tick khi có bằng chứng (lệnh, kết quả, commit/PR), không tick vì đã viết code.
 
@@ -17,7 +17,6 @@ Hệ thống quản lý chung cư BlueMoon (v1.0): tài khoản và phân quyề
 | **S04** | **Vô hiệu, bật lại, mở khóa account; hủy session; đọc lại quyền mỗi request** | **Xong, đã tick** (nhánh `feat/s04-account-disable`, chưa PR). `verify` + `-Pintegration` xanh (86 + 75 test, MySQL 8.4, JDK 21.0.9, 06/11/2026) và đã chạy thử với backend thật. Phần UI của AC thuộc Kiệt; chờ Tuấn review và PR |
 | Frontend | Giao diện cho 24 màn v1 (sáng/tối) | Có giao diện; đã nối API cho S01, S02, S04, S05, các màn còn lại dùng dữ liệu mẫu (xem `frontend/README.md`) |
 | S03, S06–S15 | Đổi mật khẩu, khai báo/duyệt, đơn giá, kỳ thu, thu tiền, báo cáo, backup, hồi quy, bàn giao | Chưa bắt đầu |
-
 **Có thể dùng ngay:**
 - Health, metadata, session JDBC, audit.
 - Đăng nhập, đăng xuất, xem phiên (`/api/v1/auth/*`) và khóa tạm thời khi sai mật khẩu nhiều lần.
@@ -42,7 +41,7 @@ backend/            Spring Boot (Maven Wrapper, Dockerfile)
   src/main/resources/db/migration/   Flyway V1–V6
   src/test/         unit/MVC (verify) và integration (-Pintegration)
 docs/               kiến trúc, yêu cầu, quyết định, kế hoạch, kiểm chứng
-frontend/           React + TypeScript + Vite (xem frontend/README.md; do Kiệt đưa vào repo)
+frontend/           React + TypeScript + Vite (giao diện, dữ liệu mẫu; xem frontend/README.md)
 scripts/            dev.sh (docker compose), verify.sh
 compose.yaml        MySQL 8.4 + backend cho môi trường local
 ```
@@ -116,6 +115,19 @@ docker compose up --build -d
 docker compose logs -f backend
 ```
 Container `backend` build từ mã đang checkout và dùng cổng 8080. **Không chạy cùng lúc với JAR/IDE** (cổng trùng). Tạo BQT đầu tiên: chạy lệnh bootstrap trong container với `-it` (chưa kiểm chứng) hoặc dùng JAR như Cách B bước 4. Frontend chạy như bước 6 ở trên.
+
+## Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev      # http://localhost:5173, proxy /api tới http://localhost:8080
+npm test         # 22 test
+npm run build
+```
+Cần backend chạy ở cổng 8080 để đăng nhập thật; không có backend thì dùng chế độ Demo ở màn đăng nhập (chỉ có khi chạy `npm run dev`). Có chế độ sáng, tối và tự động theo hệ thống. Tiến độ, phần đã ghép API và việc còn mở: [`frontend/README.md`](frontend/README.md); thiết kế: `frontend/DESIGN.md`; báo cáo audit: `frontend/AUDIT.md`.
+
+## Phát triển bằng IDE
 
 ### Thử luồng S04 + S05 bằng giao diện
 
