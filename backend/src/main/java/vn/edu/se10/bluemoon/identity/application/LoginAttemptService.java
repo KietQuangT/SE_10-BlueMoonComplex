@@ -71,7 +71,7 @@ public class LoginAttemptService {
 
         user.resetLoginFailures();
         audit.record(user.getId(), "LOGIN_SUCCESS", "User", user.getId().toString(), null);
-        return new Result(new AuthenticatedUser(user.getId(), user.getUsername(), user.getFullName(), user.getRole().getCode(), user.getHouseholdId()), true);
+        return new Result(new AuthenticatedUser(user.getId(), user.getUsername(), user.getFullName(), user.getRole().getCode(), user.getHouseholdId(), user.isMustChangePassword()), true);
     }
 
     private void dummyAuthenticate(String username, String password) {

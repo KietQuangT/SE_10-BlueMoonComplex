@@ -53,6 +53,21 @@ Hệ quả của V2–V4 đã nằm trong DB `bluemoon` đã chạy: nếu nhóm
 Chưa xác nhận: Windows/ARM, máy thứ hai, CI trên remote (chưa push); `EXPLAIN` cho `uq_users_username`; test 403 theo vai trò qua security chain thật; bậc >= 7 qua service; test timing nhánh đang khóa/INACTIVE; round trip MySQL cho trần `9999-12-31 23:59:59.999999`. Hệ quả của V5 trong DB `bluemoon` cục bộ: nếu V5 đổi trước khi merge, Flyway báo sai checksum; Sơn tự tạo lại DB cục bộ, không sửa tay `flyway_schema_history`.
 Lệnh chạy IT cần biến `DB_USER`, `DB_PASSWORD`, `DB_NAME` (`.env` dùng tên `MYSQL_*`, Maven không tự đọc); `LOGGING_LEVEL_ORG_HIBERNATE_SQL` không đủ để bật SQL vì tên logger phân biệt hoa thường.
 
+## S02: cấp account, email mô phỏng, bootstrap (06/11/2026)
+
+| Kiểm tra | Kết quả |
+|---|---|
+| `cd backend && ./mvnw -B -ntp -Pintegration verify` (Sơn chạy, JDK 21.0.9, MySQL 8.4.13 ở localhost:3306, macOS aarch64, JVM +07, 11:43–11:44 +07, nhánh feat/s02-account-provisioning, HEAD 6e138e4, worktree sạch) | BUILD SUCCESS: surefire 56 test (AccountApiTest 5, MustChangePasswordGuardTest 3, BootstrapSecurityContextTest 1, EmailNormalizerTest 1, TemporaryPasswordGeneratorTest 1, AuthApiTest 9, AuditServiceTest 23, LoginLockPolicyTest 6, UnknownUserTimingTest 1, UserRepositoryQueryTest 1, SystemInfoApiTest 5); failsafe 51 test (AccountProvisioningIT 11, BootstrapAdminIT 7, AccountAtomicityIT 2, IdentitySessionIT 23, RoleAuditIT 4, IdentityCookieIT 1, BootstrapIT 3); 0 failure/error/skipped; 35,763 s. Log không in SHA: khớp commit là suy luận từ thời điểm |
+| Lần chạy trước trên 20f883f (Sơn chạy) | failsafe 49/51: AccountAtomicityIT 2 Error (`IllegalTransactionStateException`: stub `doThrow().when(spy).record(...)` đi qua proxy `@Transactional(MANDATORY)`). Sửa ở 6e138e4 bằng `AopTestUtils.getUltimateTargetObject`, không đổi code sản phẩm |
+| Flyway | "Successfully validated 6 migrations"; áp V6 từ V5 ở lần chạy đầu; `ddl-auto=validate` qua với cột BOOLEAN |
+| Bootstrap không console | `BootstrapAdminIT.bootstrapWithoutConsoleExitsWithoutCreatingUsers` chạy `java -jar` thật, thoát mã khác 0, in "Cần terminal tương tác", số user không đổi |
+| Bootstrap trong terminal thật (Sơn chạy tay, 12:23–12:28 +07, DB `bluemoon` cục bộ) | Lần 0: mật khẩu bị từ chối, không tạo gì. Lần 1: "Đã tạo ADMIN.". Lần 2: "Đã có ADMIN, bỏ qua.". Mật khẩu không hiện trên terminal. SQL: `audit_log` có 1 dòng `BOOTSTRAP_ADMIN` actor NULL changes `{"role":"ADMIN"}`; `users` của tài khoản đó `must_change_password=0`, `status=ACTIVE` |
+| Verifier tự chạy `mvn-sandbox.sh -B -ntp verify` | KHÔNG chạy được (sandbox không ghi được `target/` trong worktree Orca). Kết quả dựa trên log của Sơn và report trong worktree |
+
+Đã chứng minh trên MySQL thật: ADMIN cấp ba vai trò; mock email đúng người (hash khớp, mật khẩu A không vào B); email trùng bị từ chối (3 biến thể) và race 8 luồng chỉ một thắng; mật khẩu tạm không lộ trong response, output log, audit, `users.password_hash`, `SPRING_SESSION`; atomicity (audit lỗi hoặc mail lỗi thì rollback toàn bộ); cờ đổi mật khẩu chặn fail-closed và session đang mở vẫn bị chặn sau khi xóa cờ trong DB; migration V6 (DEFAULT, CHECK, FK); `BootstrapAdminService` (một ADMIN, INACTIVE vẫn chặn, mật khẩu không hợp lệ); bootstrap tay trong terminal thật.
+Chưa xác nhận: Windows, máy thứ hai, CI trên remote (chưa push); đối chứng tên logger khi bỏ cấu hình; `org.hibernate.orm.jdbc.bind=TRACE` (sẽ in email, `body`, `password_hash`: không bật); hành vi session cũ; nhánh DB của race test; đăng nhập bằng tài khoản bootstrap qua API và lịch sử shell; EP-01 của Kiệt; K2, K4, K5, K6, K9 (xem khối S02 trong `docs/sprint-1/TASKS.md`). Lệnh bootstrap báo "Dữ liệu không hợp lệ." chung chung kèm stack trace khi mật khẩu bị từ chối (chưa sửa). V6 và một tài khoản ADMIN thử đã nằm trong DB `bluemoon` cục bộ: sửa V6 trước merge thì Sơn tạo lại DB cục bộ.
+Mật khẩu tạm nằm dạng rõ trong `mock_emails.body`, không hết hạn (hệ quả D14). Xem bằng SQL: `SELECT id, recipient_email, subject, status, created_at, body FROM mock_emails ORDER BY id DESC`.
+
 ## Chưa xác nhận bằng thực thi
 
 - Máy soạn không có Docker/MySQL nên chưa chạy `docker compose up`, image build, Flyway trên MySQL, health runtime hoặc lưu/xóa JDBC session thực tế.

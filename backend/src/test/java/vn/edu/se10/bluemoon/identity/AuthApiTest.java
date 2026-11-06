@@ -91,15 +91,15 @@ class AuthApiTest {
         verifyNoInteractions(attempts);
     }
 
-    @Test void successfulRolesExposeOnlyFourFields() throws Exception {
+    @Test void successfulRolesExposeOnlyFiveFields() throws Exception {
         for (String role : new String[] {"ADMIN", "ACCOUNTANT", "RESIDENT"}) {
             when(attempts.login(anyString(), anyString())).thenReturn(new LoginAttemptService.Result(
-                    new AuthenticatedUser(1, "canonical", "Test User", role, 42L), true));
+                    new AuthenticatedUser(1, "canonical", "Test User", role, 42L, false), true));
             var result = mvc.perform(post("/api/v1/auth/login").with(csrf()).contentType("application/json")
                     .content("{\"username\":\"canonical\",\"password\":\"secret\"}"))
                     .andExpect(status().isOk()).andExpect(jsonPath("$.role").value(role)).andReturn();
             var body = JsonMapper.builder().build().readTree(result.getResponse().getContentAsString());
-            assertThat(body.size()).isEqualTo(4);
+            assertThat(body.size()).isEqualTo(5);
             for (String field : new String[] {"passwordHash", "email", "status", "failedLoginCount", "lockedUntil"})
                 assertThat(body.has(field)).isFalse();
         }
@@ -129,7 +129,7 @@ class AuthApiTest {
 
     @Test void csrfTokenRotatesOnLoginAndLogout() throws Exception {
         when(attempts.login(anyString(), anyString())).thenReturn(new LoginAttemptService.Result(
-                new AuthenticatedUser(1, "canonical", "Test", "ADMIN", null), true));
+                new AuthenticatedUser(1, "canonical", "Test", "ADMIN", null, false), true));
         var initial = mvc.perform(get("/api/v1/auth/csrf")).andReturn();
         var session = (MockHttpSession) initial.getRequest().getSession(false);
         String before = JsonMapper.builder().build().readTree(initial.getResponse().getContentAsString()).get("token").asString();
