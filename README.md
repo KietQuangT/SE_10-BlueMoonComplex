@@ -1,28 +1,33 @@
 # SE_10 — BlueMoon Complex
 
-Hệ thống quản lý chung cư BlueMoon (v1.0): tài khoản và phân quyền, hộ/nhân khẩu, kỳ thu và thu phí, báo cáo. Repo này là monorepo; hiện chỉ có **backend** (Java 21, Spring Boot 4.0.9, Maven, MySQL 8.4). Thư mục `frontend/` chưa có mã.
+Hệ thống quản lý chung cư BlueMoon (v1.0): tài khoản và phân quyền, hộ/nhân khẩu, kỳ thu và thu phí, báo cáo. Monorepo gồm **backend** (Java 21, Spring Boot 4.0.9, Maven, MySQL 8.4) và **frontend** (React 19, TypeScript, Vite).
 
 > Nguồn sự thật về tiến độ là [`docs/sprint-1/TASKS.md`](docs/sprint-1/TASKS.md). Một task chỉ được tick khi có bằng chứng (lệnh, kết quả, commit/PR), không tick vì đã viết code.
 
-## Trạng thái
+## Trạng thái (07/11/2026)
 
 | Task | Nội dung | Trạng thái |
 |---|---|---|
 | F00 | Repo, wrapper, hướng dẫn, CI | Xong (PR #4) |
 | F01 | Chốt hợp đồng, quyền và dữ liệu (D13–D17) | Xong theo xác nhận của Sơn; chưa có văn bản của cả nhóm |
 | F02 | Nền tảng backend/DB, audit cùng transaction | Xong (PR #4) |
-| S01 | Đăng nhập, session, vai trò, audit, chống dò mật khẩu | Xong (PR #5 đã merge) |
-| S02 | Cấp account, email mô phỏng, bootstrap BQT | Xong (PR #6 đã merge) |
-| **S05** | **Hộ, nhân khẩu, chuyển đi, lịch sử biến động** | **Xong, đang chờ PR/CI (nhánh `feat/s05-households-residents`); Tuấn đã review và approve theo lời Sơn** |
-| S03, S04, S06–S15 | Đổi mật khẩu, vô hiệu account, khai báo/duyệt, đơn giá, kỳ thu, thu tiền, báo cáo, backup, hồi quy, bàn giao | Chưa bắt đầu |
+| S01 | Đăng nhập, session, vai trò, audit, chống dò mật khẩu | Xong (PR #5) |
+| S02 | Cấp account, email mô phỏng, bootstrap BQT | Xong (PR #6) |
+| S05 | Hộ, nhân khẩu, chuyển đi, lịch sử biến động | Xong (PR #7) |
+| **S04** | **Vô hiệu, bật lại, mở khóa account; hủy session; đọc lại quyền mỗi request** | **Xong, đã tick** (nhánh `feat/s04-account-disable`, chưa PR). `verify` + `-Pintegration` xanh (86 + 75 test, MySQL 8.4, JDK 21.0.9, 06/11/2026) và đã chạy thử với backend thật. Phần UI của AC thuộc Kiệt; chờ Tuấn review và PR |
+| Frontend | Giao diện cho 24 màn v1 (sáng/tối) | Có giao diện; đã nối API cho S01, S02, S04, S05, các màn còn lại dùng dữ liệu mẫu (xem `frontend/README.md`) |
+| S03, S06–S15 | Đổi mật khẩu, khai báo/duyệt, đơn giá, kỳ thu, thu tiền, báo cáo, backup, hồi quy, bàn giao | Chưa bắt đầu |
 
 **Có thể dùng ngay:**
 - Health, metadata, session JDBC, audit.
 - Đăng nhập, đăng xuất, xem phiên (`/api/v1/auth/*`) và khóa tạm thời khi sai mật khẩu nhiều lần.
 - Lệnh tạo BQT đầu tiên (profile `bootstrap`); ADMIN cấp account qua `POST /api/v1/accounts` (kèm email mô phỏng).
+- ADMIN vô hiệu, bật lại, mở khóa account (S04); trạng thái và vai trò đọc lại từ DB ở mỗi request nên cookie cũ chết ngay.
 - Hộ và nhân khẩu cho ADMIN, chuyển đi, lịch sử biến động, và cư dân xem thành viên hộ mình (`/api/v1/households`, `/api/v1/residents`).
 
-**Chưa có:** tài khoản mặc định; đổi mật khẩu và xóa cờ đổi mật khẩu lần đầu (S03); vô hiệu account, mở khóa thủ công, hủy session theo account (S04); khai báo/duyệt, tạm vắng, quay lại cư trú (S06); mọi API phí và báo cáo. Mọi endpoint không khai báo đều bị chặn mặc định (`denyAll`).
+**Chưa có:** tài khoản mặc định (cố ý); đổi mật khẩu và xóa cờ đổi mật khẩu lần đầu (S03); API liệt kê tài khoản; khai báo/duyệt, tạm vắng, quay lại cư trú (S06); mọi API phí và báo cáo. Mọi endpoint không khai báo đều bị chặn mặc định (`denyAll`).
+
+> **Lưu ý khi thử:** vì S03 chưa có, tài khoản mới cấp bị chặn mọi API (403 `PASSWORD_CHANGE_REQUIRED`) cho tới khi có luồng đổi mật khẩu. Tài khoản BQT tạo bằng lệnh bootstrap thì không bị chặn.
 
 ## Cấu trúc repo
 
@@ -31,49 +36,118 @@ backend/            Spring Boot (Maven Wrapper, Dockerfile)
   src/main/java/vn/edu/se10/bluemoon/
     config/         SecurityConfig (session, CSRF, CORS, quyền), ClockConfig
     common/         audit (AuditService), error, web (request ID)
-    identity/       api / application / persistence: đăng nhập, session, khóa tài khoản, cấp account, bootstrap BQT
+    identity/       api / application / persistence: đăng nhập, session, khóa tài khoản, cấp account, vô hiệu/bật lại/mở khóa, bootstrap BQT
     residency/      api / application / persistence: hộ, nhân khẩu, chuyển đi, lịch sử biến động, HouseholdLookup
     systeminfo/     metadata công khai
   src/main/resources/db/migration/   Flyway V1–V6
   src/test/         unit/MVC (verify) và integration (-Pintegration)
 docs/               kiến trúc, yêu cầu, quyết định, kế hoạch, kiểm chứng
-frontend/           chưa có mã
+frontend/           React + TypeScript + Vite (xem frontend/README.md; do Kiệt đưa vào repo)
 scripts/            dev.sh (docker compose), verify.sh
 compose.yaml        MySQL 8.4 + backend cho môi trường local
 ```
 
 Package theo tính năng: `api` → `application` → `persistence`. Module không gọi repository của module khác; dùng interface ở `application` (ví dụ `identity` kiểm tra trạng thái hộ qua `HouseholdLookup`). Chi tiết và quy ước: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-## Khởi động nhanh bằng Docker
+## Chạy dự án từng bước
 
-Yêu cầu Git và Docker Engine/Desktop có Compose v2.
+Yêu cầu máy: **Git**, **Docker Desktop** (Compose v2), **JDK 21** (build chỉ chấp nhận đúng JDK 21), **Node 22+** và npm (cho frontend), curl. macOS: `brew install openjdk@21` rồi đặt `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`.
+
+Có hai cách. **Cách B (khuyến nghị khi phát triển)** chạy MySQL trong Docker, backend bằng JAR hoặc IDE, frontend bằng Vite. **Cách A** chạy cả backend trong Docker, nhanh nhưng khó sửa và gỡ lỗi.
+
+### Chung cho cả hai cách
+
+1. Lấy mã và chuyển sang nhánh cần chạy (ví dụ nhánh S04 để thử vô hiệu/mở khóa).
+2. Tạo file môi trường và đặt mật khẩu local:
+   ```bash
+   cp .env.example .env
+   # Mở .env, thay MYSQL_PASSWORD và MYSQL_ROOT_PASSWORD (mật khẩu chỉ dùng trên máy bạn).
+   ```
+   `.env` chỉ Docker Compose đọc, dùng tên `MYSQL_*`; Maven và IDE không tự đọc nó. Không commit `.env`.
+
+### Cách B: MySQL Docker + backend JAR + frontend Vite
+
+1. **Bật MySQL** và chờ sẵn sàng (cột Health là `healthy`):
+   ```bash
+   docker compose up -d db
+   docker compose ps
+   ```
+2. **Build backend** (chạy test và đóng gói JAR, mất khoảng 1 phút; không cần DB):
+   ```bash
+   cd backend
+   ./mvnw -B -ntp verify          # Windows: mvnw.cmd
+   ```
+   Báo `Dự án dùng JDK 21` nghĩa là `java` mặc định không phải JDK 21: đặt `JAVA_HOME` rồi chạy lại.
+3. **Đặt biến kết nối DB** trong cửa sổ terminal sẽ chạy backend (đọc từ `.env`, không in mật khẩu):
+   ```bash
+   set -a; . ../.env; set +a
+   export DB_HOST=127.0.0.1 DB_PORT=${DB_PORT:-3306} DB_NAME=$MYSQL_DATABASE DB_USER=$MYSQL_USER DB_PASSWORD=$MYSQL_PASSWORD
+   ```
+   PowerShell: `$env:DB_HOST="127.0.0.1"; $env:DB_NAME="bluemoon"; $env:DB_USER="bluemoon"; $env:DB_PASSWORD="..."` (không dán mật khẩu vào chat, issue hay commit).
+4. **Tạo BQT đầu tiên** (một lần, DB mới chưa có tài khoản nào). Lệnh hỏi tên đăng nhập, họ tên, email, mật khẩu hai lần (từ 8 ký tự, không hiện trên màn hình):
+   ```bash
+   java -jar target/bluemoon-backend-0.1.0-SNAPSHOT.jar --spring.profiles.active=bootstrap
+   ```
+   DB đã có ADMIN thì lệnh in "Đã có ADMIN, bỏ qua." và không làm gì. Tự đặt và nhớ mật khẩu: không có tài khoản mặc định và không có API đặt lại (xem "Quên mật khẩu ADMIN" bên dưới).
+5. **Chạy backend** (giữ cửa sổ này mở; Flyway tự tạo bảng khi khởi động):
+   ```bash
+   java -jar target/bluemoon-backend-0.1.0-SNAPSHOT.jar --spring.profiles.active=local
+   # hoặc trong IDE/Maven: ./mvnw spring-boot:run  (cần cùng các biến DB_* ở bước 3)
+   ```
+   Kiểm tra ở terminal khác; cả hai phải trả `200`:
+   ```bash
+   curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080/actuator/health
+   curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080/api/v1/auth/csrf
+   ```
+   Nếu `auth/csrf` trả 401, cổng 8080 đang có một backend khác (thường là container `backend` của Docker từ lần chạy trước): xem mục "Xử lý sự cố".
+6. **Chạy frontend** (cửa sổ khác; cần thư mục `frontend/` trong nhánh bạn đang dùng):
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   Mở đúng **http://localhost:5173** (không dùng `127.0.0.1`: CORS của backend chỉ nhận origin `http://localhost:5173`). Vite chuyển tiếp `/api` sang `http://localhost:8080`.
+7. **Đăng nhập** ở màn Login bằng tên và mật khẩu BQT vừa tạo. Giữ chế độ **Backend thật** (không bấm "Demo"). Sau đó thử luồng dưới đây.
+
+### Cách A: Docker chạy cả backend
+
 ```bash
-cp .env.example .env
-# Mở .env, thay hai mật khẩu local (MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD).
 docker compose up --build -d
 docker compose logs -f backend
 ```
-Kiểm tra ở terminal khác:
-```bash
-curl -fsS http://localhost:8080/actuator/health
-curl -fsS http://localhost:8080/api/v1/system/info
-```
-Health chỉ báo trạng thái ứng dụng và DB, không có chi tiết. `/actuator/health/liveness` chỉ kiểm tra tiến trình sống, không dùng riêng nó để kết luận DB sẵn sàng.
+Container `backend` build từ mã đang checkout và dùng cổng 8080. **Không chạy cùng lúc với JAR/IDE** (cổng trùng). Tạo BQT đầu tiên: chạy lệnh bootstrap trong container với `-it` (chưa kiểm chứng) hoặc dùng JAR như Cách B bước 4. Frontend chạy như bước 6 ở trên.
 
-## Phát triển bằng IDE
+### Thử luồng S04 + S05 bằng giao diện
 
-Cài JDK 21. Maven Wrapper tự tải Maven 3.9.11 lần đầu (cần Internet). Build chỉ chấp nhận đúng JDK 21: nếu `java` mặc định là bản khác, enforcer báo "Dự án dùng JDK 21"; đặt `JAVA_HOME` trỏ tới JDK 21 trong shell chạy `./mvnw`.
+1. **Hộ:** Hộ gia đình → Thêm hộ (ví dụ `DEMO-01`, căn `DEMO-A01`, 50.5 m²). Thêm lần hai cùng mã phải báo trùng.
+2. **Nhân khẩu:** trang hộ → Thêm nhân khẩu (dùng số giấy tờ giả). Số giấy tờ trùng với người đang cư trú phải bị chặn và thông báo không chứa số.
+3. **Chuyển đi:** Chuyển đi và lưu trữ → chọn hộ, nhân khẩu, ngày, lý do. Người đó sang tab Lưu trữ, không bị xóa.
+4. **Cấp tài khoản cư dân:** Tài khoản → Tạo tài khoản, vai trò Cư dân, gắn hộ. Mật khẩu tạm không hiện trên màn hình; xem trong thư mô phỏng (bảng `mock_emails`):
+   ```bash
+   docker compose exec db sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -u"$MYSQL_USER" "$MYSQL_DATABASE" -e "SELECT id, recipient_email, body FROM mock_emails ORDER BY id DESC LIMIT 1\G"'
+   ```
+   Tài khoản mới bị 403 `PASSWORD_CHANGE_REQUIRED` vì S03 chưa có. **Chỉ để thử trên DB local**, có thể tắt cờ cho đúng tài khoản đó: `UPDATE users SET must_change_password = FALSE WHERE username = '<tên>'` (chạy qua `mysql` như trên với `-e`). Đây không phải hành vi của sản phẩm.
+5. **Vô hiệu, bật lại, mở khóa:** Tài khoản (danh sách chỉ hiện tài khoản vừa cấp trong phiên, **đừng tải lại trang**, vì chưa có API liệt kê). Đăng nhập tài khoản cư dân ở cửa sổ ẩn danh; ở cửa sổ BQT bấm Vô hiệu hóa: lần bấm kế của cư dân bị đưa về đăng nhập. Nhập sai mật khẩu 5 lần để bị khóa, rồi BQT bấm Mở khóa.
+6. **Kiểm audit:** `SELECT id, action, entity_type, entity_id, changes FROM audit_log ORDER BY id DESC LIMIT 15;` Phải thấy `HOUSEHOLD_CREATED`, `RESIDENT_CREATED`, `RESIDENT_MOVED_OUT`, `ACCOUNT_DISABLED`, `SESSIONS_REVOKED`, `ACCOUNT_ENABLED`, `ACCOUNT_UNLOCKED`; cột `changes` không chứa email hay mật khẩu.
+
+Mở shell MySQL tương tác: `docker compose exec db sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -u"$MYSQL_USER" "$MYSQL_DATABASE"'`.
+
+### Quên mật khẩu ADMIN (chỉ DB local)
+
+Chưa có API đặt lại mật khẩu (S03). Trên DB local, tạo hash BCrypt rồi ghi đè; thay `<tên>`. Việc này đi thẳng vào DB, **không có dòng audit**; không dùng trên DB thật:
 ```bash
-docker compose up -d db
-export DB_HOST=127.0.0.1 DB_PORT=3306 DB_NAME=bluemoon DB_USER=bluemoon
-export DB_PASSWORD='mat_khau_ban_da_dat_trong_env'
-cd backend
-./mvnw spring-boot:run
+read -rs PW; HASH=$(printf '%s' "$PW" | htpasswd -niBC 10 u | tr -d '\n' | cut -d: -f2); unset PW
+printf "UPDATE users u JOIN roles r ON r.id=u.role_id SET u.password_hash='%s', u.failed_login_count=0, u.lock_level=0, u.locked_until=NULL WHERE r.code='ADMIN' AND u.username='<tên>';\nDELETE FROM SPRING_SESSION WHERE PRINCIPAL_NAME='<tên>';\n" "$HASH" \
+  | docker compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_PASSWORD" mysql -u"$MYSQL_USER" "$MYSQL_DATABASE"'
 ```
-- Không chạy backend trong Docker và trong IDE cùng lúc (cùng cổng 8080). Nếu `.env` đổi `DB_PORT`, đổi tương ứng trong IDE.
-- `.env` chỉ dùng cho Docker Compose và dùng tên `MYSQL_*`; Maven/IDE không tự đọc nó và cần biến `DB_*` như trên. `DB_PASSWORD` phải khớp mật khẩu mà volume MySQL đã được tạo.
-- PowerShell: `$env:DB_PASSWORD="..."` và `./mvnw.cmd`. Không dán mật khẩu vào chat, issue hay commit.
+Dự án chỉ nhận hash BCrypt (`BCryptPasswordEncoder`, hash dạng `$2a$`/`$2y$`).
+
+### Ghi chú về cấu hình
+
 - Profile mặc định là `local`: cookie session không có cờ `Secure` vì chưa có TLS. Không dùng cấu hình này để triển khai ra Internet.
+- Không chạy backend trong Docker và trong IDE/JAR cùng lúc (cùng cổng 8080). Nếu `.env` đổi `DB_PORT`, đổi tương ứng ở bước 3.
+- Health chỉ báo trạng thái ứng dụng và DB, không có chi tiết. `/actuator/health/liveness` chỉ kiểm tra tiến trình sống.
+
 
 ## Xác thực và phân quyền (S01)
 
@@ -129,9 +203,28 @@ java -jar target/bluemoon-backend-0.1.0-SNAPSHOT.jar --spring.profiles.active=bo
 - Đang khóa: mật khẩu đúng vẫn bị từ chối, không đếm thêm và không gia hạn. Hết khóa thì đăng nhập đúng đặt lại bộ đếm.
 - `ADMIN` không bị khóa (không có lớp chặn dò mật khẩu ADMIN ở tầng ứng dụng; xem rủi ro trong `docs/DECISIONS.md`).
 - Thời điểm khóa lưu UTC (`DATETIME(6)`); kết quả không phụ thuộc múi giờ của JVM.
-- Mở khóa thủ công bởi BQT thuộc task S04, chưa có.
+- Mở khóa thủ công bởi BQT: xem mục "Vô hiệu, bật lại và mở khóa account (S04)" bên dưới.
 
 **Audit:** `LOGIN_SUCCESS`, `LOGIN_FAILED`, `ACCOUNT_LOCKED` ghi cùng transaction với thay đổi dữ liệu (rollback thì audit cũng rollback). `AuditService.recordBootstrap` dành riêng cho lệnh tạo BQT đầu tiên (actor NULL, action cố định `BOOTSTRAP_ADMIN`).
+
+## Vô hiệu, bật lại và mở khóa account (S04)
+
+Tiền tố `/api/v1`. Cả ba route chỉ dành cho `ADMIN`, cần đăng nhập và CSRF, trả `204` không có body.
+
+| Route | Việc làm | Lỗi |
+|---|---|---|
+| `POST /accounts/{id}/disable` | Đặt `status = INACTIVE` và xóa mọi phiên của account (`SPRING_SESSION` theo username) | 409 `ACCOUNT_DISABLE_CONFLICT`: tự vô hiệu chính mình, vô hiệu ADMIN `ACTIVE` cuối cùng, hoặc account đã `INACTIVE`; 404 `ACCOUNT_NOT_FOUND` |
+| `POST /accounts/{id}/enable` | Đặt `status = ACTIVE`; người đó đăng nhập lại bằng mật khẩu hiện có | 409 `ACCOUNT_ALREADY_ACTIVE` nếu đang `ACTIVE`; 404 |
+| `POST /accounts/{id}/unlock` | Đặt lại `failed_login_count`, `lock_level` về 0 và `locked_until` về `NULL` | 409 `ACCOUNT_NOT_LOCKED` nếu account là ADMIN hoặc không còn dấu vết khóa (cả ba cột đã sạch); 404 |
+
+**Quy tắc đã chốt (D22 và hợp đồng S04):**
+- Mỗi request đã đăng nhập đọc lại `status`, vai trò và `household_id` từ DB, không tin giá trị trong session. Cookie của account bị vô hiệu nhận 401 ngay; hạ quyền hoặc đổi hộ có hiệu lực ở request kế tiếp. Khi account không còn `ACTIVE`, phiên bị hủy trước khi trả 401.
+- Mở khóa đặt lại cả bậc khóa (`lock_level`), kể cả khi khóa đã hết hạn: nếu không, chỉ một lần sai nữa là lên bậc kế (D17, D18). ADMIN không bị khóa nên không có mở khóa ADMIN.
+- Vô hiệu, hủy phiên và audit nằm trong cùng một transaction. Audit: `ACCOUNT_DISABLED`, `ACCOUNT_ENABLED`, `ACCOUNT_UNLOCKED`, `SESSIONS_REVOKED`; không ghi email hay mật khẩu. Thao tác của actor đã bị vô hiệu giữa chừng bị từ chối 401.
+- Không đổi hộ hàng loạt khi hộ chuyển trạng thái (không hủy phiên cư dân trong hộ); dựa vào việc đọc lại mỗi request.
+
+**Giới hạn đã biết:** chưa có API liệt kê tài khoản; thiếu test đua thật cho trường hợp actor bị vô hiệu sau khi qua filter; chưa kiểm cookie thật ngoài MockMvc; `lock()` không đọc lại vai trò của actor; 409 dùng chung `detail` "Thông tin bị trùng" (có `code` riêng). Chi tiết: khối S04 trong `docs/sprint-1/TASKS.md` khi task được tick.
+
 
 ## Hộ, nhân khẩu và biến động (S05)
 
@@ -161,7 +254,7 @@ Trang trả `{content, page, size, totalElements, totalPages}`. Hộ trả `{id,
 - Audit cùng transaction: `HOUSEHOLD_CREATED`, `HOUSEHOLD_UPDATED`, `RESIDENT_CREATED`, `RESIDENT_UPDATED`, `RESIDENT_MOVED_OUT`. Audit chỉ ghi id, trạng thái, ngày hiệu lực và tên trường đã đổi, không ghi họ tên, số giấy tờ, số điện thoại, địa chỉ hay lý do.
 - Lỗi có `code`: 400 (`HOUSEHOLD_INVALID`, `INVALID_DATE`, `INVALID_FILTER`, `INVALID_RESIDENT`, `EMPTY_UPDATE`, `VALIDATION`), 404 (`HOUSEHOLD_NOT_FOUND`, `RESIDENT_NOT_FOUND`). Lỗi do bean validation (độ dài, thiếu trường) trả 400 không kèm `code`.
 
-**Giới hạn đã biết:** mã hộ và số giấy tờ chưa được cắt khoảng trắng đầu/cuối (`"H1"` và `"H1 "` là hai giá trị khác nhau); PATCH không xóa được một trường (null là giữ nguyên); mọi thao tác ghi nhân khẩu bị xếp tuần tự toàn cục để chống đua kiểm tra trùng số giấy tờ; chưa có endpoint ghi tạm vắng hay quay lại cư trú (S06); `householdId` nằm trong session nên đổi hộ của account (nếu có sau này) phải hủy session cũ (S04). Danh sách đầy đủ ở khối S05 trong `docs/sprint-1/TASKS.md`.
+**Giới hạn đã biết:** mã hộ và số giấy tờ chưa được cắt khoảng trắng đầu/cuối (`"H1"` và `"H1 "` là hai giá trị khác nhau); PATCH không xóa được một trường (null là giữ nguyên); mọi thao tác ghi nhân khẩu bị xếp tuần tự toàn cục để chống đua kiểm tra trùng số giấy tờ; chưa có endpoint ghi tạm vắng hay quay lại cư trú (S06); `householdId` được đọc lại từ DB ở mỗi request (S04), nên đổi hộ của account có hiệu lực ngay. Danh sách đầy đủ ở khối S05 trong `docs/sprint-1/TASKS.md`.
 
 ## Cơ sở dữ liệu và migration
 
@@ -176,7 +269,7 @@ Flyway tự áp migration khi khởi động; Hibernate chỉ `validate`, không
 | V5 | Cột chống dò mật khẩu: `failed_login_count`, `lock_level`, `locked_until` |
 | V6 | Cờ `must_change_password` và bảng `mock_emails` (email mô phỏng) |
 
-S05 không thêm migration. Phí và vai trò thứ tư bắt đầu từ V7. Quy tắc: không sửa migration đã merge hoặc đã chạy trên DB của người khác; thêm `V<n>__mo_ta.sql` mới. Nếu đã sửa migration trên DB cục bộ, Flyway báo sai checksum: tạo lại DB cục bộ, không sửa tay `flyway_schema_history`.
+S04 và S05 không thêm migration. Phí và vai trò thứ tư bắt đầu từ V7. Quy tắc: không sửa migration đã merge hoặc đã chạy trên DB của người khác; thêm `V<n>__mo_ta.sql` mới. Nếu đã sửa migration trên DB cục bộ, Flyway báo sai checksum: tạo lại DB cục bộ, không sửa tay `flyway_schema_history`.
 
 ## Test và build
 
@@ -185,8 +278,9 @@ cd backend
 ./mvnw -B -ntp verify                    # không cần DB
 ./mvnw -B -ntp -Pintegration verify      # cần MySQL thật và biến DB_*
 ```
-- Lệnh đầu chạy unit/MVC/security (hiện 75 test), đóng gói JAR, không cần DB.
-- Lệnh thứ hai chạy thêm integration (hiện 63 test: `BootstrapIT`, `RoleAuditIT`, `IdentityCookieIT`, `IdentitySessionIT`, `AccountProvisioningIT`, `AccountAtomicityIT`, `BootstrapAdminIT`, `HouseholdIntegrationIT`, `ResidentIntegrationIT`). Không tự bỏ qua khi thiếu DB. Lần chạy gần nhất (06/11/2026, MySQL 8.4, JDK 21.0.9) xanh cả hai.
+- Lệnh đầu chạy unit/MVC/security (86 test ở nhánh S04, 06/11/2026), đóng gói JAR, không cần DB.
+- Lệnh thứ hai chạy thêm integration (75 test: `BootstrapIT`, `RoleAuditIT`, `IdentityCookieIT`, `IdentitySessionIT`, `AccountProvisioningIT`, `AccountAtomicityIT`, `AccountManagementIT`, `BootstrapAdminIT`, `HouseholdIntegrationIT`, `ResidentIntegrationIT`). Không tự bỏ qua khi thiếu DB. Lần chạy gần nhất ở nhánh S04 (06/11/2026, MySQL 8.4, JDK 21.0.9) xanh cả hai, `BUILD SUCCESS`.
+- Frontend: `cd frontend && npm test` (29 test), `npm run build`.
 - `BootstrapAdminIT` chạy `java -jar target/...jar` thật nên cần JAR đã được đóng gói (lệnh `verify` làm việc đó).
 - Integration chạy trên DB `bluemoon` đang cấu hình: tự áp migration chưa có, tự thêm rồi xóa dữ liệu fixture, và `RoleAuditIT` đổi tên role `ADMIN` rồi khôi phục. `ResidentIntegrationIT` ghi vào hộ có id nhỏ nhất trong một test đua. Đừng chạy trên DB có người khác đang dùng hoặc dữ liệu thật.
 - Ghi lệnh và kết quả vào `docs/VALIDATION.md`. Không dùng cờ bỏ qua test hay enforcer.
@@ -212,12 +306,13 @@ cd backend
 |---|---|
 | [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) | Yêu cầu |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Kiến trúc, quy ước, auth, audit, lỗi |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Quyết định D01–D21 và các điểm chưa xác nhận |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Quyết định D01–D22 và các điểm chưa xác nhận |
 | [`docs/sprint-1/PLAN.md`](docs/sprint-1/PLAN.md) | Kế hoạch Sprint 1 |
 | [`docs/sprint-1/TASKS.md`](docs/sprint-1/TASKS.md) | Checklist và khối bằng chứng từng task |
 | [`docs/VALIDATION.md`](docs/VALIDATION.md) | Lệnh đã chạy và kết quả |
 | [`docs/SOURCE_REVIEW.md`](docs/SOURCE_REVIEW.md) | Đối chiếu nguồn và mâu thuẫn |
 | [`docs/STRUCTURE.md`](docs/STRUCTURE.md) | Cấu trúc dự án đầy đủ |
+| [`frontend/README.md`](frontend/README.md) | Frontend: chạy, cấu trúc, tiến độ, việc còn mở |
 
 ## Xử lý sự cố
 
@@ -230,6 +325,12 @@ cd backend
 | `Access denied for user 'bluemoon'` khi chạy integration | `DB_PASSWORD` không khớp mật khẩu mà volume MySQL đã được tạo; đặt đúng `DB_USER`, `DB_PASSWORD`, `DB_NAME` (không có khoảng trắng sau dấu `=`). Không xóa volume để sửa |
 | Đăng nhập luôn 401 trên DB mới | Chưa có tài khoản; chạy lệnh bootstrap BQT (mục "Tạo BQT đầu tiên") hoặc dùng fixture trong test |
 | Trình duyệt không gửi cookie session | Cookie `Secure` chỉ tắt ở profile `local`; kiểm tra profile đang chạy |
+| `GET /api/v1/auth/csrf` trả 401 hoặc web báo "sai mật khẩu" dù mật khẩu đúng | Cổng 8080 đang có backend khác bản (thường container `backend` của Docker từ lần trước). Dừng nó: `docker compose stop backend` (MySQL giữ nguyên), rồi chạy lại JAR. Kiểm: `curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080/api/v1/auth/csrf` phải là 200 |
+| Đăng nhập báo lỗi CORS hoặc 403 khi mở trang bằng `127.0.0.1` | Mở đúng `http://localhost:5173`; CORS chỉ nhận origin cấu hình ở `CORS_ALLOWED_ORIGIN` |
+| Tài khoản mới đăng nhập được nhưng mọi trang báo 403 `PASSWORD_CHANGE_REQUIRED` | Chờ S03 (đổi mật khẩu). Chỉ để thử trên DB local: xem "Thử luồng S04 + S05", bước 4 |
+| Quên mật khẩu ADMIN | Xem "Quên mật khẩu ADMIN (chỉ DB local)" |
+| `npm run dev` báo cổng 5173 bận | Có một Vite khác đang chạy; dùng luôn nó hoặc tắt nó rồi chạy lại (`strictPort`) |
+| Danh sách tài khoản trống sau khi tải lại trang | Bình thường: chưa có API liệt kê tài khoản; danh sách chỉ nhớ tài khoản cấp trong phiên |
 
 ## Dừng và dữ liệu
 
