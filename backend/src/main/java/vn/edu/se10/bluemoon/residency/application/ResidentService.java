@@ -15,13 +15,13 @@ public class ResidentService {
  private final ResidentRepository residents; private final HouseholdRepository households; private final ResidencyChangeRepository changes; private final AuditService audit; private final Clock clock;
  public ResidentService(ResidentRepository residents,HouseholdRepository households,ResidencyChangeRepository changes,AuditService audit,Clock clock){this.residents=residents;this.households=households;this.changes=changes;this.audit=audit;this.clock=clock;}
  @Transactional public ResidentResponse create(long householdId,ResidentRequest request,long actor){
-  validate(request,true,clock); Household household=household(householdId); if(request.identityNumber()!=null) guard(); if(!household.getStatus().equals("ACTIVE"))throw new BadRequestException("HOUSEHOLD_INVALID");
+  guard(); validate(request,true,clock); Household household=household(householdId); if(!household.getStatus().equals("ACTIVE"))throw new BadRequestException("HOUSEHOLD_INVALID");
   if(request.identityNumber()!=null) checkIdentity(request.identityNumber(),null);
   Resident r=residents.saveAndFlush(new Resident(householdId,request.fullName(),request.identityNumber(),request.dateOfBirth(),request.phone(),request.relationshipToHead(),clock.instant()));
   audit.record(actor,"RESIDENT_CREATED","Resident",r.getId().toString(),Map.of("id",r.getId().toString(),"householdId",r.getHouseholdId().toString(),"residencyStatus",r.getResidencyStatus().name())); return ResidentResponse.from(r);
  }
  @Transactional public ResidentResponse update(long id,ResidentRequest request,long actor){
-  validate(request,false,clock); if(request.identityNumber()!=null) guard(); Resident r=locked(id);
+  guard(); validate(request,false,clock); Resident r=locked(id);
   if(request.identityNumber()!=null && r.getResidencyStatus()!=ResidencyStatus.MOVED_OUT)checkIdentity(request.identityNumber(),id);
   Map<String,String> fields=new LinkedHashMap<>();
   if(request.fullName()!=null && !Objects.equals(request.fullName(),r.getFullName()))fields.put("fullName","changed");
@@ -33,7 +33,9 @@ public class ResidentService {
   audit.record(actor,"RESIDENT_UPDATED","Resident",r.getId().toString(),Map.of("fields",String.join(",",fields.keySet()))); return ResidentResponse.from(r);
  }
  @Transactional public ResidentResponse moveOut(long id,MoveOutRequest request,long actor){
-  if(request.effectiveDate()==null || request.effectiveDate().isAfter(today()) || request.reason()!=null && request.reason().length()>255)throw new BadRequestException("INVALID_DATE");
+  guard();
+  if(request.reason()!=null && request.reason().length()>255)throw new BadRequestException("VALIDATION");
+  if(request.effectiveDate()==null || request.effectiveDate().isAfter(today()))throw new BadRequestException("INVALID_DATE");
   Resident r=locked(id); if(r.getResidencyStatus()==ResidencyStatus.MOVED_OUT)throw new ConflictException("RESIDENT_ALREADY_MOVED_OUT");
   Instant now=clock.instant(); r.moveOut(now); changes.save(new ResidencyChange(r,request.effectiveDate(),request.reason(),actor,now));
   audit.record(actor,"RESIDENT_MOVED_OUT","Resident",r.getId().toString(),Map.of("id",r.getId().toString(),"householdId",r.getHouseholdId().toString(),"effectiveDate",request.effectiveDate().toString())); return ResidentResponse.from(r);
@@ -45,6 +47,7 @@ public class ResidentService {
  private PageRequest paging(int page,int size){if(page<0 || size<1 || size>100)throw new BadRequestException("INVALID_FILTER");return PageRequest.of(page,size,Sort.by("id"));}
  private Household household(long id){return households.findById(id).orElseThrow(()->new NotFoundException("HOUSEHOLD_NOT_FOUND"));}
  private Resident locked(long id){return residents.lockById(id).orElseThrow(()->new NotFoundException("RESIDENT_NOT_FOUND"));}
+ // Serializes all resident writes and inserts referencing the guard household; acceptable for v1 scale.
  private void guard(){if(households.lockIdentityGuard()==null)throw new BadRequestException("HOUSEHOLD_INVALID");}
  private void checkIdentity(String identity,Long exclude){if(!residents.findConflicts(identity,CURRENT,exclude).isEmpty())throw new ConflictException("IDENTITY_NUMBER_ALREADY_USED");}
  private LocalDate today(){return LocalDate.now(clock.withZone(ZoneId.of("Asia/Ho_Chi_Minh")));}
