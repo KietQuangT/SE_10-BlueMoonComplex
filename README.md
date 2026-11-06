@@ -1,6 +1,6 @@
 # SE_10 — BlueMoon Complex
 
-Hệ thống quản lý chung cư BlueMoon (v1.0): tài khoản và phân quyền, hộ/nhân khẩu, kỳ thu và thu phí, báo cáo. Repo này là monorepo; hiện chỉ có **backend** (Java 21, Spring Boot 4.0.9, Maven, MySQL 8.4). Thư mục `frontend/` chưa có mã.
+Hệ thống quản lý chung cư BlueMoon (v1.0): tài khoản và phân quyền, hộ/nhân khẩu, kỳ thu và thu phí, báo cáo. Repo này là monorepo gồm **backend** (Java 21, Spring Boot 4.0.9, Maven, MySQL 8.4) và **frontend** (React 19, TypeScript, Vite; xem [`frontend/README.md`](frontend/README.md)). Giao diện mới ghép API đăng nhập và tạo tài khoản; phần còn lại chạy bằng dữ liệu mẫu.
 
 > Nguồn sự thật về tiến độ là [`docs/sprint-1/TASKS.md`](docs/sprint-1/TASKS.md). Một task chỉ được tick khi có bằng chứng (lệnh, kết quả, commit/PR), không tick vì đã viết code.
 
@@ -13,9 +13,10 @@ Hệ thống quản lý chung cư BlueMoon (v1.0): tài khoản và phân quyề
 | F02 | Nền tảng backend/DB, audit cùng transaction | Xong (PR #4) |
 | S01 | Đăng nhập, session, vai trò, audit, chống dò mật khẩu | Xong (PR #5 đã merge) |
 | S02 | Cấp account, email mô phỏng, bootstrap BQT | Xong (PR #6 đã merge) |
-| **S05** | **Hộ, nhân khẩu, chuyển đi, lịch sử biến động** | **Xong, đang chờ PR/CI (nhánh `feat/s05-households-residents`); Tuấn đã review và approve theo lời Sơn** |
-| S03, S04, S06–S15 | Đổi mật khẩu, vô hiệu account, khai báo/duyệt, đơn giá, kỳ thu, thu tiền, báo cáo, backup, hồi quy, bàn giao | Chưa bắt đầu |
-
+| S05 | Hộ, nhân khẩu, chuyển đi, lịch sử biến động | Xong (PR #7 đã merge) |
+| S04 | Vô hiệu, bật lại, mở khóa account | Đã code trên nhánh `feat/s04-account-disable` (commit `de3091e`); chưa verify, chưa tick |
+| Frontend | Giao diện cho 24 màn v1 | Có giao diện và dữ liệu mẫu; chưa commit vào repo, chờ Kiệt (xem `frontend/README.md`) |
+| S03, S06–S15 | Đổi mật khẩu, khai báo/duyệt, đơn giá, kỳ thu, thu tiền, báo cáo, backup, hồi quy, bàn giao | Chưa bắt đầu |
 **Có thể dùng ngay:**
 - Health, metadata, session JDBC, audit.
 - Đăng nhập, đăng xuất, xem phiên (`/api/v1/auth/*`) và khóa tạm thời khi sai mật khẩu nhiều lần.
@@ -37,7 +38,7 @@ backend/            Spring Boot (Maven Wrapper, Dockerfile)
   src/main/resources/db/migration/   Flyway V1–V6
   src/test/         unit/MVC (verify) và integration (-Pintegration)
 docs/               kiến trúc, yêu cầu, quyết định, kế hoạch, kiểm chứng
-frontend/           chưa có mã
+frontend/           React + TypeScript + Vite (giao diện, dữ liệu mẫu; xem frontend/README.md)
 scripts/            dev.sh (docker compose), verify.sh
 compose.yaml        MySQL 8.4 + backend cho môi trường local
 ```
@@ -59,6 +60,17 @@ curl -fsS http://localhost:8080/actuator/health
 curl -fsS http://localhost:8080/api/v1/system/info
 ```
 Health chỉ báo trạng thái ứng dụng và DB, không có chi tiết. `/actuator/health/liveness` chỉ kiểm tra tiến trình sống, không dùng riêng nó để kết luận DB sẵn sàng.
+
+## Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev      # http://localhost:5173, proxy /api tới http://localhost:8080
+npm test         # 22 test
+npm run build
+```
+Cần backend chạy ở cổng 8080 để đăng nhập thật; không có backend thì dùng chế độ Demo ở màn đăng nhập (chỉ có khi chạy `npm run dev`). Có chế độ sáng, tối và tự động theo hệ thống. Tiến độ, phần đã ghép API và việc còn mở: [`frontend/README.md`](frontend/README.md); thiết kế: `frontend/DESIGN.md`; báo cáo audit: `frontend/AUDIT.md`.
 
 ## Phát triển bằng IDE
 
@@ -218,6 +230,7 @@ cd backend
 | [`docs/VALIDATION.md`](docs/VALIDATION.md) | Lệnh đã chạy và kết quả |
 | [`docs/SOURCE_REVIEW.md`](docs/SOURCE_REVIEW.md) | Đối chiếu nguồn và mâu thuẫn |
 | [`docs/STRUCTURE.md`](docs/STRUCTURE.md) | Cấu trúc dự án đầy đủ |
+| [`frontend/README.md`](frontend/README.md) | Frontend: chạy, cấu trúc, tiến độ, việc còn mở |
 
 ## Xử lý sự cố
 

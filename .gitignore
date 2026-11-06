@@ -23,3 +23,5 @@ backups/
 .claude/
 CLAUDE.local.md
 _agents_workspace/
+
+.claude/handoff/

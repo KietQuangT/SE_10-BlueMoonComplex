@@ -1,0 +1,320 @@
+/*
+ * BlueMoon design tokens — one system.
+ * Theme "Blue Moon" (06/11/2026): cobalt accent on a pale moonlit-blue ground, a soft moon glow on
+ * Login and around the app frame (see moon.svg). Pairing Newsreader / Hanken Grotesk (both ship a
+ * Vietnamese subset). Panels, tables and forms stay white so data reads clearly; one accent
+ * (cobalt) marks the main action, focus and links.
+ */
+:root {
+  /* Grounds (neutral) */
+  --surface-ground: #f2f6fd;
+  --surface-panel: #ffffff;
+  --surface-subtle: #eaf0fa;
+  --surface-muted: #e2eaf7;
+
+  /* Ink — body text is 7:1 or better on every ground */
+  --ink: #0b1220;
+  --ink-on: #ffffff;
+  --text-primary: #0b1220;
+  --text-secondary: #26314a;
+  --text-muted: #404c63;
+  --text-on-brand: #ffffff;
+
+  /* The one accent (cobalt): white label 6.7:1 on it, it 3:1+ on the ground */
+  --color-brand: #1d4ed8;
+  --color-brand-hover: #1e40af;
+  --color-brand-active: #1e3a8a;
+  --color-brand-soft: #e6eefc;
+  --color-brand-ink: #1e3a8a;
+
+  /* State colours — used for status only, always paired with a text label */
+  --color-amber: #b45309;
+  --color-amber-soft: #fef3c7;
+  --color-amber-ink: #7c3405;
+  --color-danger: #b91c1c;
+  --color-danger-hover: #991b1b;
+  --color-danger-soft: #fee2e2;
+  --color-danger-ink: #7f1d1d;
+  --color-info: #1d4e6b;
+  --color-info-soft: #e6f0f6;
+  --color-info-ink: #14394f;
+  --color-neutral-soft: #e8eef8;
+  --color-neutral-ink: #26314a;
+
+  /* Lines: hairline for structure, strong for the edge of a control (4.5:1 on white, WCAG 1.4.11) */
+  --border-subtle: #d3dcec;
+  --border-strong: #5f6f86;
+  --shadow-overlay: 0 12px 32px rgba(11, 18, 32, 0.18);
+
+  /* Moon: glow colours and the breathing cycle (stopped under reduced motion) */
+  --moon-glow: rgba(157, 188, 255, 0.45);
+  --moon-glow-soft: rgba(191, 212, 255, 0.4);
+  --moon-breathe: 9s;
+
+  /* Type */
+  --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --text-xs: 0.8125rem; /* 13px: nothing is smaller */
+  --text-sm: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px: text people read */
+  --text-md: 1.125rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-2xl: clamp(1.75rem, 1.4rem + 1.2vw, 2.375rem);
+  --text-hero: clamp(2rem, 1.5rem + 2vw, 3.25rem);
+
+  /* Spacing scale 4 8 12 16 24 32 48 64 */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-8: 3rem;
+  --space-10: 4rem;
+
+  /* Radius "soft": controls 8, panels 12, frames 20 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  /* Controls */
+  --control-h: 48px;
+  --btn-h: 44px;
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 160ms;
+  --duration-base: 220ms;
+
+  /* Layers */
+  --z-sticky: 15;
+  --z-topbar: 20;
+  --z-nav: 30;
+  --z-popover: 40;
+  --z-modal: 50;
+  --z-qa: 60;
+
+  /* Shell */
+  --rail-width: 264px;
+  --topbar-height: 64px;
+  --mobile-nav-height: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Theme surfaces that are gradients or scenes (dark values below) */
+  color-scheme: light;
+  --rail-end: #eaf1fd;
+  --rail-moon-dim: transparent;
+  --ws-top: #e7eefc;
+  --ws-glow: rgba(157, 188, 255, 0.45);
+  --sky: linear-gradient(180deg, #bcd3f6 0%, #dce9fc 45%, #f4f8ff 66%, #f4f8ff 100%);
+  --lake: linear-gradient(180deg, #e8f1ff 0%, #bcd4f6 40%, #a3c1ee 100%);
+  --scene-base: #a3c1ee;
+  --horizon: rgba(255, 255, 255, 0.95);
+  --reflect: rgba(255, 255, 255, 0.8);
+  --stars-opacity: 0;
+  --moon-filter: none;
+  --moon-opacity: 0.85;
+  --card-glass: rgba(255, 255, 255, 0.86);
+}
+
+/* Dark: near-black blue night, electric-blue moonlight. White text on the accent fails 4.5:1 here,
+   so --text-on-brand and --ink-on flip to the night colour. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --surface-ground: #04060d;
+  --surface-panel: #0b1222;
+  --surface-subtle: #0f182c;
+  --surface-muted: #152140;
+  --ink: #e8eefc;
+  --ink-on: #04060d;
+  --text-primary: #e8eefc;
+  --text-secondary: #c3cee6;
+  --text-muted: #9fb0d0;
+  --text-on-brand: #04060d;
+  --color-brand: #5b8cff;
+  --color-brand-hover: #7ea2ff;
+  --color-brand-active: #9db8ff;
+  --color-brand-soft: #14224a;
+  --color-brand-ink: #a9c1ff;
+  --color-amber: #fbbf24;
+  --color-amber-soft: #33230a;
+  --color-amber-ink: #fcd34d;
+  --color-danger: #f87171;
+  --color-danger-hover: #fca5a5;
+  --color-danger-soft: #3a1414;
+  --color-danger-ink: #fecaca;
+  --color-info: #7dc4ee;
+  --color-info-soft: #0e2a3d;
+  --color-info-ink: #a9dcf7;
+  --color-neutral-soft: #1a2540;
+  --color-neutral-ink: #c3cee6;
+  --border-subtle: #1c2947;
+  --border-strong: #6b7fa6;
+  --shadow-overlay: 0 12px 32px rgba(0, 0, 0, 0.65);
+  --moon-glow: rgba(91, 140, 255, 0.3);
+  --moon-glow-soft: rgba(91, 140, 255, 0.16);
+  --rail-end: #050a16;
+  --rail-moon-dim: rgba(5, 10, 22, 0.45);
+  --ws-top: #08112a;
+  --ws-glow: rgba(91, 140, 255, 0.24);
+  --sky: linear-gradient(180deg, #010207 0%, #040a1a 45%, #0a1b44 66%, #0a1b44 100%);
+  --lake: linear-gradient(180deg, #0f2a66 0%, #050d22 40%, #01030a 100%);
+  --scene-base: #01030a;
+  --horizon: rgba(140, 180, 255, 0.7);
+  --reflect: rgba(110, 160, 255, 0.6);
+  --stars-opacity: 0.95;
+  --moon-filter: drop-shadow(0 0 56px rgba(91, 140, 255, 0.6));
+  --moon-opacity: 1;
+  --card-glass: rgba(9, 16, 34, 0.7);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  background-color: var(--surface-ground);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  caret-color: var(--color-brand);
+  scrollbar-color: var(--border-strong) var(--surface-ground);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--surface-ground);
+  color: var(--text-primary);
+}
+
+h1,
+h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+h3,
+h4 {
+  line-height: 1.3;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+::selection {
+  background-color: var(--color-brand);
+  color: var(--text-on-brand);
+}
+
+a {
+  color: var(--color-brand-ink);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  color: var(--color-brand);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* A bare <button> has no browser chrome; .btn and utilities add the look */
+button {
+  border: 0;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+code {
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-muted);
+  font-size: 0.92em;
+}
+
+/* Figures and codes: same face, aligned digits; a number never breaks from its unit */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Visually hidden, still read by assistive tech */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Skip link: out of the grid and off screen until focused */
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: var(--space-2);
+  z-index: var(--z-modal);
+  padding: var(--space-2) var(--space-4);
+  min-height: var(--btn-h);
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--ink);
+  color: var(--ink-on);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  text-decoration: none;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  color: var(--ink-on);
+}
+
+/* Reduced motion: stop looping and sliding motion; colour changes still answer the pointer */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line {
+    animation: none;
+  }
+
+  .btn:active:not(:disabled) {
+    transform: none;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
