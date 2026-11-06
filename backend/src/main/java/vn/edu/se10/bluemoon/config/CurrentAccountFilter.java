@@ -22,6 +22,8 @@ public class CurrentAccountFilter extends OncePerRequestFilter {
         if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof AuthenticatedUser principal) {
             var current = accounts.refresh(principal.userId());
             if (current == null) {
+                var session = request.getSession(false);
+                if (session != null) session.invalidate();
                 SecurityContextHolder.clearContext();
                 response.setStatus(401); response.setContentType("application/problem+json"); response.setCharacterEncoding("UTF-8");
                 response.getWriter().write("{\"type\":\"about:blank\",\"title\":\"Chưa xác thực\",\"status\":401}");

@@ -22,6 +22,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(AccountController.class)
 @Import(SecurityConfig.class)
 class AccountApiTest {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    vn.edu.se10.bluemoon.identity.application.CurrentAccountService currentAccount;
+    @org.junit.jupiter.api.BeforeEach void refreshCurrentAccountForSlice() {
+        org.mockito.Mockito.when(currentAccount.refresh(org.mockito.ArgumentMatchers.anyLong())).thenAnswer(invocation ->
+            (vn.edu.se10.bluemoon.identity.application.AuthenticatedUser) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+    }
+
     @Autowired MockMvc mvc;
     @MockitoBean AccountProvisioningService service;
     @MockitoBean AccountManagementService management;
@@ -41,6 +48,7 @@ class AccountApiTest {
             String path = "/api/v1/accounts/2/" + action;
             mvc.perform(post(path).with(csrf())).andExpect(status().isUnauthorized());
             mvc.perform(post(path).with(authentication(principal("ADMIN", false)))).andExpect(status().isForbidden());
+            mvc.perform(post(path).with(authentication(principal("ADMIN", false))).with(csrf().useInvalidToken())).andExpect(status().isForbidden());
             for (String role : List.of("ACCOUNTANT", "RESIDENT"))
                 mvc.perform(post(path).with(authentication(principal(role, false))).with(csrf())).andExpect(status().isForbidden());
         }

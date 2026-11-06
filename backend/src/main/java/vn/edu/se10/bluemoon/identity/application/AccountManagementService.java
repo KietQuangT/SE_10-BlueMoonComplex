@@ -21,13 +21,15 @@ public class AccountManagementService {
     public AccountManagementService(UserRepository users, RoleRepository roles, JdbcTemplate jdbc, AuditService audit, Clock clock) {
         this.users = users; this.roles = roles; this.jdbc = jdbc; this.audit = audit; this.clock = clock;
     }
-    private User lock(long id) {
+    private User lock(long id, long actor) {
         // Serialize all management operations before locking a user, including competing ADMIN disables.
         roles.findByCodeForUpdate("ADMIN").orElseThrow();
+        if (users.findByIdForUpdate(actor).filter(u -> "ACTIVE".equals(u.getStatus())).isEmpty())
+            throw new org.springframework.security.authentication.BadCredentialsException("Unauthorized");
         return users.findByIdForUpdate(id).orElseThrow(() -> new NotFoundException("ACCOUNT_NOT_FOUND"));
     }
     @Transactional public void disable(long id, long actor) {
-        User user = lock(id);
+        User user = lock(id, actor);
         if (id == actor || "INACTIVE".equals(user.getStatus()) ||
             ("ADMIN".equals(user.getRole().getCode()) && users.countByRole_CodeAndStatus("ADMIN", "ACTIVE") <= 1))
             throw new ConflictException("ACCOUNT_DISABLE_CONFLICT");
@@ -37,14 +39,14 @@ public class AccountManagementService {
         audit.record(actor, "SESSIONS_REVOKED", "User", Long.toString(id), null);
     }
     @Transactional public void enable(long id, long actor) {
-        User user = lock(id);
+        User user = lock(id, actor);
         if ("ACTIVE".equals(user.getStatus())) throw new ConflictException("ACCOUNT_ALREADY_ACTIVE");
         user.setStatus("ACTIVE", clock.instant());
         audit.record(actor, "ACCOUNT_ENABLED", "User", Long.toString(id), null);
     }
     @Transactional public void unlock(long id, long actor) {
-        User user = lock(id);
-        if ("ADMIN".equals(user.getRole().getCode()) || user.getLockedUntil() == null || !user.getLockedUntil().isAfter(clock.instant()))
+        User user = lock(id, actor);
+        if ("ADMIN".equals(user.getRole().getCode()) || (user.getLockedUntil() == null || !user.getLockedUntil().isAfter(clock.instant())) && user.getLockLevel() == 0 && user.getFailedLoginCount() == 0)
             throw new ConflictException("ACCOUNT_NOT_LOCKED");
         user.resetLoginFailures();
         audit.record(actor, "ACCOUNT_UNLOCKED", "User", Long.toString(id), null);

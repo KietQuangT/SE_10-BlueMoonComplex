@@ -102,3 +102,10 @@ Chưa tick foundation DoD khi các điều kiện này chưa có bằng chứng.
 
 - `cd backend && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./mvnw -B -ntp verify`: 83 test, 0 lỗi, BUILD SUCCESS (JDK 21.0.9). Script `../.claude/bin/mvn-sandbox.sh` không có trong worktree.
 - Không chạy `-Pintegration` theo brief: các test MySQL mới chưa được kiểm chứng. UI thuộc Kiệt, chưa kiểm thử ở đây.
+
+### S04 — vòng sửa 1, 06/11/2026
+
+- Sau rebase `origin/main`: `93a19ca3cdb23f8f2e5aa97618bf666c01d07979`; không có xung đột.
+- `cd backend && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./mvnw -B -ntp verify`: **85 test, 0 lỗi, BUILD SUCCESS**; script `../.claude/bin/mvn-sandbox.sh` không có.
+- Lần verify trước: 85 test, 1 failure (`BootstrapSecurityContextTest.securityBeansCanStartWithoutWebServer`: thiếu bean `CurrentAccountService` sau khi inject bắt buộc); đã sửa test context và chạy lại thành công như trên. Lệnh Maven đầu với JDK mặc định dừng ở enforcer: `Dự án dùng JDK 21`.
+- Chưa chạy `-Pintegration` theo brief: IT mở khóa, hạ quyền thật, đổi hộ và đăng nhập lại sau invalidate chưa được kiểm chứng trên MySQL. Không migration.
