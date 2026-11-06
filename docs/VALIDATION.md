@@ -84,3 +84,8 @@ Mật khẩu tạm nằm dạng rõ trong `mock_emails.body`, không hết hạn
 4. Không có credential/PII thật, migration không phá dữ liệu; PR chỉ có bộ khung và tài liệu.
 
 Chưa tick foundation DoD khi các điều kiện này chưa có bằng chứng. Build unit thành công không chứng minh toàn bộ ứng dụng đã chạy trên MySQL hay Sprint 1 hoàn thành.
+
+## S05 lát A: sửa review vòng 1 (06/11/2026)
+
+- `cd backend && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./mvnw -B -ntp verify`: BUILD SUCCESS, 63 test, 0 failure, 0 error, 0 skipped (JDK 21.0.9).
+- Không chạy `-Pintegration` theo yêu cầu: các test `HouseholdIntegrationIT` mới về rollback, lọc, phân trang và race chưa được xác nhận trên MySQL.
