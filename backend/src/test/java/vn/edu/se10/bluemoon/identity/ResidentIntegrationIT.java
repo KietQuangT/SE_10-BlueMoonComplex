@@ -31,8 +31,9 @@ class ResidentIntegrationIT extends AccountIntegrationBase {
  @AfterEach void cleanResidency(){jdbc.update("DELETE FROM audit_log WHERE actor_user_id IN (SELECT id FROM users WHERE username=?)",prefix+"-resident");jdbc.update("DELETE FROM users WHERE username=?",prefix+"-resident");jdbc.update("DELETE FROM residency_changes WHERE household_id IN (SELECT id FROM households WHERE household_code LIKE ?)",prefix+"%");jdbc.update("DELETE FROM residents WHERE household_id IN (SELECT id FROM households WHERE household_code LIKE ?)",prefix+"%");jdbc.update("DELETE FROM households WHERE household_code LIKE ?",prefix+"%");}
  @Test void residentCanOnlySeeOwnHouseholdAndNullHouseholdIsForbidden() throws Exception {
   long a=household("a"),b=household("b"),first=addId(a,prefix+"first"),second=addId(b,prefix+"second");
+  long absent=addId(a,prefix+"absent"),moved=addId(a,prefix+"moved");jdbc.update("UPDATE residents SET residency_status='TEMPORARILY_ABSENT' WHERE id=?",absent);jdbc.update("UPDATE residents SET residency_status='MOVED_OUT' WHERE id=?",moved);
   var residentCookie=residentLogin(a);
-  mvc.perform(get("/api/v1/households/me/residents").param("householdId",Long.toString(b)).header("householdId",Long.toString(b)).cookie(residentCookie)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(first)).andExpect(jsonPath("$[0].identityNumber").doesNotExist());
+  mvc.perform(get("/api/v1/households/me/residents").param("householdId",Long.toString(b)).header("householdId",Long.toString(b)).cookie(residentCookie)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2)).andExpect(jsonPath("$[0].id").value(first)).andExpect(jsonPath("$[1].id").value(absent)).andExpect(jsonPath("$[0].identityNumber").doesNotExist());
   mvc.perform(get("/api/v1/households/"+b+"/residents").cookie(residentCookie)).andExpect(status().isForbidden());
   var noHousehold=UsernamePasswordAuthenticationToken.authenticated(new AuthenticatedUser(adminId,"resident","Name","RESIDENT",null,false),null,List.of(new SimpleGrantedAuthority("ROLE_RESIDENT")));
   mvc.perform(get("/api/v1/households/me/residents").with(authentication(noHousehold))).andExpect(status().isForbidden());
@@ -45,20 +46,46 @@ class ResidentIntegrationIT extends AccountIntegrationBase {
  }
  @Test void moveOutHistoryFilteringAndReuse() throws Exception {
   long h=household("a"), first=addId(h,prefix+"first"), second=addId(h,prefix+"second"), third=addId(h,prefix+"third");
+  long other=household("b"),otherCurrent=addId(other,prefix+"other"),otherMoved=addId(other,prefix+"other-moved");move(otherMoved).andExpect(status().isOk());
   jdbc.update("UPDATE residents SET residency_status='TEMPORARILY_ABSENT' WHERE id=?",second);
   add(h,(prefix+"second").toUpperCase(Locale.ROOT)).andExpect(status().isConflict());
   mvc.perform(get("/api/v1/households/"+h+"/residents").param("status","MOVED_OUT").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(0));
   move(first).andExpect(status().isOk()).andExpect(jsonPath("$.residencyStatus").value("MOVED_OUT"));move(first).andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("RESIDENT_ALREADY_MOVED_OUT"));
-  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM residency_changes WHERE resident_id=? AND change_type='MOVE_OUT' AND status='APPROVED' AND recorded_by=?",Integer.class,first,adminId)).isEqualTo(1);
+  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM residency_changes WHERE resident_id=? AND household_id=? AND effective_date='2020-01-01' AND change_type='MOVE_OUT' AND status='APPROVED' AND recorded_by=?",Integer.class,first,h,adminId)).isEqualTo(1);
   mvc.perform(get("/api/v1/households/"+h+"/residents").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(2));
   mvc.perform(get("/api/v1/households/"+h+"/residents").param("size","1").param("page","1").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.content[0].id").value(third));
   mvc.perform(get("/api/v1/households/"+h+"/residents").param("status","MOVED_OUT").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1)).andExpect(jsonPath("$.content[0].id").value(first));
-  mvc.perform(get("/api/v1/households/"+h+"/residency-changes").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.content[0].reason").doesNotExist());
+  assertThat(jdbc.queryForObject("SELECT reason FROM residency_changes WHERE resident_id=? AND household_id=? AND effective_date='2020-01-01'",String.class,first,h)).isEqualTo("private reason");
+  mvc.perform(get("/api/v1/households/"+h+"/residency-changes").cookie(cookie)).andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1)).andExpect(jsonPath("$.content[0].residentId").value(first)).andExpect(jsonPath("$.content[0].changeType").value("MOVE_OUT")).andExpect(jsonPath("$.content[0].status").value("APPROVED")).andExpect(jsonPath("$.content[0].recordedBy").value(adminId)).andExpect(jsonPath("$.content[0].effectiveDate").value("2020-01-01")).andExpect(jsonPath("$.content[0].reason").doesNotExist());
   var logs=jdbc.queryForList("SELECT changes FROM audit_log WHERE actor_user_id=? AND entity_type='Resident'",String.class,adminId);
-  assertThat(logs).hasSize(4); for(String log:logs)assertThat(log).doesNotContain("Private Name",prefix+"first",prefix+"second","private reason");
+  assertThat(logs).hasSize(7); for(String log:logs)assertThat(log).doesNotContain("Private Name",prefix+"first",prefix+"second","private reason");
   add(h,prefix+"first").andExpect(status().isCreated());
   mvc.perform(patch("/api/v1/residents/"+third).cookie(cookie).header("X-CSRF-TOKEN",csrf).contentType("application/json").content("{\"identityNumber\":\""+prefix+"second\"}")).andExpect(status().isConflict());
-  mvc.perform(patch("/api/v1/residents/"+third).cookie(cookie).header("X-CSRF-TOKEN",csrf).contentType("application/json").content("{\"identityNumber\":\""+prefix+"third\"}")).andExpect(status().isOk());
+  mvc.perform(patch("/api/v1/residents/"+third).cookie(cookie).header("X-CSRF-TOKEN",csrf).contentType("application/json").content("{\"fullName\":\"Changed\"}")).andExpect(status().isOk());
+  mvc.perform(patch("/api/v1/residents/"+third).cookie(cookie).header("X-CSRF-TOKEN",csrf).contentType("application/json").content("{\"identityNumber\":\""+prefix+"new\"}")).andExpect(status().isOk());
+  assertAudit(first,"RESIDENT_CREATED",Set.of("id","householdId","residencyStatus"));assertAudit(first,"RESIDENT_MOVED_OUT",Set.of("id","householdId","effectiveDate"));
+  var updates=jdbc.queryForList("SELECT changes FROM audit_log WHERE actor_user_id=? AND entity_type='Resident' AND entity_id=? AND action='RESIDENT_UPDATED' ORDER BY id",String.class,adminId,Long.toString(third));
+  assertThat(updates).hasSize(2);var mapper=tools.jackson.databind.json.JsonMapper.builder().build();
+  for(String update:updates){assertThat(mapper.readTree(update).propertyNames()).containsExactlyInAnyOrder("fields");assertThat(update).doesNotContain("Changed",prefix+"new");}
+  assertThat(mapper.readTree(updates.get(0)).get("fields").asString()).contains("fullName");assertThat(mapper.readTree(updates.get(1)).get("fields").asString()).contains("identityNumber");
+ }
+ void assertAudit(long id,String action,Set<String> expected) throws Exception {
+  var rows=jdbc.queryForList("SELECT changes FROM audit_log WHERE actor_user_id=? AND entity_type='Resident' AND entity_id=? AND action=?",String.class,adminId,Long.toString(id),action);
+  assertThat(rows).hasSize(1);assertThat(tools.jackson.databind.json.JsonMapper.builder().build().readTree(rows.get(0)).propertyNames()).containsExactlyInAnyOrderElementsOf(expected);
+ }
+ @Test void concurrentPatchAndMoveOutUseSameGuardOrder() throws Exception {
+  household("guard-fixture");
+  // Existing data may contain earlier households: use the actual minimum as the FK parent.
+  long min=jdbc.queryForObject("SELECT MIN(id) FROM households",Long.class);ExecutorService pool=Executors.newFixedThreadPool(2);
+  try {for(int round=0;round<5;round++){
+   String identity=prefix+"lock"+round;jdbc.update("INSERT INTO residents (household_id,full_name,identity_number,residency_status,created_at,updated_at) VALUES (?, 'Fixture', ?, 'RESIDING', NOW(6), NOW(6))",min,identity);
+   long id=jdbc.queryForObject("SELECT id FROM residents WHERE household_id=? AND identity_number=?",Long.class,min,identity);
+   try {CountDownLatch ready=new CountDownLatch(2),start=new CountDownLatch(1);String next=identity+"x";
+    Future<Integer> patch=pool.submit(()->{ready.countDown();if(!start.await(10,TimeUnit.SECONDS))throw new TimeoutException();return mvc.perform(patch("/api/v1/residents/"+id).cookie(cookie).header("X-CSRF-TOKEN",csrf).contentType("application/json").content("{\"identityNumber\":\""+next+"\"}")).andReturn().getResponse().getStatus();});
+    Future<Integer> move=pool.submit(()->{ready.countDown();if(!start.await(10,TimeUnit.SECONDS))throw new TimeoutException();return move(id).andReturn().getResponse().getStatus();});
+    assertThat(ready.await(10,TimeUnit.SECONDS)).isTrue();start.countDown();assertThat(patch.get(30,TimeUnit.SECONDS)).isIn(200,409);assertThat(move.get(30,TimeUnit.SECONDS)).isIn(200,409);
+   } finally {jdbc.update("DELETE FROM residency_changes WHERE resident_id=?",id);jdbc.update("DELETE FROM residents WHERE id=?",id);}
+  }}finally{pool.shutdownNow();assertThat(pool.awaitTermination(30,TimeUnit.SECONDS)).isTrue();}
  }
  @Test void concurrentMoveOutHasOneWinner() throws Exception {
   long h=household("a"),id=addId(h,prefix+"id");ExecutorService pool=Executors.newFixedThreadPool(2);CountDownLatch ready=new CountDownLatch(2),start=new CountDownLatch(1);
