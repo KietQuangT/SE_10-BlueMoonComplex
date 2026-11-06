@@ -100,13 +100,30 @@ class AccountManagementIT extends AccountIntegrationBase {
         long target=createUser("-target", "ACCOUNTANT"); Cookie old=login("-target");
         jdbc.update("UPDATE users SET status='INACTIVE' WHERE id=?",target);
         mvc.perform(get("/api/v1/auth/me").cookie(old)).andExpect(status().isUnauthorized());
-        jdbc.update("UPDATE users SET status='ACTIVE' WHERE id=?",target);
         var tokenResponse=mvc.perform(get("/api/v1/auth/csrf").cookie(old)).andExpect(status().isOk()).andReturn();
+        jdbc.update("UPDATE users SET status='ACTIVE' WHERE id=?",target);
         String token=JsonMapper.builder().build().readTree(tokenResponse.getResponse().getContentAsString()).get("token").asString();
         Cookie fresh=remember(tokenResponse.getResponse().getCookie("SESSION"));
         var result=mvc.perform(post("/api/v1/auth/login").cookie(fresh).header("X-CSRF-TOKEN",token).contentType("application/json").content("{\"username\":\""+prefix+"-target\",\"password\":\"test-only-pass\"}"))
             .andExpect(status().isOk()).andReturn();
         remember(result.getResponse().getCookie("SESSION"));
+    }
+    @Test void managementAuditChangesContainNoEmailOrPassword() throws Exception {
+        long target=createUser("-target", "ACCOUNTANT");
+        jdbc.update("UPDATE users SET email=? WHERE id=?", "audit-test@example.test", target);
+        manage(target,"disable",204);
+        assertAuditChangesEmpty(target,"ACCOUNT_DISABLED");
+        assertAuditChangesEmpty(target,"SESSIONS_REVOKED");
+        manage(target,"enable",204);
+        assertAuditChangesEmpty(target,"ACCOUNT_ENABLED");
+        jdbc.update("UPDATE users SET failed_login_count=1 WHERE id=?", target);
+        manage(target,"unlock",204);
+        assertAuditChangesEmpty(target,"ACCOUNT_UNLOCKED");
+    }
+    void assertAuditChangesEmpty(long target, String action) {
+        var rows=jdbc.queryForList("SELECT changes FROM audit_log WHERE entity_type='User' AND entity_id=? AND action=? ORDER BY id DESC LIMIT 1", Long.toString(target), action);
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).get("changes")).isNull();
     }
     @Test void auditFailureRollsBackStatusAndSessions() throws Exception {
         long target=createUser("-target", "ACCOUNTANT"); Cookie targetCookie=login("-target");

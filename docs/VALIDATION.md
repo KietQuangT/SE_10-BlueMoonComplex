@@ -109,3 +109,8 @@ Chưa tick foundation DoD khi các điều kiện này chưa có bằng chứng.
 - `cd backend && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./mvnw -B -ntp verify`: **85 test, 0 lỗi, BUILD SUCCESS**; script `../.claude/bin/mvn-sandbox.sh` không có.
 - Lần verify trước: 85 test, 1 failure (`BootstrapSecurityContextTest.securityBeansCanStartWithoutWebServer`: thiếu bean `CurrentAccountService` sau khi inject bắt buộc); đã sửa test context và chạy lại thành công như trên. Lệnh Maven đầu với JDK mặc định dừng ở enforcer: `Dự án dùng JDK 21`.
 - Chưa chạy `-Pintegration` theo brief: IT mở khóa, hạ quyền thật, đổi hộ và đăng nhập lại sau invalidate chưa được kiểm chứng trên MySQL. Không migration.
+
+### S04 — vòng sửa 2, 06/11/2026
+- Chạy từ `backend/`, JDK 21; script `../.claude/bin/mvn-sandbox.sh` không có. Dùng bản sao Maven cache trong worktree và thư mục tạm trong `backend/target`: `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home MAVEN_USER_HOME="$PWD/target/s04-maven-home" TMPDIR="$PWD/target/s04-tmp" ./mvnw -B -ntp -Dmaven.repo.local="$PWD/target/s04-maven-home/repository" verify`.
+- Kết quả: **BUILD SUCCESS**, 86 test, 0 failure, 0 error, 0 skipped. `AccountApiTest.inactiveActorDuringManagementReturnsHttp401` kiểm HTTP 401 thật qua MockMvc khi service ném `BadCredentialsException`; `AccountManagementServiceTest.inactiveActorCannotManageAccounts` kiểm không ghi audit cho ba thao tác.
+- Chưa chạy profile integration theo brief (cần MySQL của Sơn); các kiểm tra IT về CSRF với cookie cũ khi account còn INACTIVE và cột `changes` của audit chưa được kiểm chứng trên DB.
