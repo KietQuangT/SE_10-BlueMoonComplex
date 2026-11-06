@@ -187,7 +187,7 @@ export function AccountsPage(): React.ReactElement {
                               </button>
                             ) : null}
                             {a.status === 'INACTIVE' ? (
-                              <button type="button" className="btn btn-ghost btn-sm" disabled title="Chờ chốt (Q21)">
+                              <button type="button" className="btn btn-ghost btn-sm" disabled title="Chờ chốt">
                                 Kích hoạt lại · chờ chốt
                               </button>
                             ) : (
@@ -201,7 +201,7 @@ export function AccountsPage(): React.ReactElement {
                                 Vô hiệu hóa
                               </button>
                             )}
-                            <button type="button" className="btn btn-ghost btn-sm" disabled title="Chờ chốt (Q21)">
+                            <button type="button" className="btn btn-ghost btn-sm" disabled title="Chờ chốt">
                               Cấp lại mật khẩu tạm · chờ chốt
                             </button>
                           </span>
@@ -224,7 +224,7 @@ export function AccountsPage(): React.ReactElement {
       </section>
       <p className="field-hint">
         Ghi nhận chuyển đi (M-15) và vô hiệu hóa tài khoản là hai thao tác tách rời: schema chưa liên
-        kết nhân khẩu với tài khoản (Q23).
+        kết nhân khẩu với tài khoản.
       </p>
 
       <ConfirmDialog

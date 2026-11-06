@@ -22,14 +22,13 @@ export function PaginationBar({
   return (
     <div className="pagination-bar">
       <span className="topbar-meta tabular">
-        Hiển thị {startIdx}–{endIdx} / {totalItems} bản ghi (phân trang phía server)
+        Hiển thị {startIdx}–{endIdx} / {totalItems} bản ghi
       </span>
       <div className="filter-row">
-        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+        <label className="inline-field">
           <span className="topbar-meta">Số dòng:</span>
           <select
             className="select"
-            style={{ width: 'auto', minHeight: 36, padding: '4px 10px' }}
             value={pageSize}
             onChange={(e) => {
               onPageSizeChange(Number(e.target.value));
@@ -49,7 +48,7 @@ export function PaginationBar({
         >
           Trang trước
         </button>
-        <span className="tabular" style={{ fontSize: 'var(--text-xs)', fontWeight: 600 }}>
+        <span className="tabular page-count">
           {page} / {totalPages}
         </span>
         <button

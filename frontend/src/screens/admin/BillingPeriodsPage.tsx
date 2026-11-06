@@ -90,7 +90,7 @@ export function BillingPeriodsPage() {
       />
 
       <div className="notice-box notice-warning mb-6">
-        <p className="font-semibold">⏸ Khung màn hình Chờ chốt quy tắc nghiệp vụ (Tier C - M-24)</p>
+        <p className="font-semibold">Khung màn hình Chờ chốt quy tắc nghiệp vụ (Tier C - M-24)</p>
         <p className="text-sm mt-1">
           Theo quyết định sprint và ma trận F01, chức năng này thuộc phạm vi v1 để sinh dữ liệu hóa đơn cho Cư dân (M-32, M-33) và Kế toán (M-21, M-22), nhưng đang chờ chốt thẩm quyền (BQT phát hành hay Kế toán) và cơ chế duyệt snapshot đơn giá.
         </p>
@@ -187,7 +187,7 @@ export function BillingPeriodsPage() {
             <div className="pt-4 flex justify-end">
               <button
                 type="submit"
-                className="px-5 py-2.5 bg-teal-brand text-white font-semibold rounded hover:bg-teal-700 transition"
+                className="btn btn-primary"
               >
                 Tạo kỳ thu & Phát hành hóa đơn
               </button>

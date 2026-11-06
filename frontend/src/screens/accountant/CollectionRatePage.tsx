@@ -76,7 +76,7 @@ export function CollectionRatePage() {
           <button
             onClick={handleExport}
             disabled={exporting || periodInvoices.length === 0}
-            className="px-4 py-2 bg-teal-brand text-white font-semibold rounded hover:bg-teal-700 disabled:opacity-50 transition flex items-center gap-2"
+            className="btn btn-primary"
           >
             <span>{exporting ? 'Đang tạo bảng tính...' : '⤓ Xuất bảng Excel'}</span>
           </button>
@@ -84,7 +84,7 @@ export function CollectionRatePage() {
       </div>
 
       <div className="notice-box notice-warning mb-6">
-        <p className="font-semibold">🟡 Công thức tỷ lệ thu: Chờ chốt quy tắc (Q10)</p>
+        <p className="font-semibold">Công thức tỷ lệ thu: Chờ chốt quy tắc</p>
         <p className="text-sm mt-1">
           Chưa có quy định chính thức về mẫu số của tỷ lệ: tính theo tổng số tiền phải thu bắt buộc hay tính theo số lượng căn hộ? Các khoản tự nguyện hiện được hạch toán tách rời và không nằm trong mẫu số này.
         </p>
@@ -175,7 +175,7 @@ export function CollectionRatePage() {
               Chi tiết theo từng căn hộ trong kỳ {selectedPeriod}
             </h3>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
+              <table className="ledger-table">
                 <thead>
                   <tr className="border-b border-border bg-ground text-slate text-xs uppercase font-bold">
                     <th className="py-2.5 px-3">Căn hộ</th>

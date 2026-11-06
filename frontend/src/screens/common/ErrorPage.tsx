@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAppState } from '../../state/AppStateContext';
 import { defaultHomeByRole } from '../../lib/format';
 import { Icon } from '../../components/Icon';
+import { SHOW_DEV_TOOLS } from '../../lib/devTools';
 
 type ErrorCode = 401 | 403 | 404 | 500;
 
@@ -70,12 +71,12 @@ export function ErrorPage({
         {code}
       </div>
       <div>
-        <span className="badge badge-code">M-04</span>
+        {SHOW_DEV_TOOLS ? <span className="badge badge-code">M-04</span> : null}
         <h1 id="error-title" className="screen-title error-title">
           {copy.title}
         </h1>
         <p className="screen-desc">{copy.body}</p>
-        {code === 403 ? (
+        {SHOW_DEV_TOOLS && code === 403 ? (
           <p className="field-hint error-note">
             Lưu ý: khi một thao tác ghi bị 403, giao diện gọi lại <code>/auth/me</code> để phân biệt
             phiên hết hạn với thiếu quyền; nội dung biểu mẫu đang nhập được giữ lại.

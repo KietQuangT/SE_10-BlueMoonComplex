@@ -4,7 +4,9 @@ import { useAppState } from '../state/AppStateContext';
 import { formatAreaM2, roleDisplayName } from '../lib/format';
 import type { RoleCode } from '../types/domain';
 import { Icon, type IconName } from './Icon';
+import { ThemeToggle } from './ThemeToggle';
 import { ErrorPage } from '../screens/common/ErrorPage';
+import { useStackedTables } from '../lib/stackTables';
 
 interface NavItem {
   to: string;
@@ -157,6 +159,7 @@ export function AppShell(): React.ReactElement {
   }, [menuOpen]);
 
   const groups = useNavGroups(user?.role ?? 'RESIDENT');
+  useStackedTables(Boolean(user));
 
   if (!user) return <Outlet />;
 
@@ -180,15 +183,14 @@ export function AppShell(): React.ReactElement {
         <div>
           <NavLink to="/" className="rail-brand">
             <span className="line-mark" aria-hidden="true" />
-            <span>
-              <span className="rail-brand-title">BlueMoon</span>
-              <span className="rail-brand-sub">Chung cư · Ngã tư Văn Phú</span>
-            </span>
+            <span className="rail-brand-title">BlueMoon</span>
           </NavLink>
           <nav className="rail-nav">
             {groups.map((g) => (
-              <div className="rail-group" key={g.heading}>
-                <h2 className="rail-group-heading">{g.heading}</h2>
+              <div className="rail-group" key={g.heading} role="group" aria-label={g.heading}>
+                <p className="rail-group-heading" aria-hidden="true">
+                  {g.heading}
+                </p>
                 {g.items.map((item) => (
                   <NavLink
                     key={item.to}
@@ -241,11 +243,12 @@ export function AppShell(): React.ReactElement {
             )}
             {mode === 'demo' ? (
               <span className="badge badge-assumed">Chế độ Demo</span>
-            ) : (
+            ) : SHOW_DEV_TOOLS ? (
               <span className="badge badge-paid hide-mobile">Kết nối backend</span>
-            )}
+            ) : null}
           </div>
           <div className="topbar-actions">
+            <ThemeToggle />
             <span className="topbar-meta hide-mobile">{user.fullName}</span>
             <NavLink to="/profile" className="btn btn-ghost btn-sm hide-mobile">
               Hồ sơ và đổi mật khẩu

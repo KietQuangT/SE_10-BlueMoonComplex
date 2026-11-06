@@ -143,7 +143,7 @@ export function HouseholdsPage(): React.ReactElement {
           </>
         )}
       </section>
-      <p className="field-hint">Tra cứu nhân khẩu theo tên hoặc số giấy tờ: chờ quyết định (Q18).</p>
+      <p className="field-hint">Tra cứu nhân khẩu theo tên hoặc số giấy tờ: chờ quyết định.</p>
     </>
   );
 }

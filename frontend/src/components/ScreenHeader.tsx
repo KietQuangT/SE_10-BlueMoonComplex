@@ -2,6 +2,7 @@ import React from 'react';
 import type { ContractBadgeKind } from '../types/domain';
 import { ContractBadge } from './Badge';
 import { Icon } from './Icon';
+import { SHOW_DEV_TOOLS } from '../lib/devTools';
 
 interface ScreenHeaderProps {
   screenCode: string;
@@ -26,15 +27,19 @@ export function ScreenHeader({
         <div className="screen-title-group">
           <div className="screen-title-row">
             <h1 className="screen-title">{title}</h1>
-            <span className="badge badge-code">{screenCode}</span>
-            <ContractBadge kind={contract} />
-            {tierLabel ? <span className="badge badge-neutral">{tierLabel}</span> : null}
+            {SHOW_DEV_TOOLS ? (
+              <>
+                <span className="badge badge-code">{screenCode}</span>
+                <ContractBadge kind={contract} />
+                {tierLabel ? <span className="badge badge-neutral">{tierLabel}</span> : null}
+              </>
+            ) : null}
           </div>
           {description ? <p className="screen-desc">{description}</p> : null}
         </div>
         {actions ? <div className="filter-row">{actions}</div> : null}
       </header>
-      {contract !== 'api-live' ? (
+      {SHOW_DEV_TOOLS && contract !== 'api-live' ? (
         <p className="mock-note">
           <Icon name="info" size={15} />
           Màn này dùng dữ liệu mẫu (mock-data.json) vì backend chưa có API tương ứng. Thao tác chỉ
@@ -51,7 +56,8 @@ export interface OpenQuestion {
   owner: string;
 }
 
-export function OpenQuestions({ items }: { items: OpenQuestion[] }): React.ReactElement {
+export function OpenQuestions({ items }: { items: OpenQuestion[] }): React.ReactElement | null {
+  if (!SHOW_DEV_TOOLS) return null;
   return (
     <section className="surface-box" aria-labelledby="open-questions-heading">
       <div className="box-toolbar">

@@ -186,7 +186,7 @@ export function AbsencePage(): React.ReactElement {
               <span className="field-error">{errors.endDateAssumed}</span>
             ) : (
               <span id="abs-to-hint" className="field-hint">
-                Chưa có cột trong DB (Q2).
+                Chưa có cột trong DB.
               </span>
             )}
           </div>

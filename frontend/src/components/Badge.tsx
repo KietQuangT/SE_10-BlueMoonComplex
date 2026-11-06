@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ContractBadgeKind } from '../types/domain';
 import { Icon } from './Icon';
+import { SHOW_DEV_TOOLS } from '../lib/devTools';
 
 export function StatusBadge({
   tone,
@@ -12,7 +13,8 @@ export function StatusBadge({
   return <span className={`badge badge-${tone}`}>{label}</span>;
 }
 
-export function ContractBadge({ kind }: { kind: ContractBadgeKind }): React.ReactElement {
+export function ContractBadge({ kind }: { kind: ContractBadgeKind }): React.ReactElement | null {
+  if (!SHOW_DEV_TOOLS) return null;
   switch (kind) {
     case 'api-live':
       return (
