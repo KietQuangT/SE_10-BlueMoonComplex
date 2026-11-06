@@ -11,7 +11,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 | ☑ | S02 | M | Sơn + Kiệt | Cấp account và email mô phỏng; WBS 2.1.1.1,2.1.2.3 | S01 | Email trùng bị từ chối; mock email đúng người; bootstrap BQT và cấp cư dân đã thống nhất; không log password. |
 | ☐ | S03 | M | Kiệt + Sơn | Đổi mật khẩu, hồ sơ; WBS 2.1.1.2,2.1.2.1 | S01 | Kiểm tra mật khẩu cũ/mới, tối thiểu 8 ký tự; đổi xong các session cũ bị từ chối; DTO không lộ hash. |
 | ☐ | S04 | M | Sơn + Tuấn | Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3 | S01 | Khóa xong request mới với cookie cũ thất bại; thử nhiều session và server role; UI cần test tích hợp để đóng. |
-| ☐ | S05 | L | Sơn + Tuấn | Hộ/nhân khẩu/biến động; WBS 2.2.1.1 | F01,S01 | CRUD/tra cứu, ownership; chuyển đi xóa mềm và audit/lịch sử; validate trường đã chốt, test hộ khác bị chặn. |
+| ☑ | S05 | L | Sơn + Tuấn | Hộ/nhân khẩu/biến động; WBS 2.2.1.1 | F01,S01 | CRUD/tra cứu, ownership; chuyển đi đổi trạng thái cư trú (không xóa bản ghi, DECISIONS D20) kèm lịch sử biến động và audit; validate trường đã chốt, test hộ khác bị chặn. |
 | ☐ | S06 | L | Kiệt + Sơn + Tuấn | Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3 | S05 bản API đầu | Chờ duyệt → duyệt/từ chối đúng quyền; lưu trạng thái/lịch sử, thông báo trong app/mock theo AC; cuối cùng ghép UI. |
 | ☐ | S07 | M | Quân + Kiệt; Tuấn kiểm tra | Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3 | F01,F02 | BigDecimal; 50m² × 10.000 = 500.000; hiệu lực/rounding đã chốt; không áp thay giá vào hóa đơn cũ. |
 | ☐ | S08 | L | Quân + Tuấn | Kỳ thu/tự nguyện; WBS 2.3.1.2–3 | S07; S05 để ghép cuối | Không trùng kỳ/hộ/loại; tự nguyện không cộng nợ; giao dữ liệu thật cho thu tiền và đối chiếu độc lập. |
@@ -32,7 +32,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 - [x] S02 — Cấp account và email mô phỏng; WBS 2.1.1.1,2.1.2.3
 - [ ] S03 — Đổi mật khẩu, hồ sơ; WBS 2.1.1.2,2.1.2.1
 - [ ] S04 — Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3
-- [ ] S05 — Hộ/nhân khẩu/biến động; WBS 2.2.1.1
+- [x] S05 — Hộ/nhân khẩu/biến động; WBS 2.2.1.1
 - [ ] S06 — Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3
 - [ ] S07 — Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3
 - [ ] S08 — Kỳ thu/tự nguyện; WBS 2.3.1.2–3
@@ -129,6 +129,7 @@ Lỗi còn lại, điều chưa kiểm thử:
   - Không có chặn theo IP (không có nguồn dữ liệu); ADMIN không bị khóa nên không có lớp chặn dò mật khẩu ADMIN ở tầng ứng dụng (D17); khóa theo account không trần cho phép khóa lâu mọi account không phải ADMIN cho tới khi S04 có mở khóa thủ công.
   - V5 đã áp lên DB bluemoon cục bộ của Sơn; nếu V5 đổi trước khi merge, Flyway báo sai checksum trên DB đó (Sơn tạo lại DB cục bộ, không sửa tay flyway_schema_history).
 Kết luận: tick theo bằng chứng chạy thật của Sơn (hai lần -Pintegration xanh ở +07 và UTC) và review rủi ro không còn lỗi chặn, kèm các caveat trên; Tuấn review và push/PR còn chờ cổng G2.
+Cập nhật 06/11/2026 (theo git, không phải bằng chứng test mới): PR #5 đã merge vào main (merge commit 6e12045), nên các dòng "CHƯA push, CHƯA PR" ở trên không còn đúng. Chưa có bằng chứng văn bản về việc Tuấn review.
 ```
 
 ### S02 (tick 06/11/2026)
@@ -162,4 +163,49 @@ Lỗi còn lại, điều chưa kiểm thử:
   - mock_emails.body chứa mật khẩu tạm dạng rõ, không hết hạn (hệ quả D14); ADMIN mới chưa đổi mật khẩu không bị khóa (D17); xóa cờ trong DB không làm session đang mở hết bị chặn; mọi ADMIN INACTIVE thì bootstrap vẫn từ chối, phải sửa DB tay.
   - V6 đã áp lên DB bluemoon cục bộ của Sơn, và DB đó có một tài khoản ADMIN thử tạo bằng bootstrap; nếu V6 đổi trước khi merge, Flyway báo sai checksum (Sơn tạo lại DB cục bộ). V6 chưa được Quân, Tuấn, Kiệt xác nhận.
 Kết luận: tick theo bằng chứng chạy thật của Sơn (surefire 56 + failsafe 51 xanh ở 6e138e4, bootstrap chạy tay trong terminal thật, SQL đối chiếu), kèm các caveat trên; Tuấn review và push/PR còn chờ cổng G2.
+Cập nhật 06/11/2026 (theo git, không phải bằng chứng test mới): PR #6 đã merge vào main (merge commit faa06fa), nên các dòng "CHƯA push, CHƯA PR, chưa CI" ở trên không còn đúng. Chưa có bằng chứng văn bản về việc Tuấn review S02 (D19 ghi Tuấn không tham gia S02).
+```
+
+### S05 (tick 06/11/2026) — lát A hộ + lát B nhân khẩu
+```text
+Task: S05 (WBS 2.2.1.1) — Hộ/nhân khẩu/biến động
+Commit/PR: CHƯA push, CHƯA PR, chưa chạy CI. Worktree Orca feat-s05b chứa cả hai lát (nền main 0283cc9), HEAD 2519f94, worktree sạch:
+  cdf06a2 feat: thêm quản lý hộ gia đình (S05)                    [lát A, nhánh hhoangsonnw/feat-s05]
+  ca6a649 test: bổ sung test S05 lát A theo review vòng 1 (S05)  [lát A, HEAD nhánh hhoangsonnw/feat-s05]
+  ba0c6a7 feat: quản lý nhân khẩu và chuyển đi (S05)             [lát B]
+  2519f94 fix: sửa theo review vòng 1 lát B (S05)                [lát B, HEAD]
+Lệnh và kết quả:
+  - Bằng chứng do Sơn chạy (06/11/2026 16:27–16:30 +07, JDK 21.0.9, MySQL 8.4 ở 127.0.0.1:3306, macOS, worktree feat-s05b sạch ở 2519f94; commit 16:20:07):
+      cd backend && ./mvnw -B -ntp -Pintegration verify
+      surefire: 75 test, 0 lỗi (log Sơn dán).
+      failsafe: 63 test, 0 lỗi, 0 failure (failsafe-summary completed=63 errors=0 failures=0): BootstrapIT 3, AccountAtomicityIT 2, AccountProvisioningIT 11, BootstrapAdminIT 7, HouseholdIntegrationIT 5, IdentityCookieIT 1, IdentitySessionIT 23, ResidentIntegrationIT 7, RoleAuditIT 4.
+    Flyway: "Current version of schema bluemoon: 6; up to date, no migration necessary" (không migration mới).
+    Dòng "BUILD SUCCESS" KHÔNG có trong log Sơn dán (bị head -60 cắt): kết luận dựa trên failsafe/surefire report, không phải dòng BUILD. Các dòng ERROR IllegalStateException là test cố tình làm audit lỗi để kiểm rollback.
+    Lần chạy đầu của Sơn bị Access denied (sai mật khẩu DB trong biến môi trường), không phải lỗi code.
+  - Verifier KHÔNG chạy được Maven (sandbox không ghi được target/ ở worktree Orca). Kiểm bằng git/grep: HEAD 2519f94, worktree sạch, không migration mới (chỉ V1–V6), 0 Co-Authored-By, không PII trong audit/log, không PageImpl lộ ra API, không DELETE.
+  - Review rủi ro: lát A 1 vòng sửa (2 lỗi chặn đều là thiếu test: rollback PATCH và chứng minh lọc), lát B 1 vòng sửa (1 lỗi code: thứ tự khóa guard có thể deadlock; 4 lỗi thiếu test); re-review cả hai không còn lỗi chặn. Chi tiết `_agents_workspace/S05/03_review.md`, `03_review_B.md`. Lần chạy worker lát B đầu không tạo commit nên không tính vòng sửa. Copilot QA: chưa chạy.
+AC:
+  - CRUD/tra cứu hộ: đạt (HouseholdIntegrationIT.searchPagingPatchAndAudit; HouseholdApiTest).
+  - CRUD/tra cứu nhân khẩu: đạt (ResidentIntegrationIT.moveOutHistoryFilteringAndReuse; ResidentApiTest).
+  - Ownership, hộ khác bị chặn: đạt (ResidentIntegrationIT.residentCanOnlySeeOwnHouseholdAndNullHouseholdIsForbidden: hai hộ qua phiên JDBC thật; ResidentApiTest.residentMeRouteIsAuthorizedBeforeHouseholdWildcard). householdId lấy từ session; NULL thì 403.
+  - Chuyển đi đổi trạng thái, không xóa bản ghi: đạt (ResidentService.moveOut; moveOutHistoryFilteringAndReuse; concurrentMoveOutHasOneWinner).
+  - Lịch sử biến động (1 dòng MOVE_OUT/APPROVED) và audit cùng transaction, không PII: đạt (auditFailuresRollbackAllActions, updateAuditFailureRollsBackHousehold, invalidDataAndAuditFailureRollBack).
+  - Validate trường đã chốt (areaM2 ≤ 2 chữ số thập phân và > 0, độ dài, ngày theo Asia/Ho_Chi_Minh, trùng số giấy tờ): đạt, trừ các biên nêu ở "Lỗi còn lại".
+  - 401/403/CSRF/PASSWORD_CHANGE_REQUIRED mọi route: đạt ở mức WebMvc; DELETE rơi vào denyAll (suy từ matcher và WebMvc, chưa có IT riêng).
+Đầu ra giao cho: Tuấn (review, nhận hợp đồng); S06 (cần luồng tạm vắng, enum trạng thái); S08/S09 (đọc trạng thái hộ qua HouseholdLookup; Quân chốt cách đọc diện tích); S04 (householdId nằm trong session: đổi hộ thì hủy session); Kiệt (API hộ, nhân khẩu, /households/me/residents; trang trả record {content, page, size, totalElements, totalPages}).
+Assumption đã xác nhận (qua lời Sơn, 06/11/2026): D20, D21 (RESIDING/TEMPORARILY_ABSENT/MOVED_OUT; change_type MOVE_OUT/TEMPORARY_ABSENCE; BQT ghi APPROVED; trùng số giấy tờ trong RESIDING + TEMPORARILY_ABSENT, kiểm ở service; chuyển đi không tương lai, lần hai 409, không hoàn tác, không tự khóa account; cư dân không thấy số giấy tờ và điện thoại, ADMIN thấy đầy đủ; S05 không có endpoint tạm vắng; không khái niệm chủ hộ; diện tích > 2 chữ số thập phân thì 400, không làm tròn; mã hộ/căn hộ không sửa sau tạo). Sơn báo Tuấn đã đồng ý.
+  Tuấn đã review và approve (Sơn báo 06/11/2026; hình thức chưa rõ, chưa có link hay văn bản trong hồ sơ; chưa rõ Tuấn đã đọc các lưu ý không chặn của reviewer ở `03_review.md`, `03_review_B.md`).
+  CHƯA xác nhận: chưa có văn bản của Tuấn hay Quân; Quân chưa xác nhận A3 (ACCOUNTANT đọc hộ: code đang trả 403).
+Lỗi còn lại, điều chưa kiểm thử:
+  - Chưa push/PR/CI; Tuấn đã review và approve theo lời Sơn (chưa có bằng chứng văn bản); chưa chạy Windows hay máy thứ hai; dòng BUILD chưa thấy.
+  - Trim mã hộ và số giấy tờ (Sơn chưa quyết): collation NO PAD nên "H1" và "H1 " là hai hộ khác nhau, "123 " khác "123" và lách được kiểm trùng.
+  - Test đua lát B yếu hơn mức cần (concurrentPatchAndMoveOutUseSameGuardOrder dùng isIn(200,409), không kiểm trạng thái cuối). Deadlock thứ tự khóa guard chỉ suy luận từ cách InnoDB khóa theo khóa ngoại; test đua xanh một lần, chưa tái hiện lỗi cũ.
+  - POST nhân khẩu khi bảng households rỗng trả 400 HOUSEHOLD_INVALID thay vì 404.
+  - PATCH không xóa được trường (null = giữ nguyên); mọi ghi residents xếp tuần tự toàn cục (khóa guard), chấp nhận ở v1.
+  - Biên chưa có test: PATCH address 256 ký tự; status=INACTIVE riêng; DELETE ở mức IT; PATCH kèm trường lạ; hình dạng ResidentPage; mã lỗi ở biên ngày; rollback PATCH hộ chưa verify(target).record.
+  - Test tra cứu giả định không ai ghi bảng households đồng thời; fixture đua ghi vào hộ id nhỏ nhất: chạy IT trên DB không có dữ liệu thật.
+  - Nợ kiến trúc: service import DTO của api; controller gọi ResidentService.validate static; IT nằm trong package identity; identity.application phụ thuộc residency.application.
+  - ADMIN thấy PII đầy đủ trong DTO nhân khẩu.
+  - Worker lát A tự thêm mục S05 vào docs/VALIDATION.md ở ca6a649 (ngoài lệnh); mục này sẽ xung đột với mục S05 ở `docs/VALIDATION.md` khi gộp: giữ bản này.
+Kết luận: tick theo bằng chứng chạy thật của Sơn (surefire 75 + failsafe 63 xanh ở 2519f94 trên MySQL 8.4) và hai lượt review rủi ro không còn lỗi chặn, kèm các caveat trên; Tuấn đã review và approve (lời Sơn); push/PR còn chờ cổng G2.
 ```
