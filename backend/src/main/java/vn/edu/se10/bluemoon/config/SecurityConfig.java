@@ -34,7 +34,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 public class SecurityConfig {
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, CsrfTokenRepository csrfTokenRepository, SecurityContextRepository contextRepository) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, CsrfTokenRepository csrfTokenRepository, SecurityContextRepository contextRepository, org.springframework.beans.factory.ObjectProvider<vn.edu.se10.bluemoon.identity.application.CurrentAccountService> currentAccount) throws Exception {
         http.cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository))
             .formLogin(form -> form.disable())
@@ -47,7 +47,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                 .requestMatchers("/api/v1/auth/me", "/api/v1/auth/logout").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/v1/accounts").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/accounts", "/api/v1/accounts/*/disable", "/api/v1/accounts/*/enable", "/api/v1/accounts/*/unlock").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/v1/households/me/residents").hasRole("RESIDENT")
                 .requestMatchers(HttpMethod.GET, "/api/v1/households/*/residents", "/api/v1/households/*/residency-changes", "/api/v1/residents/*").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/households/*/residents", "/api/v1/residents/*/move-out").hasRole("ADMIN")
@@ -60,6 +60,7 @@ public class SecurityConfig {
             .exceptionHandling(errors -> errors
                 .authenticationEntryPoint((request, response, exception) -> problem(response, 401, "Chưa xác thực"))
                 .accessDeniedHandler((request, response, exception) -> problem(response, 403, "Không có quyền truy cập")));
+        currentAccount.ifAvailable(service -> http.addFilterBefore(new CurrentAccountFilter(service), MustChangePasswordFilter.class));
         return http.build();
     }
 
