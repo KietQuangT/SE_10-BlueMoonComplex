@@ -17,7 +17,6 @@ Hệ thống quản lý chung cư BlueMoon (v1.0): tài khoản và phân quyề
 | S04 | Vô hiệu, bật lại, mở khóa account | Đã code trên nhánh `feat/s04-account-disable` (commit `de3091e`); chưa verify, chưa tick |
 | Frontend | Giao diện cho 24 màn v1 | Có giao diện và dữ liệu mẫu; chưa commit vào repo, chờ Kiệt (xem `frontend/README.md`) |
 | S03, S06–S15 | Đổi mật khẩu, khai báo/duyệt, đơn giá, kỳ thu, thu tiền, báo cáo, backup, hồi quy, bàn giao | Chưa bắt đầu |
-
 **Có thể dùng ngay:**
 - Health, metadata, session JDBC, audit.
 - Đăng nhập, đăng xuất, xem phiên (`/api/v1/auth/*`) và khóa tạm thời khi sai mật khẩu nhiều lần.
