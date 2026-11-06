@@ -66,6 +66,7 @@ public class User {
     public int getLockLevel() { return lockLevel; }
     public Instant getLockedUntil() { return lockedUntil; }
 
+    public void setStatus(String status, Instant now) { this.status = status; this.updatedAt = now; }
     public void failedAttempt() { failedLoginCount++; }
     public void lock(Instant until) { lockLevel++; failedLoginCount = 0; lockedUntil = until; }
     public void resetLoginFailures() { failedLoginCount = 0; lockLevel = 0; lockedUntil = null; }

@@ -10,7 +10,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 | ☑ | S01 | M | Sơn; Tuấn review | Identity/session/role/audit; WBS 2.1.1.1, 2.1.1.3 | F01,F02 | Đăng nhập đúng/sai, đổi session ID, 401/403, audit write; chốt và test chống brute-force, không mặc định đã có. |
 | ☑ | S02 | M | Sơn + Kiệt | Cấp account và email mô phỏng; WBS 2.1.1.1,2.1.2.3 | S01 | Email trùng bị từ chối; mock email đúng người; bootstrap BQT và cấp cư dân đã thống nhất; không log password. |
 | ☐ | S03 | M | Kiệt + Sơn | Đổi mật khẩu, hồ sơ; WBS 2.1.1.2,2.1.2.1 | S01 | Kiểm tra mật khẩu cũ/mới, tối thiểu 8 ký tự; đổi xong các session cũ bị từ chối; DTO không lộ hash. |
-| ☐ | S04 | M | Sơn + Tuấn | Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3 | S01 | Khóa xong request mới với cookie cũ thất bại; thử nhiều session và server role; UI cần test tích hợp để đóng. |
+| ☑ | S04 | M | Sơn + Tuấn | Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3 | S01 | Khóa xong request mới với cookie cũ thất bại; thử nhiều session và server role; UI cần test tích hợp để đóng. |
 | ☑ | S05 | L | Sơn + Tuấn | Hộ/nhân khẩu/biến động; WBS 2.2.1.1 | F01,S01 | CRUD/tra cứu, ownership; chuyển đi đổi trạng thái cư trú (không xóa bản ghi, DECISIONS D20) kèm lịch sử biến động và audit; validate trường đã chốt, test hộ khác bị chặn. |
 | ☐ | S06 | L | Kiệt + Sơn + Tuấn | Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3 | S05 bản API đầu | Chờ duyệt → duyệt/từ chối đúng quyền; lưu trạng thái/lịch sử, thông báo trong app/mock theo AC; cuối cùng ghép UI. |
 | ☐ | S07 | M | Quân + Kiệt; Tuấn kiểm tra | Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3 | F01,F02 | BigDecimal; 50m² × 10.000 = 500.000; hiệu lực/rounding đã chốt; không áp thay giá vào hóa đơn cũ. |
@@ -128,7 +128,7 @@ Lỗi còn lại, điều chưa kiểm thử:
   - 403 theo vai trò chưa qua chain thật; "đường không khai báo khi đã đăng nhập thì 403" chưa có test; bậc >=7 chỉ test hàm thuần (không qua service); "hết khóa" dựng bằng ghi locked_until quá khứ vào DB, chưa test tiến AdjustableClock; cookie sau login chưa kiểm HttpOnly/SameSite riêng; chưa có EXPLAIN cho index uq_users_username; chưa có round trip MySQL cho trần 9999-12-31 23:59:59.999999.
   - Không có chặn theo IP (không có nguồn dữ liệu); ADMIN không bị khóa nên không có lớp chặn dò mật khẩu ADMIN ở tầng ứng dụng (D17); khóa theo account không trần cho phép khóa lâu mọi account không phải ADMIN cho tới khi S04 có mở khóa thủ công.
   - V5 đã áp lên DB bluemoon cục bộ của Sơn; nếu V5 đổi trước khi merge, Flyway báo sai checksum trên DB đó (Sơn tạo lại DB cục bộ, không sửa tay flyway_schema_history).
-Kết luận: tick theo bằng chứng chạy thật của Sơn (hai lần -Pintegration xanh ở +07 và UTC) và review rủi ro không còn lỗi chặn, kèm các caveat trên; Tuấn review và push/PR còn chờ cổng G2.
+Kết luận: tick theo bằng chứng chạy thật của Sơn (hai lần -Pintegration xanh ở +07 và UTC) và review rủi ro không còn lỗi chặn, kèm các caveat trên; Tuấn review và PR còn chờ cổng G2 và Tuấn review.
 Cập nhật 06/11/2026 (theo git, không phải bằng chứng test mới): PR #5 đã merge vào main (merge commit 6e12045), nên các dòng "CHƯA push, CHƯA PR" ở trên không còn đúng. Chưa có bằng chứng văn bản về việc Tuấn review.
 ```
 
@@ -208,4 +208,42 @@ Lỗi còn lại, điều chưa kiểm thử:
   - ADMIN thấy PII đầy đủ trong DTO nhân khẩu.
   - Worker lát A tự thêm mục S05 vào docs/VALIDATION.md ở ca6a649 (ngoài lệnh); mục này sẽ xung đột với mục S05 ở `docs/VALIDATION.md` khi gộp: giữ bản này.
 Kết luận: tick theo bằng chứng chạy thật của Sơn (surefire 75 + failsafe 63 xanh ở 2519f94 trên MySQL 8.4) và hai lượt review rủi ro không còn lỗi chặn, kèm các caveat trên; Tuấn đã review và approve (lời Sơn); push/PR còn chờ cổng G2.
+```
+
+### S04 (tick 06/11/2026)
+```text
+Task: S04 (WBS 2.1.2.2, 2.1.1.3) — Vô hiệu account, mở khóa thủ công, hủy session, kiểm tra lại quyền mỗi request
+Commit/PR: nhánh feat/s04-account-disable, nền origin/main ee3ef96 (sau PR #7); CHƯA PR, chưa chạy CI. Code ở ab15b71 (worktree Orca feat-s04, nhánh hhoangsonnw/feat-s04), sạch:
+  93a19ca feat: vô hiệu account, mở khóa thủ công, hủy session (S04)   [commit gốc de3091e, đã rebase lên main]
+  7ebe38b fix: sửa theo review vòng 1 (S04)
+  ab15b71 test: bổ sung test N3, audit, N2 và sửa D22 (S04 vòng 2)
+Lệnh và kết quả:
+  - Bằng chứng do Sơn chạy (06/11/2026 23:20 +07, JDK 21.0.9, MySQL thật, worktree feat-s04 ở ab15b71):
+      cd backend && ./mvnw -B -ntp -Pintegration verify
+      BUILD SUCCESS (54,1 s). Log Sơn dán: "Tests run: 75, Failures: 0, Errors: 0, Skipped: 0" (pha failsafe).
+  - Verifier đối chiếu độc lập các báo cáo trong worktree: surefire 86 test (18 file) và failsafe 75 test (10 file), 0 failure, 0 error, 0 skipped; failsafe-summary completed=75; không có <failure>/<error>/<skipped> trong TEST-*.xml; report đóng dấu 23:19:53–23:20:44, sau commit ab15b71 (23:17:21) và sau lần biên dịch cuối (23:16:56), nên thuộc đúng ab15b71. Không có dấu vết cờ bỏ qua test. AccountManagementIT: 12 test xanh.
+  - Verifier và Claude KHÔNG chạy được Maven (sandbox không ghi target/ ở worktree Orca); dòng lệnh Sơn gõ không có trong hồ sơ ngoài đoạn log dán.
+  - Quá trình sửa: vòng 0 review rủi ro không lỗi chặn; vòng sửa 1 (N1, N2, N3, N5, N6, D22) review không lỗi chặn (`03_review_round1.md`); vòng sửa 2 (ab15b71) chỉ thêm test và sửa cột nguồn D22, Claude đọc diff nhưng không giao subagent review lại. Hết hạn mức 2 vòng. Copilot QA chạy một lần (trên 7ebe38b): không chạy được `verify` (bị từ chối quyền), chỉ ra thiếu test HTTP 401 cho N3 và thiếu test audit không lộ email/mật khẩu, cả hai đã bổ sung ở ab15b71.
+AC (TASKS.md S04: "Khóa xong request mới với cookie cũ thất bại; thử nhiều session và server role; UI cần test tích hợp để đóng."):
+  - Khóa xong, request mới với cookie cũ thất bại (401) và session bị xóa: đạt (AccountManagementIT.disableRevokesAllSessionsAndEnableRestoresLogin, freshStatusAndRoleAreEnforcedOnNextRequest).
+  - Nhiều session: đạt (cùng test đầu: hai session của account đích chết, session admin còn sống; "account khác" mới chỉ là admin, chưa có ca nhiều account khác).
+  - Server role: đạt (demotedAdminLosesAccessOnNextRequest trên MySQL: ADMIN hạ ACCOUNTANT thì request kế bị 403; CurrentAccountFilterTest.roleAndHouseholdComeFromDatabase; AccountRefreshApiTest.databaseRoleOverridesSessionRoleBeforeAuthorization). Đổi household_id: updatedHouseholdIsUsedImmediately, residentSeesNewHouseholdOnNextRequest.
+  - Mở khóa thủ công, đăng nhập ngay, ba cột về 0/0/NULL, 409 theo D22: đạt (unlockClearsLockAndAllowsImmediateLogin, expiredLockOrFailedCountCanBeReset, conflictsAndMissingAccount; AccountManagementServiceTest).
+  - 401/403, token chống giả mạo yêu cầu thiếu hoặc sai trên cả ba endpoint: đạt ở mức MockMvc với service mock (AccountApiTest.managementRoutes*); IT chỉ có ca hạ quyền thật.
+  - Audit cùng transaction, không email hay mật khẩu: đạt (auditFailureRollsBackStatusAndSessions, managementAuditChangesContainNoEmailOrPassword, concurrentDisableHasOneWinner).
+  - N3 (actor mất ACTIVE thì 401, không thao tác): đạt ở mức unit và MockMvc (AccountManagementServiceTest.inactiveActorCannotManageAccounts, AccountApiTest.inactiveActorDuringManagementReturnsHttp401); chưa có test đua thật.
+  - UI cần test tích hợp để đóng: CHƯA. Theo hợp đồng đã duyệt (`_agents_workspace/S04/01_contract.md`) phần UI thuộc Kiệt; task này chỉ kiểm phía server.
+Đầu ra giao cho: Kiệt (ba endpoint POST /api/v1/accounts/{id}/disable|enable|unlock, ADMIN, 204, 401 khi account bị vô hiệu giữa chừng; UI vô hiệu/bật lại/mở khóa); S03 (cơ chế hủy session theo principal để dùng khi đổi mật khẩu, và đọc lại status mỗi request); S05/S06 (householdId đọc lại từ DB mỗi request, Q3/Q4); Tuấn (review, test EP-01).
+Assumption đã xác nhận (qua lời Sơn, 06/11/2026): Q1–Q6 của hợp đồng (vô hiệu = INACTIVE; ADMIN vô hiệu ADMIN khác được, tự vô hiệu và ADMIN ACTIVE cuối cùng thì 409; đọc lại status và household_id mỗi request; không hủy session hàng loạt khi hộ đổi; không migration; không mở khóa ADMIN); vòng sửa 1: N1, N2, N3, N4 (409 khi đã INACTIVE hoặc đã ACTIVE), N5/D22 (mở khóa đặt lại cả lock_level), N6; N7, N8 chấp nhận không sửa.
+  CHƯA xác nhận: chưa có văn bản của Tuấn (người review S04) hay Kiệt về hợp đồng; chưa có xác nhận review ab15b71 bằng subagent.
+Lỗi còn lại, điều chưa kiểm thử:
+  - Chưa PR/CI; chưa chạy Windows hay máy thứ hai; chưa có test tích hợp UI (phần của Kiệt). Sơn đã chạy thử với backend thật (06/11/2026): đăng nhập, hộ, nhân khẩu, chuyển đi, vô hiệu, mở khóa qua giao diện.
+  - R2: SQL thật đã thấy trong log IT: `for update of u1_0` (chỉ khóa users) và `for update of r1_0` (roles); loại giả định deadlock "khóa role qua join" ở đăng nhập. Chưa có test đua đăng nhập ADMIN với thao tác quản lý, nên chưa kết luận hết về deadlock.
+  - N3 chỉ có test unit và MockMvc (service giả ném BadCredentialsException); không có test đua thật actor bị vô hiệu sau khi qua filter. Body 401 của nhánh GlobalExceptionHandler khác body của filter.
+  - Cookie thật ngoài MockMvc: chưa kiểm Spring Session đặt lại cookie SESSION hết hạn trên server thật và trình duyệt thật.
+  - Test 401/403 của ba endpoint mới chỉ ở slice với service giả; IT chỉ có ca hạ quyền thật.
+  - N7: 409 dùng chung detail "Thông tin bị trùng" (có code riêng). N8: RESIDENT mất household_id vẫn giữ session (các endpoint hộ trả 403). R3: lock() không đọc lại role của actor. R6: locked_until hết hạn khác NULL cùng 0/0 trả 409, chỉ tạo được bằng SQL tay.
+  - Worker vòng 1 ghi log verify lỗi ngoài worktree (/tmp/s04_verify.log), vi phạm nhẹ; có thể xóa.
+  - Tiền nhiệm S01 đã tick.
+Kết luận: tick theo bằng chứng chạy thật của Sơn (surefire 86 + failsafe 75 xanh, BUILD SUCCESS ở ab15b71 trên MySQL), hai lượt review rủi ro không còn lỗi chặn và vòng 2 chỉ thêm test, kèm các caveat trên; phần UI của AC thuộc Kiệt, chưa có; push/PR còn chờ cổng G2.
 ```

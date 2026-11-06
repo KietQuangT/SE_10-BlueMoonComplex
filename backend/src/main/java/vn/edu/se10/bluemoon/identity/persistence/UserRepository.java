@@ -12,6 +12,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
     boolean existsByUsername(String username);
     boolean existsByRole_Code(String code);
+    long countByRole_CodeAndStatus(String code, String status);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from User u join fetch u.role where u.id = :id")
+    Optional<User> findByIdForUpdate(@Param("id") long id);
+    @Query("select u from User u join fetch u.role where u.id = :id")
+    Optional<User> findWithRoleById(@Param("id") long id);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from User u join fetch u.role where u.username = :username")
