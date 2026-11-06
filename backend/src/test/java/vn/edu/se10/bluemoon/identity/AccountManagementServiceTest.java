@@ -42,7 +42,10 @@ class AccountManagementServiceTest {
     @Test void inactiveActorCannotManageAccounts() {
         target("ACTIVE", "ACCOUNTANT"); when(actor.getStatus()).thenReturn("INACTIVE");
         assertThatThrownBy(() -> service.disable(2,1)).isInstanceOf(org.springframework.security.core.AuthenticationException.class);
+        assertThatThrownBy(() -> service.enable(2,1)).isInstanceOf(org.springframework.security.core.AuthenticationException.class);
+        assertThatThrownBy(() -> service.unlock(2,1)).isInstanceOf(org.springframework.security.core.AuthenticationException.class);
         verifyNoInteractions(jdbc,audit); verify(user, never()).setStatus(anyString(), any());
+        verify(user, never()).resetLoginFailures();
     }
     @Test void unlockClearsExpiredLockLevelAndFailedCount() {
         target("ACTIVE", "ACCOUNTANT"); when(user.getLockedUntil()).thenReturn(clock.instant().minusSeconds(1));

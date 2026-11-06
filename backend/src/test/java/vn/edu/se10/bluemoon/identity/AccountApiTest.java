@@ -43,6 +43,16 @@ class AccountApiTest {
                 .andExpect(status().isNoContent());
         }
     }
+    @Test void inactiveActorDuringManagementReturnsHttp401() throws Exception {
+        var failure = new org.springframework.security.authentication.BadCredentialsException("Unauthorized");
+        doThrow(failure).when(management).disable(2, 1);
+        doThrow(failure).when(management).enable(2, 1);
+        doThrow(failure).when(management).unlock(2, 1);
+        for (String action : List.of("disable", "enable", "unlock")) {
+            mvc.perform(post("/api/v1/accounts/2/" + action).with(authentication(principal("ADMIN", false))).with(csrf()))
+                .andExpect(status().isUnauthorized());
+        }
+    }
     @Test void managementRoutesRequireAdminAndCsrf() throws Exception {
         for (String action : List.of("disable", "enable", "unlock")) {
             String path = "/api/v1/accounts/2/" + action;
