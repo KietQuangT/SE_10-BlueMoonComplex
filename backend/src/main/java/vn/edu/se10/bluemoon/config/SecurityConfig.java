@@ -34,7 +34,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 public class SecurityConfig {
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, CsrfTokenRepository csrfTokenRepository, SecurityContextRepository contextRepository, org.springframework.beans.factory.ObjectProvider<vn.edu.se10.bluemoon.identity.application.CurrentAccountService> currentAccount) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, CsrfTokenRepository csrfTokenRepository, SecurityContextRepository contextRepository, vn.edu.se10.bluemoon.identity.application.CurrentAccountService currentAccount) throws Exception {
         http.cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository))
             .formLogin(form -> form.disable())
@@ -60,7 +60,7 @@ public class SecurityConfig {
             .exceptionHandling(errors -> errors
                 .authenticationEntryPoint((request, response, exception) -> problem(response, 401, "Chưa xác thực"))
                 .accessDeniedHandler((request, response, exception) -> problem(response, 403, "Không có quyền truy cập")));
-        currentAccount.ifAvailable(service -> http.addFilterBefore(new CurrentAccountFilter(service), MustChangePasswordFilter.class));
+        http.addFilterBefore(new CurrentAccountFilter(currentAccount), MustChangePasswordFilter.class);
         return http.build();
     }
 

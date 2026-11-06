@@ -26,6 +26,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 @WebMvcTest(ResidentController.class) @Import(SecurityConfig.class)
 class ResidentApiTest {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    vn.edu.se10.bluemoon.identity.application.CurrentAccountService currentAccount;
+    @org.junit.jupiter.api.BeforeEach void refreshCurrentAccountForSlice() {
+        org.mockito.Mockito.when(currentAccount.refresh(org.mockito.ArgumentMatchers.anyLong())).thenAnswer(invocation ->
+            (vn.edu.se10.bluemoon.identity.application.AuthenticatedUser) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+    }
+
  @Autowired MockMvc mvc; @MockitoBean ResidentService service; @MockitoBean Clock clock;
  @BeforeEach void setup(){when(clock.withZone(any())).thenAnswer(invocation -> Clock.fixed(Instant.parse("2026-11-06T18:00:00Z"),invocation.getArgument(0)));}
  private static UsernamePasswordAuthenticationToken principal(String role,boolean change){return UsernamePasswordAuthenticationToken.authenticated(new AuthenticatedUser(7,"user","User",role,1L,change),null,List.of(new SimpleGrantedAuthority("ROLE_"+role)));}

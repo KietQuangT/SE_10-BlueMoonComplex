@@ -18,9 +18,10 @@ class AccountManagementServiceTest {
     JdbcTemplate jdbc=mock(JdbcTemplate.class); AuditService audit=mock(AuditService.class);
     Clock clock=Clock.fixed(Instant.parse("2026-11-06T00:00:00Z"),ZoneOffset.UTC);
     AccountManagementService service=new AccountManagementService(users,roles,jdbc,audit,clock);
-    Role role=mock(Role.class); User user=mock(User.class);
+    Role role=mock(Role.class); User user=mock(User.class); User actor=mock(User.class);
     void target(String status, String roleCode) {
         when(roles.findByCodeForUpdate("ADMIN")).thenReturn(Optional.of(role));
+        when(users.findByIdForUpdate(1)).thenReturn(Optional.of(actor)); when(actor.getStatus()).thenReturn("ACTIVE");
         when(users.findByIdForUpdate(2)).thenReturn(Optional.of(user));
         when(user.getStatus()).thenReturn(status); when(user.getRole()).thenReturn(role); when(role.getCode()).thenReturn(roleCode);
         when(user.getUsername()).thenReturn("account");
@@ -37,6 +38,17 @@ class AccountManagementServiceTest {
         verify(jdbc).update("DELETE FROM SPRING_SESSION WHERE PRINCIPAL_NAME = ?","account");
         verify(audit).record(1,"ACCOUNT_DISABLED","User","2",null);
         verify(audit).record(1,"SESSIONS_REVOKED","User","2",null);
+    }
+    @Test void inactiveActorCannotManageAccounts() {
+        target("ACTIVE", "ACCOUNTANT"); when(actor.getStatus()).thenReturn("INACTIVE");
+        assertThatThrownBy(() -> service.disable(2,1)).isInstanceOf(org.springframework.security.core.AuthenticationException.class);
+        verifyNoInteractions(jdbc,audit); verify(user, never()).setStatus(anyString(), any());
+    }
+    @Test void unlockClearsExpiredLockLevelAndFailedCount() {
+        target("ACTIVE", "ACCOUNTANT"); when(user.getLockedUntil()).thenReturn(clock.instant().minusSeconds(1));
+        when(user.getLockLevel()).thenReturn(1); service.unlock(2,1);
+        when(user.getLockLevel()).thenReturn(0); when(user.getFailedLoginCount()).thenReturn(1); service.unlock(2,1);
+        verify(user, times(2)).resetLoginFailures(); verify(audit, times(2)).record(1,"ACCOUNT_UNLOCKED","User","2",null);
     }
     @Test void unlockRejectsAdminAndExpiredLock() {
         target("ACTIVE","ADMIN"); assertThatThrownBy(() -> service.unlock(2,1)).isInstanceOf(ConflictException.class);

@@ -38,6 +38,13 @@ import vn.edu.se10.bluemoon.identity.application.LoginAttemptService;
 @Import({SecurityConfig.class, RequestIdFilter.class, AuthApiTest.AdminProbe.class, AuthApiTest.AdminProbeSecurity.class})
 @TestPropertySource(properties = "app.cors.allowed-origin=http://localhost:5173")
 class AuthApiTest {
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    vn.edu.se10.bluemoon.identity.application.CurrentAccountService currentAccount;
+    @org.junit.jupiter.api.BeforeEach void refreshCurrentAccountForSlice() {
+        org.mockito.Mockito.when(currentAccount.refresh(org.mockito.ArgumentMatchers.anyLong())).thenAnswer(invocation ->
+            (vn.edu.se10.bluemoon.identity.application.AuthenticatedUser) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+    }
+
     @TestConfiguration
     static class AdminProbeSecurity {
         @Bean @Order(0)

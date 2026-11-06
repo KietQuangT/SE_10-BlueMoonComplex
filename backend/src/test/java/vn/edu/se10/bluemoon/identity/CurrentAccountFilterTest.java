@@ -27,7 +27,9 @@ class CurrentAccountFilterTest {
     }
     @Test void inactiveAccountIsRejected() throws Exception {
         authenticated(); when(accounts.refresh(1)).thenReturn(null);
+        var session=request.getSession();
         var chain=new MockFilterChain(); filter.doFilter(request,response,chain);
+        assertThat(((org.springframework.mock.web.MockHttpSession) session).isInvalid()).isTrue();
         assertThat(response.getStatus()).isEqualTo(401); assertThat(chain.getRequest()).isNull();
     }
     @Test void roleAndHouseholdComeFromDatabase() throws Exception {

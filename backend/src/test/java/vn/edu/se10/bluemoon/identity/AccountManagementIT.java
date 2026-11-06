@@ -17,6 +17,7 @@ class AccountManagementIT extends AccountIntegrationBase {
     @MockitoSpyBean AuditService audit;
     @AfterEach void cleanHouses() {
         jdbc.update("UPDATE users SET household_id=NULL WHERE username LIKE ?", prefix+"%");
+        jdbc.update("DELETE FROM residents WHERE household_id IN (SELECT id FROM households WHERE household_code LIKE ?)", prefix+"%");
         jdbc.update("DELETE FROM households WHERE household_code LIKE ?",prefix+"%");
     }
     long createUser(String suffix, String role) {
@@ -68,6 +69,44 @@ class AccountManagementIT extends AccountIntegrationBase {
         mvc.perform(get("/api/v1/auth/me").cookie(targetCookie)).andExpect(status().isOk()).andExpect(jsonPath("$.householdId").value(house));
         jdbc.update("UPDATE users SET household_id=NULL WHERE id=?",target);
         mvc.perform(get("/api/v1/auth/me").cookie(targetCookie)).andExpect(status().isOk()).andExpect(jsonPath("$.householdId").doesNotExist());
+    }
+    @Test void demotedAdminLosesAccessOnNextRequest() throws Exception {
+        jdbc.update("UPDATE users SET role_id=(SELECT id FROM roles WHERE code='ACCOUNTANT') WHERE id=?", adminId);
+        manage(adminId,"enable",403);
+    }
+    @Test void expiredLockOrFailedCountCanBeReset() throws Exception {
+        long target=createUser("-target", "ACCOUNTANT");
+        jdbc.update("UPDATE users SET failed_login_count=0, lock_level=2, locked_until=DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 1 MINUTE) WHERE id=?",target);
+        manage(target,"unlock",204);
+        jdbc.update("UPDATE users SET failed_login_count=1, lock_level=0, locked_until=NULL WHERE id=?",target);
+        manage(target,"unlock",204); manage(target,"unlock",409); manage(adminId,"unlock",409);
+        assertThat(jdbc.queryForObject("SELECT failed_login_count + lock_level FROM users WHERE id=?",Integer.class,target)).isZero();
+        assertThat(jdbc.queryForObject("SELECT locked_until FROM users WHERE id=?",java.sql.Timestamp.class,target)).isNull();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE action='ACCOUNT_UNLOCKED' AND entity_id=?",Long.class,Long.toString(target))).isEqualTo(2);
+    }
+    @Test void residentSeesNewHouseholdOnNextRequest() throws Exception {
+        for (String suffix : new String[]{"-h1","-h2"})
+            jdbc.update("INSERT INTO households (household_code, apartment_code, area_m2, status, created_at, updated_at) VALUES (?, ?, 10, 'ACTIVE', NOW(6), NOW(6))",prefix+suffix,prefix+suffix);
+        long first=jdbc.queryForObject("SELECT id FROM households WHERE household_code=?",Long.class,prefix+"-h1");
+        long second=jdbc.queryForObject("SELECT id FROM households WHERE household_code=?",Long.class,prefix+"-h2");
+        jdbc.update("INSERT INTO residents (household_id,full_name,residency_status,created_at,updated_at) VALUES (?, 'First', 'RESIDING', NOW(6), NOW(6)), (?, 'Second', 'RESIDING', NOW(6), NOW(6))",first,second);
+        long target=createUser("-resident", "RESIDENT"); jdbc.update("UPDATE users SET household_id=? WHERE id=?",first,target);
+        Cookie resident=login("-resident");
+        mvc.perform(get("/api/v1/households/me/residents").cookie(resident)).andExpect(status().isOk()).andExpect(jsonPath("$[0].fullName").value("First"));
+        jdbc.update("UPDATE users SET household_id=? WHERE id=?",second,target);
+        mvc.perform(get("/api/v1/households/me/residents").cookie(resident)).andExpect(status().isOk()).andExpect(jsonPath("$[0].fullName").value("Second"));
+    }
+    @Test void invalidatedSessionCanFetchNewTokenAndLogin() throws Exception {
+        long target=createUser("-target", "ACCOUNTANT"); Cookie old=login("-target");
+        jdbc.update("UPDATE users SET status='INACTIVE' WHERE id=?",target);
+        mvc.perform(get("/api/v1/auth/me").cookie(old)).andExpect(status().isUnauthorized());
+        jdbc.update("UPDATE users SET status='ACTIVE' WHERE id=?",target);
+        var tokenResponse=mvc.perform(get("/api/v1/auth/csrf").cookie(old)).andExpect(status().isOk()).andReturn();
+        String token=JsonMapper.builder().build().readTree(tokenResponse.getResponse().getContentAsString()).get("token").asString();
+        Cookie fresh=remember(tokenResponse.getResponse().getCookie("SESSION"));
+        var result=mvc.perform(post("/api/v1/auth/login").cookie(fresh).header("X-CSRF-TOKEN",token).contentType("application/json").content("{\"username\":\""+prefix+"-target\",\"password\":\"test-only-pass\"}"))
+            .andExpect(status().isOk()).andReturn();
+        remember(result.getResponse().getCookie("SESSION"));
     }
     @Test void auditFailureRollsBackStatusAndSessions() throws Exception {
         long target=createUser("-target", "ACCOUNTANT"); Cookie targetCookie=login("-target");
