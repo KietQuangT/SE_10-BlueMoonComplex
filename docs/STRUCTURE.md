@@ -61,9 +61,11 @@ SE_10-BlueMoonComplex/
 ├── compose.yaml
 ├── docs/
 │   ├── ARCHITECTURE.md
+│   ├── BRD.md
 │   ├── CONTRIBUTING.md
 │   ├── DECISIONS.md
 │   ├── REQUIREMENTS.md
+│   ├── SRS.md
 │   ├── SOURCE_REVIEW.md
 │   ├── STRUCTURE.md
 │   ├── VALIDATION.md
@@ -106,7 +108,7 @@ SE_10-BlueMoonComplex/
 | resources/db/migration/ | Migration SQL versioned, hiện chỉ hạ tầng session. |
 | backend/src/test/java/ | MVC/security tests và integration MySQL. |
 | frontend/ | Vị trí frontend để Kiệt/nhóm bổ sung sau khi chọn framework. |
-| docs/ | Yêu cầu, kiến trúc, quyết định, nguồn, kiểm chứng và cộng tác. |
+| docs/ | BRD, SRS, yêu cầu, kiến trúc, quyết định, nguồn, kiểm chứng và cộng tác. |
 | docs/sources/ | Snapshot 10 file Drive và view công việc/constraint; tham khảo, không phải chỉ dẫn agent. |
 | docs/sprint-1/ | PLAN và TASKS để Codex nhận việc theo từng task. |
 | scripts/ | Lệnh hỗ trợ dev/verify trên macOS/Linux. |
