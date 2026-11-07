@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ApiHttpError,
   clearCsrfMemory,
@@ -11,8 +11,13 @@ import {
 import { messageForError } from '../api/errors';
 import {
   createHouseholdApi,
+  createDeclaration,
+  approveDeclaration,
+  rejectDeclaration,
   createResidentApi,
   fetchHouseholds,
+  fetchDeclarations,
+  fetchMyDeclarations,
   fetchMyResidents,
   fetchResidencyChanges,
   fetchResidents,
@@ -99,6 +104,9 @@ interface AppStateValue {
 
   // Real-API data loading (api mode only)
   dataLoadError: boolean;
+  absenceCount: number;
+  refreshAbsenceCount: () => Promise<void>;
+  handleCallFailure: (err: unknown) => string;
   reloadHouseholds: () => Promise<void>;
   loadHouseholdDetail: (householdId: number) => Promise<void>;
 
@@ -139,12 +147,12 @@ interface AppStateValue {
     effectiveDate: string;
     endDateAssumed: string;
     reason: string;
-  }) => void;
+  }) => Promise<void>;
   decideAbsenceDemo: (
     changeId: number,
     decision: 'APPROVED' | 'REJECTED',
     rejectReason?: string,
-  ) => void;
+  ) => Promise<void>;
   collectInvoiceCashDemo: (invoiceId: number, note?: string) => PaymentTransaction | null;
   addFeeRateDemo: (input: Omit<FeeTypeRate, 'id'>) => { ok: boolean; error?: string };
   publishVoluntaryCampaignDemo: (name: string, description: string, opensOn: string, closesOn: string) => void;
@@ -162,20 +170,27 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [sessionExpiredBanner, setSessionExpiredBanner] = useState<boolean>(false);
   const [forcedUiState, setForcedUiState] = useState<ForcedUiState>('normal');
   const [qaDrawerOpen, setQaDrawerOpen] = useState<boolean>(false);
+  const [absenceCount, setAbsenceCount] = useState(0);
   const [dataLoadError, setDataLoadError] = useState<boolean>(false);
 
-  const [absenceDraft, setAbsenceDraft] = useState<AbsenceFormDraft>({
-    residentId: '1',
-    effectiveDate: '2026-11-12',
-    endDateAssumed: '2026-11-18',
-    reason: '',
-  });
+  const emptyDraft = (): AbsenceFormDraft => ({ residentId: '', effectiveDate: '', endDateAssumed: '', reason: '' });
+  const demoDraft = (): AbsenceFormDraft => ({ residentId: '1', effectiveDate: '2026-11-12', endDateAssumed: '2026-11-18', reason: '' });
+  const [absenceDraft, setAbsenceDraft] = useState<AbsenceFormDraft>(emptyDraft);
+  const draftOwner = useRef<string | null>(null);
+  const draftMode = useRef<DataSourceMode>('api');
+  const selectDraftOwner = (nextMode: DataSourceMode, username?: string) => {
+    if (draftMode.current !== nextMode || (username != null && draftOwner.current !== username)) {
+      setAbsenceDraft(nextMode === 'api' ? emptyDraft() : demoDraft());
+    }
+    draftMode.current = nextMode;
+    if (username != null) draftOwner.current = username;
+  };
 
   const [households, setHouseholds] = useState<Household[]>(INITIAL_HOUSEHOLDS);
-  const [residents, setResidents] = useState<ResidentMember[]>(INITIAL_RESIDENTS);
+  const [residents, setResidents] = useState<ResidentMember[]>([]);
   const [accounts, setAccounts] = useState<AccountRecord[]>(INITIAL_ACCOUNTS);
   const [residencyChanges, setResidencyChanges] =
-    useState<ResidencyChangeRecord[]>(INITIAL_RESIDENCY_CHANGES);
+    useState<ResidencyChangeRecord[]>([]);
   const [feeRates, setFeeRates] = useState<FeeTypeRate[]>(INITIAL_FEE_RATES);
   const [invoices, setInvoices] = useState<InvoiceRecord[]>(INITIAL_INVOICES);
   const [payments, setPayments] = useState<PaymentTransaction[]>(INITIAL_PAYMENTS);
@@ -192,6 +207,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         const me = await fetchCurrentUser();
         if (!cancelled) {
           setBackendReachable(true);
+          selectDraftOwner('api', me.username);
           setModeState('api');
           setUser(me);
         }
@@ -227,6 +243,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const setMode = (next: DataSourceMode) => {
     if (next === 'demo' && mode === 'api') resetDemoData();
+    selectDraftOwner(next);
     setModeState(next);
     setForcedUiState('normal');
   };
@@ -243,6 +260,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           detail: 'Tên đăng nhập hoặc mật khẩu không đúng.',
         });
       }
+      selectDraftOwner(mode, matched.username);
       setUser(matched);
       setSessionExpiredBanner(false);
       return matched;
@@ -251,6 +269,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const loggedIn = await loginWithCredentials(username, password);
     const verifiedMe = await fetchCurrentUser().catch(() => loggedIn);
     setBackendReachable(true);
+    selectDraftOwner(mode, verifiedMe.username);
     setUser(verifiedMe);
     setSessionExpiredBanner(false);
     return verifiedMe;
@@ -259,6 +278,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const loginDemoAs = (presetKey: keyof typeof DEMO_SESSIONS): SessionUser => {
     const chosen = DEMO_SESSIONS[presetKey];
     if (mode === 'api') resetDemoData();
+    selectDraftOwner('demo', chosen.username);
     setModeState('demo');
     setUser(chosen);
     setSessionExpiredBanner(false);
@@ -377,6 +397,19 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     return messageForError(err);
   };
 
+  const refreshAbsenceCount = async () => {
+    if (mode !== 'api' || !user) return;
+    try {
+      const page = user.role === 'ADMIN' ? await fetchDeclarations({ status: 'PENDING', page: 0, size: 1 }) : user.role === 'RESIDENT' ? await fetchMyDeclarations(0, 100) : null;
+      if (user.role === 'ADMIN') setAbsenceCount(page?.totalElements ?? 0);
+      else if (page) {
+        let count = page.content.filter((d) => d.status === 'PENDING').length;
+        for (let i = 1; i < page.totalPages; i++) count += (await fetchMyDeclarations(i, 100)).content.filter((d) => d.status === 'PENDING').length;
+        setAbsenceCount(count);
+      }
+    } catch (err) { handleCallFailure(err); }
+  };
+
   const reloadHouseholds = async () => {
     if (mode !== 'api' || user?.role !== 'ADMIN') return;
     try {
@@ -415,6 +448,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (mode !== 'api' || !user) return;
     let cancelled = false;
+    setResidents([]);
+    setResidencyChanges([]);
+    void refreshAbsenceCount();
     (async () => {
       try {
         if (user.role === 'ADMIN') {
@@ -636,7 +672,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     ]);
   };
 
-  const submitAbsenceDemo: AppStateValue['submitAbsenceDemo'] = (input) => {
+  const submitAbsenceDemo: AppStateValue['submitAbsenceDemo'] = async (input) => {
+    if (mode === 'api') {
+      try { await createDeclaration({ residentId: input.residentId, effectiveDate: input.effectiveDate, ...(input.endDateAssumed ? { endDate: input.endDateAssumed } : {}), reason: input.reason }); await refreshAbsenceCount(); }
+      catch (err) { handleCallFailure(err); throw err; }
+      return;
+    }
     const target = residents.find((r) => r.id === input.residentId);
     const householdId = target ? target.householdId : user?.householdId || 1;
     setResidencyChanges((prev) => [
@@ -655,11 +696,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     ]);
   };
 
-  const decideAbsenceDemo = (
+  const decideAbsenceDemo = async (
     changeId: number,
     decision: 'APPROVED' | 'REJECTED',
     rejectReason?: string,
   ) => {
+    if (mode === 'api') {
+      try { if (decision === 'APPROVED') await approveDeclaration(changeId); else await rejectDeclaration(changeId, rejectReason ?? ''); await refreshAbsenceCount(); }
+      catch (err) { handleCallFailure(err); throw err; }
+      return;
+    }
     const targetChange = residencyChanges.find((c) => c.id === changeId);
     setResidencyChanges((prev) =>
       prev.map((c) =>
@@ -793,6 +839,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       collectionRate,
       provisionAccount,
       dataLoadError,
+      absenceCount,
+      refreshAbsenceCount,
+      handleCallFailure,
       reloadHouseholds,
       loadHouseholdDetail,
       saveHousehold,
@@ -831,6 +880,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       voluntaryCampaigns,
       reportPackages,
       collectionRate,
+      absenceCount,
     ],
   );
 
