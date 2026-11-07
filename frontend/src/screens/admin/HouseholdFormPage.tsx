@@ -11,7 +11,9 @@ const AREA_RE = /^\d{1,8}(\.\d{1,2})?$/;
 /** M-14 — Thêm/sửa hộ (mode household) và thêm nhân khẩu (mode resident). */
 export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }): React.ReactElement {
   const { id } = useParams();
-  const { households, saveHouseholdDemo, addResidentDemo } = useAppState();
+  const { households, saveHousehold, addResident, mode: dataMode } = useAppState();
+  const [saving, setSaving] = useState(false);
+  const live = dataMode === 'api';
   const navigate = useNavigate();
   const existing = id ? households.find((h) => String(h.id) === id) : undefined;
   const isEdit = mode === 'household' && Boolean(id);
@@ -38,7 +40,7 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
 
   const backTo = existing ? `/admin/households/${existing.id}` : '/admin/households';
 
-  const submitHousehold = (e: React.FormEvent) => {
+  const submitHousehold = async (e: React.FormEvent) => {
     e.preventDefault();
     const next: Record<string, string> = {};
     if (!hh.householdCode.trim()) next.householdCode = 'Nhập mã hộ.';
@@ -48,15 +50,17 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
     setErrors(next);
     setFormError(null);
     if (Object.keys(next).length) return;
-    const result = saveHouseholdDemo({ ...hh, areaM2: area, id: existing?.id });
+    setSaving(true);
+    const result = await saveHousehold({ ...hh, areaM2: area, id: existing?.id });
+    setSaving(false);
     if (!result.ok) {
       setFormError(result.error ?? 'Không lưu được hộ.');
       return;
     }
-    navigate(backTo);
+    navigate(result.id && !existing ? `/admin/households/${result.id}` : backTo);
   };
 
-  const submitResident = (e: React.FormEvent) => {
+  const submitResident = async (e: React.FormEvent) => {
     e.preventDefault();
     const next: Record<string, string> = {};
     if (!rs.fullName.trim()) next.fullName = 'Nhập họ tên nhân khẩu.';
@@ -65,7 +69,9 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
     setErrors(next);
     setFormError(null);
     if (Object.keys(next).length || !existing) return;
-    const result = addResidentDemo({ householdId: existing.id, ...rs });
+    setSaving(true);
+    const result = await addResident({ householdId: existing.id, ...rs });
+    setSaving(false);
     if (!result.ok) {
       setFormError(result.error ?? 'Không lưu được nhân khẩu.');
       return;
@@ -95,7 +101,7 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
               ? `Sửa hộ ${existing?.householdCode}`
               : 'Thêm hộ gia đình'
         }
-        contract="db-ready"
+        contract={live ? 'api-live' : 'db-ready'}
         tierLabel="Mức B"
       />
       {formError ? (
@@ -119,6 +125,7 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
                 className="input tabular"
                 maxLength={50}
                 value={hh.householdCode}
+                disabled={live && isEdit}
                 onChange={(e) => setHh({ ...hh, householdCode: e.target.value })}
                 aria-invalid={Boolean(errors.householdCode)}
                 aria-describedby={errors.householdCode ? 'f-householdCode-err' : undefined}
@@ -134,6 +141,7 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
                 className="input tabular"
                 maxLength={50}
                 value={hh.apartmentCode}
+                disabled={live && isEdit}
                 onChange={(e) => setHh({ ...hh, apartmentCode: e.target.value })}
                 aria-invalid={Boolean(errors.apartmentCode)}
                 aria-describedby={errors.apartmentCode ? 'f-apartmentCode-err' : undefined}
@@ -162,6 +170,7 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
                 </span>
               )}
             </div>
+            {live ? null : (
             <div className="form-field">
               <label className="field-label" htmlFor="f-status">
                 Trạng thái
@@ -176,6 +185,7 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
                 <option value="INACTIVE">Không hoạt động</option>
               </select>
             </div>
+            )}
             <div className="form-field span-2">
               <label className="field-label" htmlFor="f-address">
                 Địa chỉ (tùy chọn)
@@ -189,7 +199,7 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
               />
             </div>
             <div className="form-field span-2 form-actions">
-              <button type="submit" className="btn btn-primary">
+              <button type="submit" className="btn btn-primary" disabled={saving}>
                 {isEdit ? 'Lưu thay đổi' : 'Thêm hộ'}
               </button>
               <Link to={backTo} className="btn btn-secondary">
@@ -275,6 +285,7 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
                 onChange={(e) => setRs({ ...rs, relationshipToHead: e.target.value })}
               />
             </div>
+            {live ? null : (
             <div className="form-field">
               <label className="field-label" htmlFor="f-residency">
                 Trạng thái cư trú
@@ -292,8 +303,9 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
               </select>
               <span className="field-hint">Tập giá trị chờ chốt.</span>
             </div>
+            )}
             <div className="form-field span-2 form-actions">
-              <button type="submit" className="btn btn-primary">
+              <button type="submit" className="btn btn-primary" disabled={saving}>
                 Thêm nhân khẩu
               </button>
               <Link to={backTo} className="btn btn-secondary">
