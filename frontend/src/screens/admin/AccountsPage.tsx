@@ -13,13 +13,15 @@ import type { AccountRecord } from '../../types/domain';
 
 /** M-10 — Danh sách tài khoản (S02/S04: danh sách chưa có API; Vô hiệu hóa, Mở khóa mô phỏng). */
 export function AccountsPage(): React.ReactElement {
-  const { user, accounts, disableAccountDemo, unlockAccountDemo, forcedUiState, setForcedUiState } = useAppState();
+  const { user, accounts, manageAccount, mode, forcedUiState, setForcedUiState } = useAppState();
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [query, setQuery] = useState('');
   const debounced = useDebouncedValue(query);
-  const [target, setTarget] = useState<{ account: AccountRecord; action: 'disable' | 'unlock' } | null>(null);
+  const [target, setTarget] = useState<{ account: AccountRecord; action: 'disable' | 'enable' | 'unlock' } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const filtered = useMemo(() => {
     if (forcedUiState === 'empty') return [];
@@ -42,16 +44,26 @@ export function AccountsPage(): React.ReactElement {
     return null;
   };
 
-  const confirm = () => {
-    if (!target) return;
-    if (target.action === 'disable') {
-      disableAccountDemo(target.account.id);
-      setNotice(`Đã vô hiệu hóa ${target.account.fullName}. Mọi phiên đăng nhập của người này bị hủy.`);
-    } else {
-      unlockAccountDemo(target.account.id);
-      setNotice(`Đã mở khóa ${target.account.fullName}. Người này có thể đăng nhập lại.`);
-    }
+  const confirm = async () => {
+    if (!target || busy) return;
+    setBusy(true);
+    setFailure(null);
+    const { account, action } = target;
+    const res = await manageAccount(account.id, action);
+    setBusy(false);
     setTarget(null);
+    if (!res.ok) {
+      setNotice(null);
+      setFailure(res.error ?? 'Có lỗi xảy ra, vui lòng thử lại.');
+      return;
+    }
+    setNotice(
+      action === 'disable'
+        ? `Đã vô hiệu hóa ${account.fullName}. Mọi phiên đăng nhập của người này bị hủy.`
+        : action === 'enable'
+          ? `Đã kích hoạt lại ${account.fullName}. Người này đăng nhập lại được bằng mật khẩu hiện có.`
+          : `Đã mở khóa ${account.fullName}. Người này có thể đăng nhập lại.`,
+    );
   };
 
   const header = (
@@ -59,7 +71,7 @@ export function AccountsPage(): React.ReactElement {
       screenCode="M-10"
       title="Danh sách tài khoản"
       description="Cấp, vô hiệu hóa và mở khóa tài khoản. Tài khoản Ban quản trị không bị khóa tạm thời."
-      contract="db-ready"
+      contract={mode === 'api' ? 'api-live' : 'db-ready'}
       tierLabel="Mức B"
       actions={
         <Link to="/admin/accounts/new" className="btn btn-primary">
@@ -86,6 +98,24 @@ export function AccountsPage(): React.ReactElement {
             Đóng
           </button>
         </div>
+      ) : null}
+
+      {failure ? (
+        <div className="banner banner-error" role="alert">
+          <div className="banner-content">
+            <Icon name="alert" />
+            <span>{failure}</span>
+          </div>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setFailure(null)}>
+            Đóng
+          </button>
+        </div>
+      ) : null}
+      {mode === 'api' ? (
+        <p className="field-hint">
+          Chưa có API liệt kê tài khoản: bảng dưới chỉ hiện các tài khoản bạn vừa cấp trong phiên làm việc này.
+          Vô hiệu, kích hoạt lại và mở khóa dùng API thật.
+        </p>
       ) : null}
 
       <section className="surface-box">
@@ -176,7 +206,7 @@ export function AccountsPage(): React.ReactElement {
                         </td>
                         <td className="align-right">
                           <span className="row-actions">
-                            {a.locked && a.role !== 'ADMIN' ? (
+                            {(a.locked || mode === 'api') && a.role !== 'ADMIN' && a.status === 'ACTIVE' ? (
                               <button
                                 type="button"
                                 className="btn btn-secondary btn-sm"
@@ -187,8 +217,12 @@ export function AccountsPage(): React.ReactElement {
                               </button>
                             ) : null}
                             {a.status === 'INACTIVE' ? (
-                              <button type="button" className="btn btn-ghost btn-sm" disabled title="Chờ chốt">
-                                Kích hoạt lại · chờ chốt
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => setTarget({ account: a, action: 'enable' })}
+                              >
+                                Kích hoạt lại
                               </button>
                             ) : (
                               <button
@@ -232,14 +266,20 @@ export function AccountsPage(): React.ReactElement {
         title={
           target?.action === 'disable'
             ? `Vô hiệu hóa ${target.account.fullName}?`
-            : `Mở khóa ${target?.account.fullName ?? ''}?`
+            : target?.action === 'enable'
+              ? `Kích hoạt lại ${target.account.fullName}?`
+              : `Mở khóa ${target?.account.fullName ?? ''}?`
         }
         consequence={
           target?.action === 'disable'
             ? 'Người này sẽ bị đăng xuất ngay và không đăng nhập lại được cho tới khi được kích hoạt lại.'
-            : 'Tài khoản đang bị khóa do nhập sai mật khẩu nhiều lần. Mở khóa cho phép đăng nhập lại ngay.'
+            : target?.action === 'enable'
+              ? 'Người này đăng nhập lại được ngay bằng mật khẩu hiện có.'
+              : 'Đặt lại cả bộ đếm nhập sai và bậc khóa của tài khoản này. Người này đăng nhập lại được ngay.'
         }
-        confirmLabel={target?.action === 'disable' ? 'Vô hiệu hóa' : 'Mở khóa'}
+        confirmLabel={
+          target?.action === 'disable' ? 'Vô hiệu hóa' : target?.action === 'enable' ? 'Kích hoạt lại' : 'Mở khóa'
+        }
         confirmTone={target?.action === 'disable' ? 'danger' : 'primary'}
         onConfirm={confirm}
         onCancel={() => setTarget(null)}

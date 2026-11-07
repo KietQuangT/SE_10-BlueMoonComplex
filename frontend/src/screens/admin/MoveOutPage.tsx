@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAppState } from '../../state/AppStateContext';
 import { formatBusinessDate } from '../../lib/format';
@@ -12,7 +12,10 @@ const todayIso = () => new Date().toISOString().slice(0, 10);
 
 /** M-15 — Ghi nhận chuyển đi (trạng thái, không xóa) và tab Lưu trữ. */
 export function MoveOutPage(): React.ReactElement {
-  const { residents, households, residencyChanges, recordMoveOutDemo, forcedUiState, setForcedUiState } = useAppState();
+  const { residents, households, residencyChanges, recordMoveOut, loadHouseholdDetail, mode, forcedUiState, setForcedUiState } =
+    useAppState();
+  const live = mode === 'api';
+  const [pickHousehold, setPickHousehold] = useState<string>('');
   const [params, setParams] = useSearchParams();
   const tab = params.get('tab') === 'archive' ? 'archive' : 'active';
   const [selectedId, setSelectedId] = useState<string>(params.get('resident') ?? '');
@@ -23,8 +26,20 @@ export function MoveOutPage(): React.ReactElement {
   const [notice, setNotice] = useState<string | null>(null);
   const [archiveHousehold, setArchiveHousehold] = useState('ALL');
 
+  // api mode: members are loaded per household, so load the one the admin picked.
+  useEffect(() => {
+    if (live && pickHousehold) void loadHouseholdDetail(Number(pickHousehold));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live, pickHousehold]);
+  useEffect(() => {
+    if (live && tab === 'archive' && archiveHousehold !== 'ALL') void loadHouseholdDetail(Number(archiveHousehold));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live, tab, archiveHousehold]);
+
   const hhCode = (hid: number) => households.find((h) => h.id === hid)?.householdCode ?? '—';
-  const active = residents.filter((r) => r.residencyStatus !== 'Đã chuyển đi');
+  const active = residents.filter(
+    (r) => r.residencyStatus !== 'Đã chuyển đi' && (!live || String(r.householdId) === pickHousehold),
+  );
   const archived = useMemo(
     () =>
       forcedUiState === 'empty'
@@ -45,7 +60,7 @@ export function MoveOutPage(): React.ReactElement {
       screenCode="M-15"
       title="Chuyển đi và lưu trữ"
       description="Người chuyển đi rời danh sách đang cư trú nhưng hồ sơ và lịch sử vẫn được giữ trong Lưu trữ."
-      contract="db-ready"
+      contract={live ? 'api-live' : 'db-ready'}
       tierLabel="Mức B"
     />
   );
@@ -105,6 +120,29 @@ export function MoveOutPage(): React.ReactElement {
             </div>
           ) : null}
           <form onSubmit={openConfirm} noValidate className="form-grid">
+            {live ? (
+              <div className="form-field span-2">
+                <label className="field-label" htmlFor="mo-household">
+                  Hộ
+                </label>
+                <select
+                  id="mo-household"
+                  className="select"
+                  value={pickHousehold}
+                  onChange={(e) => {
+                    setPickHousehold(e.target.value);
+                    setSelectedId('');
+                  }}
+                >
+                  <option value="">Chọn hộ</option>
+                  {households.map((h) => (
+                    <option key={h.id} value={h.id}>
+                      {h.householdCode} · {h.apartmentCode}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
             <div className="form-field span-2">
               <label className="field-label" htmlFor="mo-resident">
                 Nhân khẩu
@@ -200,7 +238,7 @@ export function MoveOutPage(): React.ReactElement {
                         </td>
                         <td className="tabular">{hhCode(r.householdId)}</td>
                         <td className="tabular">{formatBusinessDate(rec?.effectiveDate)}</td>
-                        <td>{rec?.reason ?? '—'}</td>
+                        <td>{rec?.reason || '—'}</td>
                         <td>
                           <ResidencyBadge status={r.residencyStatus} />
                         </td>
@@ -220,12 +258,17 @@ export function MoveOutPage(): React.ReactElement {
         consequence={`Người này rời danh sách đang cư trú của hộ ${selected ? hhCode(selected.householdId) : ''} từ ${formatBusinessDate(effectiveDate)}. Hồ sơ vẫn được giữ trong Lưu trữ.`}
         confirmLabel="Ghi nhận chuyển đi"
         onCancel={() => setConfirmOpen(false)}
-        onConfirm={() => {
-          if (selected) {
-            recordMoveOutDemo(selected.id, effectiveDate, reason.trim());
-            setNotice(`Đã ghi nhận ${selected.fullName} chuyển đi. Hồ sơ đã chuyển vào Lưu trữ.`);
-          }
+        onConfirm={async () => {
           setConfirmOpen(false);
+          if (!selected) return;
+          const res = await recordMoveOut(selected.id, effectiveDate, reason.trim());
+          if (!res.ok) {
+            setNotice(null);
+            setError(res.error ?? 'Không ghi nhận được. Vui lòng thử lại.');
+            return;
+          }
+          setError(null);
+          setNotice(`Đã ghi nhận ${selected.fullName} chuyển đi. Hồ sơ đã chuyển vào Lưu trữ.`);
           setSelectedId('');
           setReason('');
         }}

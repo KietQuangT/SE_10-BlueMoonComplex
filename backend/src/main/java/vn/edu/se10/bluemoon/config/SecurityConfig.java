@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**", "/api/v1/system/info").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/change-password").authenticated()
                 .requestMatchers("/api/v1/auth/me", "/api/v1/auth/logout").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/accounts", "/api/v1/accounts/*/disable", "/api/v1/accounts/*/enable", "/api/v1/accounts/*/unlock").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/v1/residency-declarations/mine").hasRole("RESIDENT")
