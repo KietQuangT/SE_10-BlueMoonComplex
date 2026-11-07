@@ -114,3 +114,14 @@ Chưa tick foundation DoD khi các điều kiện này chưa có bằng chứng.
 - Chạy từ `backend/`, JDK 21; script `../.claude/bin/mvn-sandbox.sh` không có. Dùng bản sao Maven cache trong worktree và thư mục tạm trong `backend/target`: `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home MAVEN_USER_HOME="$PWD/target/s04-maven-home" TMPDIR="$PWD/target/s04-tmp" ./mvnw -B -ntp -Dmaven.repo.local="$PWD/target/s04-maven-home/repository" verify`.
 - Kết quả: **BUILD SUCCESS**, 86 test, 0 failure, 0 error, 0 skipped. `AccountApiTest.inactiveActorDuringManagementReturnsHttp401` kiểm HTTP 401 thật qua MockMvc khi service ném `BadCredentialsException`; `AccountManagementServiceTest.inactiveActorCannotManageAccounts` kiểm không ghi audit cho ba thao tác.
 - Chưa chạy profile integration theo brief (cần MySQL của Sơn); các kiểm tra IT về CSRF với cookie cũ khi account còn INACTIVE và cột `changes` của audit chưa được kiểm chứng trên DB.
+
+### S06 backend: khai báo, duyệt, tra cứu tạm vắng, 07/11/2026
+- Worker Codex: `cd backend && ./mvnw -B -ntp verify` (JDK 21.0.9) ở worktree feat-s06, HEAD `7b9828e`: 93 test, 0 lỗi, BUILD SUCCESS. Copilot QA cùng SHA: 93 test (lời Copilot, chưa kiểm chứng).
+- Bằng chứng do Sơn chạy: `./mvnw -B -ntp -Pintegration verify` (JDK 21, MySQL cổng 3307), 07/11/2026 16:24 +07: failsafe 89 test, 0 lỗi, BUILD SUCCESS, 52 s. Báo cáo failsafe: `DeclarationIntegrationIT` 14 test, `ResidentIntegrationIT` 7 test. V7 đã áp trên DB của Sơn; chưa rõ DB có dữ liệu S05 hay sạch.
+- Claude không chạy Maven (sandbox); không gọi subagent verifier, tự đối chiếu SHA, số test, cờ bỏ qua. Review Opus hai lần: đạt.
+- Chưa xác nhận: UI (AC "ghép UI"), CI remote, dữ liệu S05 thật, quy tắc phí/báo cáo cho `TEMPORARILY_ABSENT`, văn bản xác nhận của Tuấn/Kiệt/Quân. Chi tiết: `docs/sprint-1/TASKS.md` mục "S06 backend" và `_agents_workspace/S06/04_evidence.md`.
+
+### S06 UI: khai báo, duyệt, quay lại, gợi ý tên tạm vắng, 07/11/2026
+- Worker Codex: `cd frontend && npm ci && npx tsc -b && npm test && npm run build` (Node 26.10.0) ở worktree feat-s06-ui, HEAD `70c06c7`: vitest 12 file / 51 test đạt, `tsc` không lỗi, build đạt. Copilot QA cùng SHA: cùng kết quả (lời Copilot, chưa kiểm chứng).
+- Review Opus 2 lần: lần 1 có 1 lỗi chặn (dữ liệu mẫu lọt vào form M-31 chế độ api), đã sửa ở `70c06c7`; lần 2 đạt.
+- Chưa xác nhận: chạy trên Chrome với backend S06 thật, 360px, screen reader; test Esc và tải lại sau quyết định thất bại; 3 vulnerabilities do `npm ci` báo; PR frontend trỏ vào nhánh S03 chưa merge. Chi tiết: `docs/sprint-1/TASKS.md` mục "S06 UI", `_agents_workspace/S06/ui/04_evidence.md`.
