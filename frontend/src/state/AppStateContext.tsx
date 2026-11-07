@@ -11,8 +11,13 @@ import {
 import { messageForError } from '../api/errors';
 import {
   createHouseholdApi,
+  createDeclaration,
+  approveDeclaration,
+  rejectDeclaration,
   createResidentApi,
   fetchHouseholds,
+  fetchDeclarations,
+  fetchMyDeclarations,
   fetchMyResidents,
   fetchResidencyChanges,
   fetchResidents,
@@ -99,6 +104,9 @@ interface AppStateValue {
 
   // Real-API data loading (api mode only)
   dataLoadError: boolean;
+  absenceCount: number;
+  refreshAbsenceCount: () => Promise<void>;
+  handleCallFailure: (err: unknown) => string;
   reloadHouseholds: () => Promise<void>;
   loadHouseholdDetail: (householdId: number) => Promise<void>;
 
@@ -139,12 +147,12 @@ interface AppStateValue {
     effectiveDate: string;
     endDateAssumed: string;
     reason: string;
-  }) => void;
+  }) => Promise<void>;
   decideAbsenceDemo: (
     changeId: number,
     decision: 'APPROVED' | 'REJECTED',
     rejectReason?: string,
-  ) => void;
+  ) => Promise<void>;
   collectInvoiceCashDemo: (invoiceId: number, note?: string) => PaymentTransaction | null;
   addFeeRateDemo: (input: Omit<FeeTypeRate, 'id'>) => { ok: boolean; error?: string };
   publishVoluntaryCampaignDemo: (name: string, description: string, opensOn: string, closesOn: string) => void;
@@ -162,6 +170,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [sessionExpiredBanner, setSessionExpiredBanner] = useState<boolean>(false);
   const [forcedUiState, setForcedUiState] = useState<ForcedUiState>('normal');
   const [qaDrawerOpen, setQaDrawerOpen] = useState<boolean>(false);
+  const [absenceCount, setAbsenceCount] = useState(0);
   const [dataLoadError, setDataLoadError] = useState<boolean>(false);
 
   const [absenceDraft, setAbsenceDraft] = useState<AbsenceFormDraft>({
@@ -175,7 +184,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [residents, setResidents] = useState<ResidentMember[]>(INITIAL_RESIDENTS);
   const [accounts, setAccounts] = useState<AccountRecord[]>(INITIAL_ACCOUNTS);
   const [residencyChanges, setResidencyChanges] =
-    useState<ResidencyChangeRecord[]>(INITIAL_RESIDENCY_CHANGES);
+    useState<ResidencyChangeRecord[]>([]);
   const [feeRates, setFeeRates] = useState<FeeTypeRate[]>(INITIAL_FEE_RATES);
   const [invoices, setInvoices] = useState<InvoiceRecord[]>(INITIAL_INVOICES);
   const [payments, setPayments] = useState<PaymentTransaction[]>(INITIAL_PAYMENTS);
@@ -377,6 +386,19 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     return messageForError(err);
   };
 
+  const refreshAbsenceCount = async () => {
+    if (mode !== 'api' || !user) return;
+    try {
+      const page = user.role === 'ADMIN' ? await fetchDeclarations({ status: 'PENDING', page: 0, size: 1 }) : user.role === 'RESIDENT' ? await fetchMyDeclarations(0, 100) : null;
+      if (user.role === 'ADMIN') setAbsenceCount(page?.totalElements ?? 0);
+      else if (page) {
+        let count = page.content.filter((d) => d.status === 'PENDING').length;
+        for (let i = 1; i < page.totalPages; i++) count += (await fetchMyDeclarations(i, 100)).content.filter((d) => d.status === 'PENDING').length;
+        setAbsenceCount(count);
+      }
+    } catch (err) { handleCallFailure(err); }
+  };
+
   const reloadHouseholds = async () => {
     if (mode !== 'api' || user?.role !== 'ADMIN') return;
     try {
@@ -415,6 +437,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (mode !== 'api' || !user) return;
     let cancelled = false;
+    setResidencyChanges([]);
+    void refreshAbsenceCount();
     (async () => {
       try {
         if (user.role === 'ADMIN') {
@@ -636,7 +660,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     ]);
   };
 
-  const submitAbsenceDemo: AppStateValue['submitAbsenceDemo'] = (input) => {
+  const submitAbsenceDemo: AppStateValue['submitAbsenceDemo'] = async (input) => {
+    if (mode === 'api') {
+      try { await createDeclaration({ residentId: input.residentId, effectiveDate: input.effectiveDate, ...(input.endDateAssumed ? { endDate: input.endDateAssumed } : {}), reason: input.reason }); await refreshAbsenceCount(); }
+      catch (err) { handleCallFailure(err); throw err; }
+      return;
+    }
     const target = residents.find((r) => r.id === input.residentId);
     const householdId = target ? target.householdId : user?.householdId || 1;
     setResidencyChanges((prev) => [
@@ -655,11 +684,16 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     ]);
   };
 
-  const decideAbsenceDemo = (
+  const decideAbsenceDemo = async (
     changeId: number,
     decision: 'APPROVED' | 'REJECTED',
     rejectReason?: string,
   ) => {
+    if (mode === 'api') {
+      try { if (decision === 'APPROVED') await approveDeclaration(changeId); else await rejectDeclaration(changeId, rejectReason ?? ''); await refreshAbsenceCount(); }
+      catch (err) { handleCallFailure(err); throw err; }
+      return;
+    }
     const targetChange = residencyChanges.find((c) => c.id === changeId);
     setResidencyChanges((prev) =>
       prev.map((c) =>
@@ -793,6 +827,9 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       collectionRate,
       provisionAccount,
       dataLoadError,
+      absenceCount,
+      refreshAbsenceCount,
+      handleCallFailure,
       reloadHouseholds,
       loadHouseholdDetail,
       saveHousehold,
@@ -831,6 +868,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       voluntaryCampaigns,
       reportPackages,
       collectionRate,
+      absenceCount,
     ],
   );
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ApiAbsencePage } from './ApiAbsencePage';
 import { useAppState } from '../../state/AppStateContext';
 import { formatBusinessDate } from '../../lib/format';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -11,6 +12,11 @@ type FormErrors = Partial<Record<'residentId' | 'effectiveDate' | 'endDateAssume
 
 /** M-31 — Khai báo tạm vắng + Đơn của tôi (đủ 8 trạng thái; giữ nội dung khi phiên hết hạn). */
 export function AbsencePage(): React.ReactElement {
+  const { mode } = useAppState();
+  return mode === 'api' ? <ApiAbsencePage /> : <DemoAbsencePage />;
+}
+
+function DemoAbsencePage(): React.ReactElement {
   const {
     user,
     residents,

@@ -1,4 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { returnResident } from '../../api/residency';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Link, useParams } from 'react-router-dom';
 import { useAppState } from '../../state/AppStateContext';
 import { formatAreaM2, formatBusinessDate } from '../../lib/format';
@@ -11,7 +13,10 @@ import { ErrorPage } from '../common/ErrorPage';
 /** M-13 — Chi tiết hộ: thông tin, thành viên, lịch sử biến động, tài khoản gắn hộ (đề xuất). */
 export function HouseholdDetailPage(): React.ReactElement {
   const { id } = useParams();
-  const { households, residents, residencyChanges, accounts, mode, loadHouseholdDetail } = useAppState();
+  const { households, residents, residencyChanges, accounts, mode, loadHouseholdDetail, handleCallFailure } = useAppState();
+  const [returnId, setReturnId] = useState<number | null>(null);
+  const [returnError, setReturnError] = useState('');
+  const [returnBusy, setReturnBusy] = useState(false);
   useEffect(() => {
     if (mode === 'api' && id) void loadHouseholdDetail(Number(id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,6 +84,7 @@ export function HouseholdDetailPage(): React.ReactElement {
         </dl>
       </section>
 
+      {returnError && <div className="banner banner-error" role="alert">{returnError}</div>}
       <h2 className="section-heading">Thành viên đang cư trú ({members.length})</h2>
       <section className="surface-box">
         {members.length === 0 ? (
@@ -117,6 +123,7 @@ export function HouseholdDetailPage(): React.ReactElement {
                       <ResidencyBadge status={m.residencyStatus} />
                     </td>
                     <td className="align-right">
+                      {mode === 'api' && m.residencyStatus === 'Tạm vắng' && <button type="button" className="btn btn-secondary" onClick={() => setReturnId(m.id)}>Đã quay lại</button>}
                       <Link to={`/admin/move-outs?resident=${m.id}`} className="btn btn-ghost btn-sm">
                         Ghi nhận chuyển đi
                       </Link>
@@ -149,6 +156,7 @@ export function HouseholdDetailPage(): React.ReactElement {
                   <th scope="col">Nhân khẩu</th>
                   <th scope="col">Ngày hiệu lực</th>
                   <th scope="col">Lý do</th>
+                  <th scope="col">Đến ngày</th>
                   <th scope="col">Trạng thái</th>
                 </tr>
               </thead>
@@ -158,7 +166,8 @@ export function HouseholdDetailPage(): React.ReactElement {
                     <td>{changeTypeLabel(c.changeType)}</td>
                     <td>{nameOf(c.residentId)}</td>
                     <td className="tabular">{formatBusinessDate(c.effectiveDate)}</td>
-                    <td>{c.reason || '—'}</td>
+                    <td>{c.reason || '—'}{c.rejectReasonAssumed && <p>Lý do từ chối: {c.rejectReasonAssumed}</p>}</td>
+                    <td>{formatBusinessDate(c.endDateAssumed)}</td>
                     <td>
                       <ChangeStatusBadge status={c.status} />
                     </td>
@@ -191,6 +200,13 @@ export function HouseholdDetailPage(): React.ReactElement {
           Mở danh sách tài khoản
         </Link>
       </section>
+      <ConfirmDialog open={returnId != null} title={`Xác nhận ${members.find((m) => m.id === returnId)?.fullName ?? ''} đã quay lại?`} consequence="Trạng thái nhân khẩu chuyển sang Đang cư trú." confirmLabel="Đã quay lại" busy={returnBusy} onCancel={() => setReturnId(null)} onConfirm={() => { void (async () => {
+        if (returnId == null) return;
+        setReturnBusy(true); setReturnError('');
+        try { await returnResident(returnId); await loadHouseholdDetail(household.id); setReturnId(null); }
+        catch (err) { setReturnError(handleCallFailure(err)); }
+        finally { setReturnBusy(false); }
+      })(); }}>{returnError && <p className="field-error" role="alert">{returnError}</p>}</ConfirmDialog>
     </>
   );
 }
