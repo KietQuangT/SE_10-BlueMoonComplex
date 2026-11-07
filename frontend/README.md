@@ -2,7 +2,7 @@
 
 Giao diện web của hệ thống quản lý cư trú và thu phí chung cư BlueMoon. Kiệt phụ trách phần này; bản hiện tại là kết quả đợt làm lại giao diện ngày 06/11/2026 (Sơn), dựng trên nhánh `feat/frontend` của Kiệt.
 
-> **Trạng thái mã:** thư mục này **chưa được commit** trên nhánh `backend` (đang untracked). Đợt làm lại đổi thương hiệu (màu, nền, logo, sáng/tối) so với bản của Kiệt, nên cần báo Kiệt trước khi đưa vào nhánh chung. Bản gốc trước đợt làm lại: `_agents_workspace/backup/frontend-20261106_184716/` (có `RESTORE.txt`).
+> **Trạng thái mã:** frontend đã được commit; các thay đổi giao diện cần Kiệt xem trước khi đưa vào nhánh chung.
 
 ## Chạy
 
@@ -27,7 +27,8 @@ npm run build    # tsc -b && vite build -> dist/
 | Tạo tài khoản (`POST /api/v1/accounts`) | Đã ghép (S02) |
 | Vô hiệu, bật lại, mở khóa tài khoản (S04: `POST /accounts/{id}/disable`, `enable`, `unlock`) | **Đã ghép** ở màn Tài khoản (M-10) trong chế độ API; backend S04 chưa vào `main` (nhánh `hhoangsonnw/feat-s04`). Chưa có API liệt kê tài khoản, nên chế độ API chỉ hiện tài khoản vừa cấp trong phiên |
 | Hộ và nhân khẩu (S05: `/households`, `/households/{id}/residents`, `/residents/{id}`, `move-out`, `residency-changes`, `/households/me/residents`) | **Đã ghép** M-12, M-13, M-14 (thêm/sửa hộ, thêm nhân khẩu), M-15 (chuyển đi và lưu trữ), M-30 (Hộ của tôi). Chế độ API tải dữ liệu thật; Demo vẫn dùng dữ liệu mẫu |
-| Tạm vắng, hóa đơn, thu tiền, đóng góp, báo cáo (S03, S06 trở đi) | Dữ liệu mẫu `src/data/mockData.ts` (Demo), chưa có API |
+| Tạm vắng (S06) | Đã ghép ở mức mã: khai báo, duyệt, từ chối, hủy, quay lại và gợi ý tên; chưa thử với backend thật trên Chrome |
+| Hóa đơn, thu tiền, đóng góp, báo cáo | Dữ liệu mẫu `src/data/mockData.ts` (Demo), chưa có API |
 
 Mọi màn dùng dữ liệu mẫu đều ghi rõ trên giao diện ở chế độ DEV/Demo. Người dùng thật không thấy nhãn nội bộ.
 

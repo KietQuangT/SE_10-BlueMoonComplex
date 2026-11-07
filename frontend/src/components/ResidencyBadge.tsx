@@ -11,9 +11,10 @@ export function ResidencyBadge({ status }: { status: ResidentMember['residencySt
 export function ChangeStatusBadge({ status }: { status: ResidencyChangeRecord['status'] }): React.ReactElement {
   if (status === 'PENDING') return <StatusBadge tone="pending" label="Chờ duyệt" />;
   if (status === 'APPROVED') return <StatusBadge tone="paid" label="Đã duyệt" />;
+  if (status === 'CANCELLED') return <StatusBadge tone="neutral" label="Đã hủy" />;
   return <StatusBadge tone="danger" label="Từ chối" />;
 }
 
 export function changeTypeLabel(type: ResidencyChangeRecord['changeType']): string {
-  return type === 'TAM_VANG' ? 'Tạm vắng' : 'Chuyển đi';
+  return type === 'TAM_VANG' ? 'Tạm vắng' : type === 'QUAY_LAI' ? 'Quay lại cư trú' : 'Chuyển đi';
 }

@@ -89,11 +89,11 @@ export interface ResidencyChangeRecord {
   id: number;
   residentId: number;
   householdId: number;
-  changeType: 'TAM_VANG' | 'CHUYEN_DI';
+  changeType: 'TAM_VANG' | 'CHUYEN_DI' | 'QUAY_LAI';
   effectiveDate: string;
   endDateAssumed: string | null;
   reason: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
   recordedBy: number;
   approvedByAssumed?: number | null;
   approvedAtAssumed?: string | null;

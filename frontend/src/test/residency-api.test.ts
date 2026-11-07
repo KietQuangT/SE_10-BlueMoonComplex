@@ -67,3 +67,42 @@ describe('S04 call', () => {
     expect((init?.headers as Record<string, string>)['X-CSRF-TOKEN']).toBe('tok');
   });
 });
+
+describe('S06 contract', () => {
+  it('maps all change types and statuses', () => {
+    const base = { id: 1, residentId: 2, effectiveDate: '2026-11-07', recordedBy: 1, reason: null, endDate: null, decisionNote: null, decidedAt: null };
+    for (const [changeType, expected] of [['TEMPORARY_ABSENCE', 'TAM_VANG'], ['MOVE_OUT', 'CHUYEN_DI'], ['RETURN', 'QUAY_LAI']] as const) {
+      for (const status of ['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED'] as const) {
+        expect(toChange({ ...base, changeType, status }, 3)).toMatchObject({ changeType: expected, status });
+      }
+    }
+  });
+});
+
+describe('S06 endpoints', () => {
+  it('sends each route with the expected method, body and CSRF header', async () => {
+    const api = await import('../api/residency');
+    const calls: Array<[string, RequestInit | undefined]> = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      calls.push([url, init]);
+      return new Response(JSON.stringify(url === '/api/v1/auth/csrf' ? { headerName: 'X-CSRF-TOKEN', token: 'tok' } : {}), { status: 200 });
+    });
+    await api.createDeclaration({ residentId: 4, effectiveDate: '2026-11-07', reason: 'Công tác' });
+    await api.fetchMyDeclarations(1, 10);
+    await api.cancelDeclaration(3);
+    await api.fetchDeclarations({ status: 'PENDING', q: '', apartment: ' ', page: 0, size: 10 });
+    await api.approveDeclaration(3);
+    await api.rejectDeclaration(3, 'Thiếu thông tin');
+    await api.returnResident(4);
+    await api.suggestResidents('An');
+    const requests = calls.filter(([url]) => url !== '/api/v1/auth/csrf');
+    expect(requests.map(([url]) => url)).toEqual(['/api/v1/residency-declarations', '/api/v1/residency-declarations/mine?page=1&size=10', '/api/v1/residency-declarations/3/cancel', '/api/v1/residency-declarations?status=PENDING&page=0&size=10', '/api/v1/residency-declarations/3/approve', '/api/v1/residency-declarations/3/reject', '/api/v1/residents/4/return', '/api/v1/residents/suggest?q=An']);
+    requests.forEach(([, init], i) => { expect(init?.method).toBe([1, 3, 7].includes(i) ? 'GET' : 'POST'); if (![1, 3, 7].includes(i)) expect((init?.headers as Record<string, string>)['X-CSRF-TOKEN']).toBe('tok'); });
+    expect(JSON.parse(String(requests[5][1]?.body))).toEqual({ decisionNote: 'Thiếu thông tin' });
+  });
+  it('provides actionable messages for every S06 error', () => {
+    for (const code of ['INVALID_DATE', 'VALIDATION', 'INVALID_FILTER', 'RESIDENT_NOT_AVAILABLE', 'DECLARATION_ALREADY_PENDING', 'DECLARATION_NOT_PENDING', 'DECLARATION_NOT_FOUND', 'RESIDENT_NOT_ABSENT']) {
+      expect(messageForError(new ApiHttpError({ status: 400, code }))).not.toBe('Dữ liệu chưa hợp lệ. Kiểm tra lại từng ô.');
+    }
+  });
+});
