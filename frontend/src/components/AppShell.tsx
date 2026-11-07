@@ -24,14 +24,14 @@ interface NavGroup {
 const SHOW_DEV_TOOLS = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO === 'true';
 
 function useNavGroups(role: RoleCode): NavGroup[] {
-  const { residencyChanges, invoices, user } = useAppState();
-  const pendingAbsence = residencyChanges.filter(
+  const { residencyChanges, invoices, user, mode, absenceCount } = useAppState();
+  const pendingAbsence = mode === 'api' ? absenceCount : residencyChanges.filter(
     (c) => c.status === 'PENDING' && c.changeType === 'TAM_VANG',
   ).length;
   const unpaidMine = invoices.filter(
     (i) => i.householdId === user?.householdId && i.status === 'CHUA_DONG',
   ).length;
-  const pendingMine = residencyChanges.filter(
+  const pendingMine = mode === 'api' ? absenceCount : residencyChanges.filter(
     (c) => c.householdId === user?.householdId && c.status === 'PENDING',
   ).length;
 
