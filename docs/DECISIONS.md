@@ -32,7 +32,7 @@ Ngày rà soát: 04/11/2026. Chỉ các lựa chọn D01–D04 đã được ng�
 - S01 (06/11/2026), cần Sơn hoặc nhóm quyết, chưa có quy tắc:
   1. Thời gian phản hồi: nhánh đang khóa không chạy BCrypt; nhánh `INACTIVE` có thể cũng bỏ qua BCrypt (suy luận, chưa đo). Kẻ tấn công khóa account bằng 5 lần sai rồi đo thời gian lần thứ 6 để biết account có tồn tại, lách mục đích "mọi lỗi đăng nhập như nhau". Đề xuất chưa duyệt: hai nhánh này cũng chạy `matches` với hash giả cố định.
   2. Nhánh `INACTIVE` và RESIDENT thiếu `household_id` hiện không đếm lần sai và không ghi audit; chỉ lần thành công và lần sai của account ACTIVE mới được audit. Sơn xác nhận hay yêu cầu audit riêng.
-  3. Độ dài tối đa mật khẩu ở login: worker đặt `@Size(max=1024)` để chặn đầu vào quá lớn khi băm BCrypt; Q9 chỉ chốt `username` 100 ký tự. Giá trị đã chốt ở D23 (Q2).
+  3. Độ dài tối đa mật khẩu ở login: worker đặt `@Size(max=1024)` để chặn đầu vào quá lớn khi băm BCrypt; Q9 chỉ chốt `username` 100 ký tự. D23 (Q2) chốt 72 byte UTF-8 cho mật khẩu mới; đăng nhập giữ `@Size(max=1024)` làm chặn đầu vào.
   4. `GET /auth/csrf` khi chưa đăng nhập tạo một dòng `SPRING_SESSION` cho mỗi lần gọi (hết hạn sau 30 phút), làm phình bảng; Tuấn xem có cần giới hạn không.
 - S05 (06/11/2026): các câu 1–6 dưới đây đã được Sơn trả lời bằng D20 (theo lời Sơn, chưa có văn bản của Tuấn, Quân); còn mở: xác nhận của Quân cho câu 6 và quyền Kế toán đọc hộ. Câu hỏi gốc, chi tiết ở `_agents_workspace/S05/00_decision_sheet.md`:
   1. Tập giá trị `residency_status` (đề xuất: RESIDING / TEMPORARILY_ABSENT / MOVED_OUT) và người Tạm vắng có còn trong danh sách hiện tại không. Nợ của F01: mục 6 của "Schema nghiệp vụ" bên dưới ghi F01 chốt tập giá trị trước S05, nhưng F01 đã tick mà chưa chốt.
