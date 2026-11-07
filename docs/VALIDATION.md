@@ -133,3 +133,7 @@ Chưa tick foundation DoD khi các điều kiện này chưa có bằng chứng.
 - Worker Codex: `cd frontend && npm ci && npx tsc -b && npm test && npm run build` (Node 26.10.0) ở worktree feat-s06-ui, HEAD `70c06c7`: vitest 12 file / 51 test đạt, `tsc` không lỗi, build đạt. Copilot QA cùng SHA: cùng kết quả (lời Copilot, chưa kiểm chứng).
 - Review Opus 2 lần: lần 1 có 1 lỗi chặn (dữ liệu mẫu lọt vào form M-31 chế độ api), đã sửa ở `70c06c7`; lần 2 đạt.
 - Chưa xác nhận: chạy trên Chrome với backend S06 thật, 360px, screen reader; test Esc và tải lại sau quyết định thất bại; 3 vulnerabilities do `npm ci` báo; PR frontend trỏ vào nhánh S03 chưa merge. Chi tiết: `docs/sprint-1/TASKS.md` mục "S06 UI", `_agents_workspace/S06/ui/04_evidence.md`.
+
+### Bản tích hợp S03 + S06, 07/11/2026
+- Bằng chứng do Sơn chạy ngày 07/11/2026 20:38 +07 ở thư mục gốc, nhánh `main` cục bộ tại `cef9b93` (`origin/main` d3d8de3 cộng S03, backend S06 và giao diện S06, chưa push): `cd backend && ./mvnw -B -ntp -Pintegration verify` (JDK 21, MySQL 8.4 cổng 3307): failsafe **94 test, 0 lỗi**, BUILD SUCCESS, 57,6 s (80 IT của S03 + 14 `DeclarationIntegrationIT`). Log Sơn dán chỉ gồm pha cuối; số test pha thông thường của bản tích hợp chưa có.
+- Chưa xác nhận: `npm test` và `npm run build` trên bản tích hợp (giao diện không đổi so với `fa78614`), CI trên remote, máy thứ hai.
