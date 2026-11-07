@@ -285,3 +285,48 @@ Lỗi còn lại, điều chưa kiểm thử:
   - Tiền nhiệm S01 đã tick.
 Kết luận: tick theo bằng chứng chạy thật của Sơn (surefire 103 + failsafe 80 xanh, BUILD SUCCESS ở c7d0b89 trên MySQL), đã đối chiếu độc lập báo cáo đúng HEAD, kèm các caveat trên; phần UI của AC thuộc Kiệt, chưa có; push/PR còn chờ cổng G2.
 ```
+
+### S06 backend (CHƯA tick; 07/11/2026): khai báo, duyệt, tra cứu tạm vắng
+```text
+Task: S06 (WBS 2.2.1.2–3), lượt backend; AC còn "cuối cùng ghép UI" nên task chưa tick (Sơn chọn 07/11/2026)
+Commit/PR: CHƯA push, CHƯA PR, chưa chạy CI. Worktree Orca feat-s06 (nhánh hhoangsonnw/feat-s06), nền main d3d8de3, sạch ở 7b9828e:
+  82e5829 fix: hoàn thiện kiểm thử tạm vắng (S06)   (reset --soft main, gồm cả code vòng 0 ac06225)
+  7b9828e fix: hủy đơn tạm vắng khi chuyển đi (S06)
+Lệnh và kết quả:
+  - Worker Codex: cd backend && ./mvnw -B -ntp verify (JDK 21.0.9): 93 test, 0 lỗi, BUILD SUCCESS; verify.log dòng đầu SHA 7b9828e.
+  - Copilot QA độc lập (lời Copilot, chưa kiểm chứng) cùng SHA 7b9828e: 93 test, 0 lỗi.
+  - Bằng chứng do Sơn chạy (07/11/2026 16:24 +07, worktree feat-s06 ở 7b9828e, JDK 21, MySQL cổng 3307): ./mvnw -B -ntp -Pintegration verify → failsafe "Tests run: 89, Failures: 0, Errors: 0, Skipped: 0", BUILD SUCCESS, 52 s. Claude đối chiếu failsafe-reports trong worktree: DeclarationIntegrationIT 14 test, ResidentIntegrationIT 7 test, 0 lỗi.
+  - Claude và subagent KHÔNG chạy được Maven (sandbox không ghi target/ ở worktree Orca); verifier subagent không được gọi, Claude tự grep đối chiếu SHA, số test và cờ bỏ qua (`_agents_workspace/S06/04_evidence.md`).
+  - Review rủi ro Opus 2 lần (ac06225, 7b9828e): đạt, không lỗi chặn. 2 vòng sửa (V7 đổi tên CHECK thành ck_rc_status_v2; test còn thiếu; move-out tự hủy đơn PENDING theo lời Sơn).
+Hợp đồng và quyết định: `_agents_workspace/S06/01_contract.md`, DECISIONS D24 (lời Sơn 07/11/2026): chỉ tạm vắng; RESIDENT khai báo cho nhân khẩu trong hộ mình; ADMIN duyệt/từ chối/"Đã quay lại"; ngày bắt đầu không quá khứ; duyệt hiệu lực ngay; một đơn PENDING mỗi nhân khẩu; hủy bằng CANCELLED; move-out tự hủy đơn PENDING; thông báo chỉ là trạng thái và lý do từ chối qua /mine; V7.
+AC (TASKS.md S06):
+  - Chờ duyệt → duyệt/từ chối đúng quyền: đạt phía server (DeclarationApiTest 8 route 401/403/CSRF/PASSWORD_CHANGE_REQUIRED; DeclarationIntegrationIT trên MySQL).
+  - Lưu trạng thái/lịch sử: đạt (V7, CANCELLED, dòng RETURN, ResidentIntegrationIT/DeclarationIntegrationIT).
+  - Thông báo trong app/mock: đạt theo D24 (trạng thái và lý do từ chối qua GET /residency-declarations/mine).
+  - Cuối cùng ghép UI: CHƯA (lượt UI sau; phần UI thuộc Kiệt).
+Đầu ra giao cho: Tuấn (kiểm tra luồng duyệt và tra cứu) và Kiệt (8 route mới và trường thêm vào ResidencyChangeResponse). Cả hai đã đồng ý chỉ theo lời Sơn; Quân biết về V7 (lời Sơn). Chưa có văn bản.
+Lỗi còn lại, điều chưa kiểm thử:
+  - V7 chưa chạy trên bản sao dữ liệu thật của S05 (DB Sơn có thể không có dữ liệu); chưa chạy Windows/máy thứ hai; chưa CI trên remote.
+  - Thiếu test: "quay lại" với nhân khẩu RESIDING; thoát %/_ của q và apartment ở hàng chờ; thứ tự lock vs truy vấn đơn PENDING ở moveOut chỉ đọc code.
+  - N+1 ở danh sách (~200 truy vấn/trang 100 dòng); `cancellable` luôn false ở phản hồi tạo/hủy; q rỗng ở hàng chờ trả 400; đơn bị hủy do move-out chỉ có nguyên nhân trong audit.
+  - Ảnh hưởng của TEMPORARILY_ABSENT tới phí (S08/S09) và báo cáo (S11) chưa có quy tắc.
+  - Code worker dồn nhiều lệnh vào một dòng dài, khó đọc; chưa dọn.
+Kết luận: backend đủ bằng chứng; chưa tick S06 vì thiếu UI. Push/PR chờ cổng G2/G3.
+```
+
+### S06 UI (CHƯA tick; 07/11/2026): khai báo, duyệt, quay lại, gợi ý tên tạm vắng (frontend)
+```text
+Task: S06 (WBS 2.2.1.2–3), lượt UI (phần của Kiệt), chế độ Backend thật `api`
+Commit/PR: CHƯA push, CHƯA PR. Worktree Orca feat-s06-ui (nhánh hhoangsonnw/feat-s06-ui), xếp trên feat/s03-change-password (3ee97ca, chưa merge vào main), sạch ở 70c06c7:
+  b78dadf feat: ghép giao diện khai báo tạm vắng (S06 UI)
+  70c06c7 fix: bảo vệ biểu mẫu tạm vắng (S06 UI)
+Lệnh và kết quả:
+  - Worker Codex: cd frontend && npm ci && npx tsc -b && npm test && npm run build (Node 26.10.0): vitest 12 file / 51 test đạt, tsc không lỗi, build đạt; verify.log SHA 70c06c7.
+  - Copilot QA độc lập (lời Copilot): cùng SHA, 12 file / 51 test, tsc và build đạt.
+  - Claude đối chiếu SHA, số test; không chạy lại npm được (sandbox); verifier subagent không được gọi.
+  - Review rủi ro Opus 2 lần: lần 1 có 1 lỗi chặn (dữ liệu mẫu lọt vào form ghi thật của M-31 ở chế độ api); vòng sửa 1 (70c06c7) đã sửa và thêm test; lần 2 đạt, không lỗi chặn.
+AC "cuối cùng ghép UI": M-31, M-16, M-13 đã ghép API S06 ở mức mã và test đơn vị (fetch giả). CHƯA chạy trên Chrome với backend S06 thật, chưa kiểm 360px/screen reader.
+Đầu ra giao cho: Kiệt (PR frontend riêng); Kiệt đồng ý chỉ theo lời Sơn.
+Lỗi còn lại: lỗi cũ không tự xóa ở M-16/M-13; hộp M-16 mở sau quyết định thất bại; thiếu test Esc, đổi tên đăng nhập, api→demo→api, tải lại sau duyệt/từ chối thất bại; npm báo 3 vulnerabilities; README/PRODUCT còn dòng lỗi thời nhỏ.
+Kết luận: UI đủ bằng chứng ở mức mã và test đơn vị; chưa tick S06 vì chưa thử tích hợp thật trên trình duyệt.
+```
