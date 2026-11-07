@@ -26,3 +26,21 @@ it('warns that pending absences will be cancelled when moving out', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Ghi nhận đã chuyển đi' }));
   expect(screen.getByText(/Các đơn tạm vắng đang chờ duyệt của người này/)).toHaveTextContent('sẽ tự động chuyển sang Đã hủy.');
 });
+
+it('does not show the cancellation warning in demo mode', () => {
+  mode = 'demo'; role = 'ADMIN'; render(<MemoryRouter><MoveOutPage /></MemoryRouter>);
+  fireEvent.change(screen.getByLabelText('Nhân khẩu'), { target: { value: '1' } });
+  fireEvent.change(screen.getByLabelText('Lý do'), { target: { value: 'Chuyển nhà' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Ghi nhận đã chuyển đi' }));
+  expect(screen.queryByText(/Các đơn tạm vắng đang chờ duyệt/)).not.toBeInTheDocument();
+});
+it('clears return failure when reopening confirmation', async () => {
+  mode = 'api'; role = 'ADMIN';
+  vi.spyOn(await import('../api/residency'), 'returnResident').mockRejectedValueOnce(new Error('conflict'));
+  show(); fireEvent.click(screen.getByRole('button', { name: 'Đã quay lại' }));
+  fireEvent.click(within(document.querySelector('dialog')!).getByText('Đã quay lại', { selector: 'button' }));
+  await screen.findByText('Lỗi');
+  fireEvent.click(within(document.querySelector('dialog')!).getByText('Hủy', { selector: 'button' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Đã quay lại' }));
+  expect(within(document.querySelector('dialog')!).queryByText('Lỗi')).not.toBeInTheDocument();
+});

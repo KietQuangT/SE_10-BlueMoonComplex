@@ -85,7 +85,7 @@ export function HouseholdDetailPage(): React.ReactElement {
       </section>
 
       {returnError && returnId == null && <div className="banner banner-error" role="alert">{returnError}</div>}
-      <h2 className="section-heading">Thành viên hiện tại ({members.length})</h2><p>Gồm người đang tạm vắng.</p>
+      <h2 className="section-heading">Thành viên hiện tại ({members.length})</h2><p className="field-hint">Gồm người đang tạm vắng.</p>
       <section className="surface-box">
         {members.length === 0 ? (
           <div className="state-panel">

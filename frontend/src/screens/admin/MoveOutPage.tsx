@@ -255,7 +255,7 @@ export function MoveOutPage(): React.ReactElement {
       <ConfirmDialog
         open={confirmOpen}
         title={`Ghi nhận ${selected?.fullName ?? ''} đã chuyển đi?`}
-        consequence={`Người này rời danh sách đang cư trú của hộ ${selected ? hhCode(selected.householdId) : ''} từ ${formatBusinessDate(effectiveDate)}. Hồ sơ vẫn được giữ trong Lưu trữ. Các đơn tạm vắng đang chờ duyệt của người này (nếu có) sẽ tự động chuyển sang Đã hủy.`}
+        consequence={`Người này rời danh sách đang cư trú của hộ ${selected ? hhCode(selected.householdId) : ''} từ ${formatBusinessDate(effectiveDate)}. Hồ sơ vẫn được giữ trong Lưu trữ.${live ? ' Các đơn tạm vắng đang chờ duyệt của người này (nếu có) sẽ tự động chuyển sang Đã hủy.' : ''}`}
         confirmLabel="Ghi nhận chuyển đi"
         onCancel={() => setConfirmOpen(false)}
         onConfirm={async () => {
