@@ -9,6 +9,8 @@ public class MockEmailService {
     private final Clock clock;
     public MockEmailService(MockEmailRepository repository, Clock clock) { this.repository = repository; this.clock = clock; }
     @Transactional(propagation = Propagation.MANDATORY)
+    public void redactBodies(long userId) { repository.redactBodies(userId, "Nội dung đã được ẩn sau khi đổi mật khẩu."); }
+    @Transactional(propagation = Propagation.MANDATORY)
     public void send(long recipientUserId, String recipientEmail, String subject, String body) {
         repository.save(new MockEmail(recipientUserId, recipientEmail, subject, body, clock.instant()));
     }
