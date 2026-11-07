@@ -16,6 +16,7 @@ public class Resident {
  protected Resident() {}
  public Resident(long householdId,String fullName,String identityNumber,LocalDate dateOfBirth,String phone,String relationship,Instant now){this.householdId=householdId;this.fullName=fullName;this.identityNumber=identityNumber;this.dateOfBirth=dateOfBirth;this.phone=phone;this.relationshipToHead=relationship;this.residencyStatus=ResidencyStatus.RESIDING;this.createdAt=now;this.updatedAt=now;}
  public void update(String name,String identity,LocalDate birth,String phone,String relationship,Instant now){if(name!=null)fullName=name;if(identity!=null)identityNumber=identity;if(birth!=null)dateOfBirth=birth;if(phone!=null)this.phone=phone;if(relationship!=null)relationshipToHead=relationship;updatedAt=now;}
+ public void setResidencyStatus(ResidencyStatus status,Instant now){residencyStatus=status;updatedAt=now;}
  public void moveOut(Instant now){residencyStatus=ResidencyStatus.MOVED_OUT;updatedAt=now;}
  public Long getId(){return id;} public Long getHouseholdId(){return householdId;} public String getFullName(){return fullName;} public String getIdentityNumber(){return identityNumber;} public LocalDate getDateOfBirth(){return dateOfBirth;} public String getPhone(){return phone;} public String getRelationshipToHead(){return relationshipToHead;} public ResidencyStatus getResidencyStatus(){return residencyStatus;} public Instant getCreatedAt(){return createdAt;} public Instant getUpdatedAt(){return updatedAt;}
 }
