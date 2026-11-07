@@ -1947,3 +1947,6 @@
 }
 
 [role="option"][aria-selected="true"] { background: var(--surface-muted); outline: 2px solid var(--text-primary); }
+
+.suggestion-anchor { position: relative; }
+.suggestion-overlay { position: absolute; top: 100%; left: 0; width: 100%; max-height: 240px; overflow-y: auto; z-index: 20; background: var(--surface-panel); border: 1px solid var(--border-strong); }
