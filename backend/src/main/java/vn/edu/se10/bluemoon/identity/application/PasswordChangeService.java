@@ -35,9 +35,7 @@ public class PasswordChangeService {
         Instant now = clock.instant();
         if (!"ADMIN".equals(user.getRole().getCode()) && user.getLockedUntil() != null && user.getLockedUntil().isAfter(now)) return Result.LOCKED;
         if (!encoder.matches(current, user.getPasswordHash())) {
-            int failedCount = user.getFailedLoginCount() + 1;
-            attempts.recordFailure(user, now);
-            audit.record(id, "PASSWORD_CHANGE_FAILED", "User", Long.toString(id), java.util.Map.of("failedCount", Integer.toString(failedCount)));
+            attempts.recordFailure(user, now, "PASSWORD_CHANGE_FAILED");
             return Result.CURRENT_PASSWORD_INCORRECT;
         }
         if (replacement.length() < 8) return Result.PASSWORD_TOO_SHORT;

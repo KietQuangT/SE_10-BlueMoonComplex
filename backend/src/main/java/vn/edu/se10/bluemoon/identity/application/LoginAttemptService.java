@@ -63,18 +63,28 @@ public class LoginAttemptService {
 
     @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
     public void recordFailure(User user, Instant now) {
+        recordFailure(user, now, "LOGIN_FAILED");
+    }
+
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void recordFailure(User user, Instant now, String action) {
         if (!"ADMIN".equals(user.getRole().getCode())) {
             user.failedAttempt();
             if (user.getFailedLoginCount() >= LoginLockPolicy.failureThreshold(user.getLockLevel())) {
                 int level = user.getLockLevel() == Integer.MAX_VALUE ? Integer.MAX_VALUE : user.getLockLevel() + 1;
                 user.lock(LoginLockPolicy.lockedUntil(now, level));
-                audit.record(user.getId(), "LOGIN_FAILED", "User", user.getId().toString(), null);
+                auditFailure(user, action);
                 audit.record(user.getId(), "ACCOUNT_LOCKED", "User", user.getId().toString(),
                         Map.of("level", Integer.toString(level), "minutes", Long.toString(LoginLockPolicy.lockDuration(level).toMinutes())));
                 return;
             }
         }
-        audit.record(user.getId(), "LOGIN_FAILED", "User", user.getId().toString(), null);
+        auditFailure(user, action);
+    }
+
+    private void auditFailure(User user, String action) {
+        audit.record(user.getId(), action, "User", user.getId().toString(),
+                "PASSWORD_CHANGE_FAILED".equals(action) ? Map.of("failedCount", Integer.toString(user.getFailedLoginCount())) : null);
     }
 
     private void dummyAuthenticate(String username, String password) {
