@@ -23,9 +23,10 @@ npm run build    # tsc -b && vite build -> dist/
 | Phần | Trạng thái |
 |---|---|
 | Đăng nhập, đăng xuất, `me`, CSRF (`/api/v1/auth/*`), đổi mật khẩu bắt buộc | Đã ghép (S01) |
+| Đổi mật khẩu `POST /api/v1/auth/change-password` (204; mọi phiên bị hủy, đăng nhập lại) | Đã ghép (S03). Cần backend build từ nhánh S03. Mới chạy thử với backend thật ca sai mật khẩu hiện tại (400, banner đúng); chưa thử đổi thành công, luồng bị ép đổi và banner khóa |
 | Tạo tài khoản (`POST /api/v1/accounts`) | Đã ghép (S02) |
-| Vô hiệu, bật lại, mở khóa tài khoản (S04) | Hợp đồng đã duyệt, **chưa** ghép, chưa vào `main` |
-| Hộ và nhân khẩu (S05: `/households`, `/residents`, ...) | API đã có trên `main`, giao diện **chưa** ghép, vẫn dùng dữ liệu mẫu |
+| Vô hiệu, bật lại, mở khóa tài khoản (S04: `POST /accounts/{id}/disable`, `enable`, `unlock`) | **Đã ghép** ở màn Tài khoản (M-10) trong chế độ API; backend S04 chưa vào `main` (nhánh `hhoangsonnw/feat-s04`). Chưa có API liệt kê tài khoản, nên chế độ API chỉ hiện tài khoản vừa cấp trong phiên |
+| Hộ và nhân khẩu (S05: `/households`, `/households/{id}/residents`, `/residents/{id}`, `move-out`, `residency-changes`, `/households/me/residents`) | **Đã ghép** M-12, M-13, M-14 (thêm/sửa hộ, thêm nhân khẩu), M-15 (chuyển đi và lưu trữ), M-30 (Hộ của tôi). Chế độ API tải dữ liệu thật; Demo vẫn dùng dữ liệu mẫu |
 | Tạm vắng, hóa đơn, thu tiền, đóng góp, báo cáo (S03, S06 trở đi) | Dữ liệu mẫu `src/data/mockData.ts` (Demo), chưa có API |
 
 Mọi màn dùng dữ liệu mẫu đều ghi rõ trên giao diện ở chế độ DEV/Demo. Người dùng thật không thấy nhãn nội bộ.
@@ -75,5 +76,11 @@ Báo cáo đầy đủ, từng mục và bằng chứng: `AUDIT.md`.
 3. **Lỗi giao diện đã biết, chưa sửa:** danh sách hóa đơn tràn 16 px ở 768 (`resident-invoices`); nút "Tải về" và "Xem gói" lệch hàng lưới ở `authority-reports`.
 4. **Cố ý không sửa:** demo nằm trong bundle (cần tách `AppStateContext` và `mockData`; bản build thật phải không bật `VITE_ENABLE_DEMO`), chưa lazy route, `formatAreaM2` còn tách dòng "m ²".
 5. **Nội dung:** vài màn mức C còn tham chiếu dạng "Q8", "Q12" trong câu chữ; cần viết lại cùng chủ nghiệp vụ. Chưa có test cho `api/client.ts` (thử lại CSRF).
-6. **Ghép API:** S04 (sau khi vào `main`), S05 (hộ, nhân khẩu), rồi các task sau; mỗi lần ghép xóa dữ liệu mẫu tương ứng và cập nhật bảng trên.
+6. **Ghép API (đợt 06/11/2026):** S04 và S05 đã nối ở mức mã; **chưa chạy thử với backend thật** (mới có `tsc`, 29 test, mock `fetch` và Demo trong Chrome). Giới hạn đã biết khi nối:
+   - Backend không có API liệt kê tài khoản, không đổi trạng thái hộ, không sửa mã hộ và mã căn hộ sau khi tạo: ở chế độ API, màn sửa hộ khóa hai mã và ẩn ô trạng thái; form nhân khẩu ẩn ô trạng thái cư trú (luôn "Đang cư trú").
+   - Danh sách hộ không có số nhân khẩu (hiện "—" tới khi mở chi tiết hộ).
+   - Lịch sử biến động không có "lý do" (API không trả), nên hiện "—".
+   - Cư dân chỉ gọi được `/households/me/residents`, nên màn Hộ của tôi không có mã căn hộ và diện tích.
+   - "Mở khóa" hiện với mọi tài khoản không phải ADMIN và đang hoạt động; API trả 409 nếu không còn gì để mở.
+   Các màn còn lại (tạm vắng, hóa đơn, thu tiền, đóng góp, báo cáo) vẫn dùng dữ liệu mẫu.
 7. **Quy trình:** commit trên nhánh riêng từ `origin/feat/frontend`, báo Kiệt về thay đổi thương hiệu, rồi mở PR. Việc này cần Sơn duyệt.
