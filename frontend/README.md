@@ -2,7 +2,7 @@
 
 Giao diện web của hệ thống quản lý cư trú và thu phí chung cư BlueMoon. Kiệt phụ trách phần này; bản hiện tại là kết quả đợt làm lại giao diện ngày 06/11/2026 (Sơn), dựng trên nhánh `feat/frontend` của Kiệt.
 
-> **Trạng thái mã:** thư mục này **chưa được commit** trên nhánh `backend` (đang untracked). Đợt làm lại đổi thương hiệu (màu, nền, logo, sáng/tối) so với bản của Kiệt, nên cần báo Kiệt trước khi đưa vào nhánh chung. Bản gốc trước đợt làm lại: `_agents_workspace/backup/frontend-20261106_184716/` (có `RESTORE.txt`).
+> **Trạng thái mã:** frontend đã được commit; các thay đổi giao diện cần Kiệt xem trước khi đưa vào nhánh chung.
 
 ## Chạy
 
@@ -27,7 +27,8 @@ npm run build    # tsc -b && vite build -> dist/
 | Tạo tài khoản (`POST /api/v1/accounts`) | Đã ghép (S02) |
 | Vô hiệu, bật lại, mở khóa tài khoản (S04: `POST /accounts/{id}/disable`, `enable`, `unlock`) | **Đã ghép** ở màn Tài khoản (M-10) trong chế độ API; backend S04 chưa vào `main` (nhánh `hhoangsonnw/feat-s04`). Chưa có API liệt kê tài khoản, nên chế độ API chỉ hiện tài khoản vừa cấp trong phiên |
 | Hộ và nhân khẩu (S05: `/households`, `/households/{id}/residents`, `/residents/{id}`, `move-out`, `residency-changes`, `/households/me/residents`) | **Đã ghép** M-12, M-13, M-14 (thêm/sửa hộ, thêm nhân khẩu), M-15 (chuyển đi và lưu trữ), M-30 (Hộ của tôi). Chế độ API tải dữ liệu thật; Demo vẫn dùng dữ liệu mẫu |
-| Tạm vắng, hóa đơn, thu tiền, đóng góp, báo cáo (S03, S06 trở đi) | Dữ liệu mẫu `src/data/mockData.ts` (Demo), chưa có API |
+| Tạm vắng (S06) | Đã ghép ở mức mã: khai báo, duyệt, từ chối, hủy, quay lại và gợi ý tên; chưa thử với backend thật trên Chrome |
+| Hóa đơn, thu tiền, đóng góp, báo cáo | Dữ liệu mẫu `src/data/mockData.ts` (Demo), chưa có API |
 
 Mọi màn dùng dữ liệu mẫu đều ghi rõ trên giao diện ở chế độ DEV/Demo. Người dùng thật không thấy nhãn nội bộ.
 
@@ -76,7 +77,7 @@ Báo cáo đầy đủ, từng mục và bằng chứng: `AUDIT.md`.
 3. **Lỗi giao diện đã biết, chưa sửa:** danh sách hóa đơn tràn 16 px ở 768 (`resident-invoices`); nút "Tải về" và "Xem gói" lệch hàng lưới ở `authority-reports`.
 4. **Cố ý không sửa:** demo nằm trong bundle (cần tách `AppStateContext` và `mockData`; bản build thật phải không bật `VITE_ENABLE_DEMO`), chưa lazy route, `formatAreaM2` còn tách dòng "m ²".
 5. **Nội dung:** vài màn mức C còn tham chiếu dạng "Q8", "Q12" trong câu chữ; cần viết lại cùng chủ nghiệp vụ. Chưa có test cho `api/client.ts` (thử lại CSRF).
-6. **Ghép API (đợt 06/11/2026):** S04 và S05 đã nối ở mức mã; **chưa chạy thử với backend thật** (mới có `tsc`, 29 test, mock `fetch` và Demo trong Chrome). Giới hạn đã biết khi nối:
+6. **Ghép API (đợt 06/11/2026):** S04 và S05 đã nối ở mức mã; **chưa chạy thử với backend thật** (mới có `tsc`, 51 test, mock `fetch` và Demo trong Chrome). Giới hạn đã biết khi nối:
    - Backend không có API liệt kê tài khoản, không đổi trạng thái hộ, không sửa mã hộ và mã căn hộ sau khi tạo: ở chế độ API, màn sửa hộ khóa hai mã và ẩn ô trạng thái; form nhân khẩu ẩn ô trạng thái cư trú (luôn "Đang cư trú").
    - Danh sách hộ không có số nhân khẩu (hiện "—" tới khi mở chi tiết hộ).
    - Lịch sử biến động không có "lý do" (API không trả), nên hiện "—".
