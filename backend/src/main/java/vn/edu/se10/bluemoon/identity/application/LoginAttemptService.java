@@ -72,8 +72,8 @@ public class LoginAttemptService {
             user.failedAttempt();
             if (user.getFailedLoginCount() >= LoginLockPolicy.failureThreshold(user.getLockLevel())) {
                 int level = user.getLockLevel() == Integer.MAX_VALUE ? Integer.MAX_VALUE : user.getLockLevel() + 1;
-                user.lock(LoginLockPolicy.lockedUntil(now, level));
                 auditFailure(user, action);
+                user.lock(LoginLockPolicy.lockedUntil(now, level));
                 audit.record(user.getId(), "ACCOUNT_LOCKED", "User", user.getId().toString(),
                         Map.of("level", Integer.toString(level), "minutes", Long.toString(LoginLockPolicy.lockDuration(level).toMinutes())));
                 return;
