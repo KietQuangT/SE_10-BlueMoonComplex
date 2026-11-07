@@ -130,7 +130,6 @@ Chưa tick foundation DoD khi các điều kiện này chưa có bằng chứng.
 - Chưa xác nhận: UI (AC "ghép UI"), CI remote, dữ liệu S05 thật, quy tắc phí/báo cáo cho `TEMPORARILY_ABSENT`, văn bản xác nhận của Tuấn/Kiệt/Quân. Chi tiết: `docs/sprint-1/TASKS.md` mục "S06 backend" và `_agents_workspace/S06/04_evidence.md`.
 
 ### S06 UI: khai báo, duyệt, quay lại, gợi ý tên tạm vắng, 07/11/2026
-- Tick S06 ngày 08/11/2026 theo lời Sơn, khi chưa kiểm Chrome với backend S06 thật. Vòng sửa 3 (`fa786147`, lời worker): vitest 13 file / 65 test đạt; chưa chạy lại trong Claude.
 - Worker Codex: `cd frontend && npm ci && npx tsc -b && npm test && npm run build` (Node 26.10.0) ở worktree feat-s06-ui, HEAD `70c06c7`: vitest 12 file / 51 test đạt, `tsc` không lỗi, build đạt. Copilot QA cùng SHA: cùng kết quả (lời Copilot, chưa kiểm chứng).
 - Review Opus 2 lần: lần 1 có 1 lỗi chặn (dữ liệu mẫu lọt vào form M-31 chế độ api), đã sửa ở `70c06c7`; lần 2 đạt.
 - Chưa xác nhận: chạy trên Chrome với backend S06 thật, 360px, screen reader; test Esc và tải lại sau quyết định thất bại; 3 vulnerabilities do `npm ci` báo; PR frontend trỏ vào nhánh S03 chưa merge. Chi tiết: `docs/sprint-1/TASKS.md` mục "S06 UI", `_agents_workspace/S06/ui/04_evidence.md`.
