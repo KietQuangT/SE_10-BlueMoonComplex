@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { ApiAbsenceApprovalsPage } from './ApiAbsenceApprovalsPage';
 import { useAppState } from '../../state/AppStateContext';
 import { formatBusinessDate } from '../../lib/format';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -12,6 +13,11 @@ type StatusFilter = 'PENDING' | 'APPROVED' | 'REJECTED' | 'ALL';
 
 /** M-16 — Duyệt khai báo tạm vắng (mặc định lọc Chờ duyệt). */
 export function AbsenceApprovalsPage(): React.ReactElement {
+  const { mode } = useAppState();
+  return mode === 'api' ? <ApiAbsenceApprovalsPage /> : <DemoAbsenceApprovalsPage />;
+}
+
+function DemoAbsenceApprovalsPage(): React.ReactElement {
   const { residencyChanges, residents, households, decideAbsenceDemo, forcedUiState, setForcedUiState } = useAppState();
   const [filter, setFilter] = useState<StatusFilter>('PENDING');
   const [selectedId, setSelectedId] = useState<number | null>(null);

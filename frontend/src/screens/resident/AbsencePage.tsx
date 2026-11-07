@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ApiAbsencePage } from './ApiAbsencePage';
 import { useAppState } from '../../state/AppStateContext';
 import { formatBusinessDate } from '../../lib/format';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -11,6 +12,11 @@ type FormErrors = Partial<Record<'residentId' | 'effectiveDate' | 'endDateAssume
 
 /** M-31 — Khai báo tạm vắng + Đơn của tôi (đủ 8 trạng thái; giữ nội dung khi phiên hết hạn). */
 export function AbsencePage(): React.ReactElement {
+  const { mode } = useAppState();
+  return mode === 'api' ? <ApiAbsencePage /> : <DemoAbsencePage />;
+}
+
+function DemoAbsencePage(): React.ReactElement {
   const {
     user,
     residents,
@@ -74,13 +80,17 @@ export function AbsencePage(): React.ReactElement {
     if (!absenceDraft.residentId || !members.some((m) => String(m.id) === absenceDraft.residentId)) {
       next.residentId = 'Chọn một thành viên đang cư trú trong hộ.';
     }
-    if (!absenceDraft.effectiveDate) next.effectiveDate = 'Chọn ngày bắt đầu vắng mặt.';
-    if (absenceDraft.endDateAssumed && absenceDraft.effectiveDate && absenceDraft.endDateAssumed < absenceDraft.effectiveDate) {
+    if ((document.getElementById('abs-from') as HTMLInputElement).validity.badInput) next.effectiveDate = 'Từ ngày chưa đúng định dạng.';
+    else if (!absenceDraft.effectiveDate) next.effectiveDate = 'Chọn ngày bắt đầu vắng mặt.';
+    if ((document.getElementById('abs-to') as HTMLInputElement).validity.badInput) next.endDateAssumed = 'Đến ngày chưa đúng định dạng.';
+    else if (absenceDraft.endDateAssumed && absenceDraft.effectiveDate && absenceDraft.endDateAssumed < absenceDraft.effectiveDate) {
       next.endDateAssumed = 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.';
     }
     if (!absenceDraft.reason.trim()) next.reason = 'Nhập lý do vắng mặt.';
     else if (absenceDraft.reason.length > 255) next.reason = 'Lý do tối đa 255 ký tự.';
     setErrors(next);
+    if (next.effectiveDate === 'Từ ngày chưa đúng định dạng.') document.getElementById('abs-from')?.focus();
+    else if (next.endDateAssumed === 'Đến ngày chưa đúng định dạng.') document.getElementById('abs-to')?.focus();
     if (Object.keys(next).length) return;
 
     setStatus('submitting');
@@ -180,10 +190,10 @@ export function AbsencePage(): React.ReactElement {
               value={absenceDraft.endDateAssumed}
               onChange={(e) => update('endDateAssumed', e.target.value)}
               aria-invalid={Boolean(errors.endDateAssumed)}
-              aria-describedby="abs-to-hint"
+              aria-describedby={errors.endDateAssumed ? 'abs-to-err' : 'abs-to-hint'}
             />
             {errors.endDateAssumed ? (
-              <span className="field-error">{errors.endDateAssumed}</span>
+              <span id="abs-to-err" className="field-error">{errors.endDateAssumed}</span>
             ) : (
               <span id="abs-to-hint" className="field-hint">
                 Chưa có cột trong DB.

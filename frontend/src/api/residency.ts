@@ -30,9 +30,13 @@ export interface MyResidentDto {
 export interface ResidencyChangeDto {
   id: number;
   residentId: number;
-  changeType: 'MOVE_OUT' | 'TEMPORARY_ABSENCE';
+  changeType: 'MOVE_OUT' | 'TEMPORARY_ABSENCE' | 'RETURN';
   effectiveDate: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  reason?: string | null;
+  endDate?: string | null;
+  decisionNote?: string | null;
+  decidedAt?: string | null;
   recordedBy: number;
 }
 interface Page<T> {
@@ -88,10 +92,12 @@ export const toChange = (d: ResidencyChangeDto, householdId: number): ResidencyC
   id: d.id,
   residentId: d.residentId,
   householdId,
-  changeType: d.changeType === 'MOVE_OUT' ? 'CHUYEN_DI' : 'TAM_VANG',
+  changeType: d.changeType === 'MOVE_OUT' ? 'CHUYEN_DI' : d.changeType === 'RETURN' ? 'QUAY_LAI' : 'TAM_VANG',
   effectiveDate: d.effectiveDate,
-  endDateAssumed: null,
-  reason: '',
+  endDateAssumed: d.endDate ?? null,
+  reason: d.reason ?? '',
+  rejectReasonAssumed: d.decisionNote ?? null,
+  approvedAtAssumed: d.decidedAt ?? null,
   status: d.status,
   recordedBy: d.recordedBy,
 });
@@ -159,3 +165,33 @@ export const moveOutApi = (residentId: number, effectiveDate: string, reason: st
     effectiveDate,
     reason: reason || null,
   });
+
+export type DeclarationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+export interface DeclarationDto {
+  id: number; residentId: number; residentName: string; householdId: number;
+  householdCode: string; apartmentCode: string; changeType: 'TEMPORARY_ABSENCE';
+  status: DeclarationStatus; effectiveDate: string; endDate: string | null;
+  reason: string; decisionNote: string | null; decidedAt: string | null;
+  createdAt: string; cancellable: boolean;
+}
+export interface DeclarationPage { content: DeclarationDto[]; page: number; size: number; totalElements: number; totalPages: number }
+export interface ResidentSuggestion { residentId: number; fullName: string; householdId: number; householdCode: string; apartmentCode: string }
+export interface DeclarationFilters { status?: DeclarationStatus; apartment?: string; q?: string; page?: number; size?: number }
+function query(filters: DeclarationFilters): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && String(value).trim() !== '') params.set(key, String(value).trim());
+  }
+  const result = params.toString();
+  return result ? `?${result}` : '';
+}
+export const createDeclaration = (body: { residentId: number; effectiveDate: string; endDate?: string; reason: string }) =>
+  sendAuthenticatedWrite<DeclarationDto>('/api/v1/residency-declarations', 'POST', body);
+export const fetchMyDeclarations = (page = 0, size = 10) =>
+  getAuthenticated<DeclarationPage>(`/api/v1/residency-declarations/mine${query({ page, size })}`);
+export const cancelDeclaration = (id: number) => sendAuthenticatedWrite<DeclarationDto>(`/api/v1/residency-declarations/${id}/cancel`, 'POST');
+export const fetchDeclarations = (filters: DeclarationFilters = {}) => getAuthenticated<DeclarationPage>(`/api/v1/residency-declarations${query(filters)}`);
+export const approveDeclaration = (id: number) => sendAuthenticatedWrite<DeclarationDto>(`/api/v1/residency-declarations/${id}/approve`, 'POST');
+export const rejectDeclaration = (id: number, decisionNote: string) => sendAuthenticatedWrite<DeclarationDto>(`/api/v1/residency-declarations/${id}/reject`, 'POST', { decisionNote });
+export const returnResident = (id: number) => sendAuthenticatedWrite<ResidentDto>(`/api/v1/residents/${id}/return`, 'POST');
+export const suggestResidents = (q: string) => getAuthenticated<ResidentSuggestion[]>(`/api/v1/residents/suggest${query({ q })}`);
