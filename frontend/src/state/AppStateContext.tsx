@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ApiHttpError,
   clearCsrfMemory,
@@ -173,15 +173,21 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [absenceCount, setAbsenceCount] = useState(0);
   const [dataLoadError, setDataLoadError] = useState<boolean>(false);
 
-  const [absenceDraft, setAbsenceDraft] = useState<AbsenceFormDraft>({
-    residentId: '1',
-    effectiveDate: '2026-11-12',
-    endDateAssumed: '2026-11-18',
-    reason: '',
-  });
+  const emptyDraft = (): AbsenceFormDraft => ({ residentId: '', effectiveDate: '', endDateAssumed: '', reason: '' });
+  const demoDraft = (): AbsenceFormDraft => ({ residentId: '1', effectiveDate: '2026-11-12', endDateAssumed: '2026-11-18', reason: '' });
+  const [absenceDraft, setAbsenceDraft] = useState<AbsenceFormDraft>(emptyDraft);
+  const draftOwner = useRef<string | null>(null);
+  const draftMode = useRef<DataSourceMode>('api');
+  const selectDraftOwner = (nextMode: DataSourceMode, username?: string) => {
+    if (draftMode.current !== nextMode || (username != null && draftOwner.current !== username)) {
+      setAbsenceDraft(nextMode === 'api' ? emptyDraft() : demoDraft());
+    }
+    draftMode.current = nextMode;
+    if (username != null) draftOwner.current = username;
+  };
 
   const [households, setHouseholds] = useState<Household[]>(INITIAL_HOUSEHOLDS);
-  const [residents, setResidents] = useState<ResidentMember[]>(INITIAL_RESIDENTS);
+  const [residents, setResidents] = useState<ResidentMember[]>([]);
   const [accounts, setAccounts] = useState<AccountRecord[]>(INITIAL_ACCOUNTS);
   const [residencyChanges, setResidencyChanges] =
     useState<ResidencyChangeRecord[]>([]);
@@ -201,6 +207,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         const me = await fetchCurrentUser();
         if (!cancelled) {
           setBackendReachable(true);
+          selectDraftOwner('api', me.username);
           setModeState('api');
           setUser(me);
         }
@@ -236,6 +243,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const setMode = (next: DataSourceMode) => {
     if (next === 'demo' && mode === 'api') resetDemoData();
+    selectDraftOwner(next);
     setModeState(next);
     setForcedUiState('normal');
   };
@@ -252,6 +260,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           detail: 'Tên đăng nhập hoặc mật khẩu không đúng.',
         });
       }
+      selectDraftOwner(mode, matched.username);
       setUser(matched);
       setSessionExpiredBanner(false);
       return matched;
@@ -260,6 +269,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     const loggedIn = await loginWithCredentials(username, password);
     const verifiedMe = await fetchCurrentUser().catch(() => loggedIn);
     setBackendReachable(true);
+    selectDraftOwner(mode, verifiedMe.username);
     setUser(verifiedMe);
     setSessionExpiredBanner(false);
     return verifiedMe;
@@ -268,6 +278,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const loginDemoAs = (presetKey: keyof typeof DEMO_SESSIONS): SessionUser => {
     const chosen = DEMO_SESSIONS[presetKey];
     if (mode === 'api') resetDemoData();
+    selectDraftOwner('demo', chosen.username);
     setModeState('demo');
     setUser(chosen);
     setSessionExpiredBanner(false);
@@ -437,6 +448,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (mode !== 'api' || !user) return;
     let cancelled = false;
+    setResidents([]);
     setResidencyChanges([]);
     void refreshAbsenceCount();
     (async () => {

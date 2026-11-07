@@ -77,7 +77,7 @@ Báo cáo đầy đủ, từng mục và bằng chứng: `AUDIT.md`.
 3. **Lỗi giao diện đã biết, chưa sửa:** danh sách hóa đơn tràn 16 px ở 768 (`resident-invoices`); nút "Tải về" và "Xem gói" lệch hàng lưới ở `authority-reports`.
 4. **Cố ý không sửa:** demo nằm trong bundle (cần tách `AppStateContext` và `mockData`; bản build thật phải không bật `VITE_ENABLE_DEMO`), chưa lazy route, `formatAreaM2` còn tách dòng "m ²".
 5. **Nội dung:** vài màn mức C còn tham chiếu dạng "Q8", "Q12" trong câu chữ; cần viết lại cùng chủ nghiệp vụ. Chưa có test cho `api/client.ts` (thử lại CSRF).
-6. **Ghép API (đợt 06/11/2026):** S04 và S05 đã nối ở mức mã; **chưa chạy thử với backend thật** (mới có `tsc`, 29 test, mock `fetch` và Demo trong Chrome). Giới hạn đã biết khi nối:
+6. **Ghép API (đợt 06/11/2026):** S04 và S05 đã nối ở mức mã; **chưa chạy thử với backend thật** (mới có `tsc`, 51 test, mock `fetch` và Demo trong Chrome). Giới hạn đã biết khi nối:
    - Backend không có API liệt kê tài khoản, không đổi trạng thái hộ, không sửa mã hộ và mã căn hộ sau khi tạo: ở chế độ API, màn sửa hộ khóa hai mã và ẩn ô trạng thái; form nhân khẩu ẩn ô trạng thái cư trú (luôn "Đang cư trú").
    - Danh sách hộ không có số nhân khẩu (hiện "—" tới khi mở chi tiết hộ).
    - Lịch sử biến động không có "lý do" (API không trả), nên hiện "—".
