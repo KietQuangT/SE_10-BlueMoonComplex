@@ -4,7 +4,7 @@ BlueMoon Complex là hệ thống quản lý chung cư được phát triển tr
 
 Dự án tổ chức theo mô hình monorepo, gồm backend Spring Boot, frontend React và cơ sở dữ liệu MySQL.
 
-> **Trạng thái cập nhật: 07/11/2026.** Nội dung dưới đây phản ánh tiến độ được ghi nhận trên nhánh `feat/s04-account-disable`. Một số chức năng vẫn đang phát triển; giao diện đã có không đồng nghĩa với API tương ứng đã hoàn thành.
+> **Trạng thái cập nhật: 07/11/2026.** Nội dung dưới đây phản ánh tiến độ được ghi nhận trên nhánh `feat/s03-change-password` (nền `main` sau PR #11, đã gồm S01, S02, S04 và S05). Một số chức năng vẫn đang phát triển; giao diện đã có không đồng nghĩa với API tương ứng đã hoàn thành.
 
 ## 1. Công nghệ sử dụng
 
@@ -26,19 +26,21 @@ Dự án tổ chức theo mô hình monorepo, gồm backend Spring Boot, fronten
 - **Đăng nhập và phân quyền (S01):** đăng nhập, đăng xuất, kiểm tra phiên, phân quyền theo vai trò và cơ chế khóa tài khoản khi đăng nhập sai nhiều lần.
 - **Cấp tài khoản (S02):** tạo tài khoản Ban quản trị đầu tiên bằng lệnh bootstrap; ADMIN cấp tài khoản mới và gửi mật khẩu tạm qua email mô phỏng.
 - **Quản lý tài khoản (S04):** vô hiệu hóa, kích hoạt lại, mở khóa tài khoản và hủy phiên đăng nhập. Trạng thái, vai trò và hộ liên kết được kiểm tra lại từ cơ sở dữ liệu ở mỗi request.
+- **Đổi mật khẩu (S03):** `POST /api/v1/auth/change-password` cho mọi vai trò đã đăng nhập, kể cả tài khoản đang bị buộc đổi mật khẩu lần đầu. Kiểm tra mật khẩu hiện tại; mật khẩu mới phải có tối thiểu 8 ký tự, chữ hoa, chữ thường, chữ số và ký tự đặc biệt, tối đa 72 byte UTF-8, và khác mật khẩu hiện tại (D23). Đổi thành công thì mọi phiên của tài khoản, kể cả phiên đang dùng, bị hủy và phải đăng nhập lại; nội dung email mô phỏng chứa mật khẩu tạm bị che. Sai mật khẩu hiện tại được đếm và khóa như đăng nhập sai (ADMIN không bị khóa). Hồ sơ cá nhân ở v1 chỉ xem qua `GET /auth/me`.
 - **Hộ và nhân khẩu (S05):** tạo, cập nhật, tra cứu hộ; thêm, sửa, tra cứu nhân khẩu; ghi nhận chuyển đi và lịch sử biến động. Cư dân có thể xem danh sách thành viên trong hộ của mình.
-- **Frontend:** đã xây dựng giao diện cho 24 màn hình v1, hỗ trợ giao diện sáng/tối. Các luồng S01, S02, S04 và S05 đã kết nối API; các phần còn lại sử dụng dữ liệu mẫu.
+- **Frontend:** đã xây dựng giao diện cho 24 màn hình v1, hỗ trợ giao diện sáng/tối. Các luồng S01, S02, S04 và S05 đã kết nối API; các phần còn lại sử dụng dữ liệu mẫu. Backend S03 đã sẵn sàng; phần giao diện đổi mật khẩu nối API thuộc Kiệt.
 
 ### Đang phát triển hoặc chưa có
 
-- Đổi mật khẩu và hoàn tất luồng đổi mật khẩu lần đầu (S03).
+- Giao diện đổi mật khẩu nối API S03 (Kiệt) và quyết định đồng bộ `users.full_name` với `residents.full_name` (chưa chốt cách nối; ngoài S03).
+- Email thật: v1 chỉ có email mô phỏng (bảng `mock_emails`, xem bằng SQL); gửi email thật cần quyết định của nhóm.
 - API liệt kê tài khoản; giao diện danh sách tài khoản hiện chưa lấy dữ liệu đầy đủ từ backend.
 - Khai báo cư trú, phê duyệt, tạm vắng và quay lại cư trú (S06).
 - Đơn giá, kỳ thu, thu tiền, báo cáo, sao lưu và các công việc kiểm thử/bàn giao còn lại (S07–S15).
 
-**Lưu ý:** Tài khoản được ADMIN cấp hiện có cờ `must_change_password = true`. Tài khoản có thể đăng nhập nhưng phần lớn API sẽ trả `403 PASSWORD_CHANGE_REQUIRED` cho đến khi S03 được triển khai. Tài khoản ADMIN được tạo bằng bootstrap không gặp giới hạn này.
+**Lưu ý:** Tài khoản được ADMIN cấp có cờ `must_change_password = true`. Tài khoản có thể đăng nhập nhưng phần lớn API trả `403 PASSWORD_CHANGE_REQUIRED` cho đến khi gọi `POST /api/v1/auth/change-password`; sau khi đổi, mọi phiên bị hủy và cần đăng nhập lại bằng mật khẩu mới. Tài khoản ADMIN được tạo bằng bootstrap không gặp giới hạn này.
 
-Tiến độ và bằng chứng hoàn thành từng task được quản lý tại [`docs/sprint-1/TASKS.md`](docs/sprint-1/TASKS.md). S04 đã được kiểm thử trên nhánh phát triển nhưng, tại thời điểm cập nhật README, chưa mở PR và còn chờ review.
+Tiến độ và bằng chứng hoàn thành từng task được quản lý tại [`docs/sprint-1/TASKS.md`](docs/sprint-1/TASKS.md). S04 đã merge qua PR #11. S03 đã được kiểm thử trên nhánh `feat/s03-change-password`, chưa mở PR tại thời điểm cập nhật README và còn chờ review; phần giao diện thuộc Kiệt.
 
 ## 3. Cấu trúc thư mục
 
@@ -84,8 +86,8 @@ Khuyến nghị khi lập trình: **MySQL chạy trong Docker, backend chạy t�
 git clone https://github.com/KietQuangT/SE_10-BlueMoonComplex.git
 cd SE_10-BlueMoonComplex
 
-# Chuyển sang nhánh có các thay đổi S04 khi cần kiểm tra chức năng mới
-git switch feat/s04-account-disable
+# Chuyển sang nhánh S03 (đổi mật khẩu, chưa merge) khi cần kiểm tra chức năng mới
+git switch feat/s03-change-password
 
 cp .env.example .env
 ```
@@ -203,6 +205,7 @@ Tiền tố chung: `/api/v1`.
 | Nhóm | Endpoint chính | Mô tả |
 | --- | --- | --- |
 | Xác thực | `GET /auth/csrf`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | Lấy CSRF token, đăng nhập, đăng xuất, xem phiên |
+| Đổi mật khẩu | `POST /auth/change-password` | Body `{currentPassword, newPassword}`, trả `204`; mọi phiên của tài khoản bị hủy. Lỗi `400` có `code`: `CURRENT_PASSWORD_INCORRECT`, `PASSWORD_TOO_SHORT`, `PASSWORD_TOO_LONG`, `PASSWORD_WEAK`, `PASSWORD_SAME_AS_CURRENT`; `401` khi bị khóa do nhập sai hoặc tài khoản không còn hoạt động |
 | Cấp tài khoản | `POST /accounts` | ADMIN tạo account và email mô phỏng |
 | Quản lý tài khoản | `POST /accounts/{id}/disable`, `/enable`, `/unlock` | Vô hiệu, kích hoạt lại, mở khóa |
 | Hộ | `POST /households`, `GET /households`, `GET /households/{id}`, `PATCH /households/{id}` | Tạo, xem, cập nhật hộ |
@@ -265,7 +268,7 @@ cd backend
 ./mvnw -B -ntp -Pintegration verify
 ```
 
-Theo kết quả ghi trong README trước đó, lần kiểm thử nhánh S04 ngày 06/11/2026 có **86 test ở bộ kiểm tra thông thường và 75 integration test**, chạy thành công trên JDK 21.0.9 và MySQL 8.4. Đây là kết quả tại thời điểm ghi nhận, không phải cam kết cho mọi commit sau đó.
+Kết quả kiểm thử S03 ngày 07/11/2026 tại commit `c7d0b89` (chạy `-Pintegration verify` trên JDK 21.0.9 và MySQL 8.4 trong Docker): **103 test ở bộ kiểm tra thông thường và 80 integration test**, không lỗi (chi tiết trong `docs/VALIDATION.md`). Lần kiểm thử S04 ngày 06/11/2026 có 86 và 75. Đây là kết quả tại thời điểm ghi nhận, không phải cam kết cho mọi commit sau đó.
 
 **Cảnh báo:** integration test ghi và xóa dữ liệu fixture, thực hiện migration khi cần và có thể thay đổi dữ liệu tạm thời trong database. Chỉ chạy trên DB local dành riêng cho kiểm thử, không chạy trên DB dùng chung hoặc có dữ liệu thật.
 
@@ -299,7 +302,9 @@ Phân công hiện tại: Kiệt (repository, frontend, API), Sơn (nền tảng
 | `GET /api/v1/auth/csrf` trả `401` | Kiểm tra có backend cũ đang chạy trên cổng `8080` hay không. |
 | MySQL báo `Access denied` | Đối chiếu `DB_*` và giá trị trong `.env`; mật khẩu trong volume MySQL cũ không tự đổi khi sửa `.env`. |
 | Đăng nhập `401` trên DB mới | Kiểm tra đã bootstrap ADMIN hay chưa. |
-| Tài khoản mới bị `403 PASSWORD_CHANGE_REQUIRED` | Đây là giới hạn hiện tại do S03 chưa hoàn thành. |
+| Tài khoản mới bị `403 PASSWORD_CHANGE_REQUIRED` | Bình thường với mật khẩu tạm: gọi `POST /api/v1/auth/change-password` (hoặc màn Hồ sơ khi giao diện đã nối API), rồi đăng nhập lại. |
+| Integration test hoặc JAR báo `Access denied` dù mật khẩu đúng | Kiểm tra `DB_PORT`. Nếu trên máy có MySQL khác chiếm cổng `3306`, MySQL trong Docker có thể được ánh xạ cổng khác (xem `docker compose ps`, ví dụ `3307`). |
+| Đăng nhập báo sai mật khẩu hoặc thiếu endpoint mới | Có thể container `backend` cũ vẫn giữ cổng `8080`; dừng bằng `docker compose stop backend` rồi chạy JAR của nhánh hiện tại. |
 | Frontend báo lỗi CORS | Truy cập bằng `http://localhost:5173` và kiểm tra `CORS_ALLOWED_ORIGIN`. |
 | Danh sách tài khoản trống sau khi tải lại trang | API liệt kê account chưa triển khai; giao diện chỉ giữ các tài khoản vừa tạo trong phiên hiện tại. |
 | Flyway báo sai checksum | Không sửa bảng lịch sử migration thủ công; kiểm tra migration bị thay đổi và xử lý trên DB local riêng. |

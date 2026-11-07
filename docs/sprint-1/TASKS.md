@@ -9,7 +9,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 | ☑ | F02 | M | Sơn + Tuấn | Nền tảng backend/DB và luồng mẫu; WBS 1.2.1.2 | F00 | Health/metadata, security boundary, Flyway/session chạy MySQL; teammate cài lại và có kết quả integration. |
 | ☑ | S01 | M | Sơn; Tuấn review | Identity/session/role/audit; WBS 2.1.1.1, 2.1.1.3 | F01,F02 | Đăng nhập đúng/sai, đổi session ID, 401/403, audit write; chốt và test chống brute-force, không mặc định đã có. |
 | ☑ | S02 | M | Sơn + Kiệt | Cấp account và email mô phỏng; WBS 2.1.1.1,2.1.2.3 | S01 | Email trùng bị từ chối; mock email đúng người; bootstrap BQT và cấp cư dân đã thống nhất; không log password. |
-| ☐ | S03 | M | Kiệt + Sơn | Đổi mật khẩu, hồ sơ; WBS 2.1.1.2,2.1.2.1 | S01 | Kiểm tra mật khẩu cũ/mới, tối thiểu 8 ký tự; đổi xong các session cũ bị từ chối; DTO không lộ hash. |
+| ☑ | S03 | M | Kiệt + Sơn | Đổi mật khẩu, hồ sơ; WBS 2.1.1.2,2.1.2.1 | S01 | Kiểm tra mật khẩu cũ/mới, tối thiểu 8 ký tự; đổi xong các session cũ bị từ chối; DTO không lộ hash. |
 | ☑ | S04 | M | Sơn + Tuấn | Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3 | S01 | Khóa xong request mới với cookie cũ thất bại; thử nhiều session và server role; UI cần test tích hợp để đóng. |
 | ☑ | S05 | L | Sơn + Tuấn | Hộ/nhân khẩu/biến động; WBS 2.2.1.1 | F01,S01 | CRUD/tra cứu, ownership; chuyển đi đổi trạng thái cư trú (không xóa bản ghi, DECISIONS D20) kèm lịch sử biến động và audit; validate trường đã chốt, test hộ khác bị chặn. |
 | ☐ | S06 | L | Kiệt + Sơn + Tuấn | Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3 | S05 bản API đầu | Chờ duyệt → duyệt/từ chối đúng quyền; lưu trạng thái/lịch sử, thông báo trong app/mock theo AC; cuối cùng ghép UI. |
@@ -30,7 +30,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 - [x] F02 — Nền tảng backend/DB và luồng mẫu; WBS 1.2.1.2
 - [x] S01 — Identity/session/role/audit; WBS 2.1.1.1, 2.1.1.3
 - [x] S02 — Cấp account và email mô phỏng; WBS 2.1.1.1,2.1.2.3
-- [ ] S03 — Đổi mật khẩu, hồ sơ; WBS 2.1.1.2,2.1.2.1
+- [x] S03 — Đổi mật khẩu, hồ sơ; WBS 2.1.1.2,2.1.2.1
 - [ ] S04 — Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3
 - [x] S05 — Hộ/nhân khẩu/biến động; WBS 2.2.1.1
 - [ ] S06 — Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3
@@ -246,4 +246,42 @@ Lỗi còn lại, điều chưa kiểm thử:
   - Worker vòng 1 ghi log verify lỗi ngoài worktree (/tmp/s04_verify.log), vi phạm nhẹ; có thể xóa.
   - Tiền nhiệm S01 đã tick.
 Kết luận: tick theo bằng chứng chạy thật của Sơn (surefire 86 + failsafe 75 xanh, BUILD SUCCESS ở ab15b71 trên MySQL), hai lượt review rủi ro không còn lỗi chặn và vòng 2 chỉ thêm test, kèm các caveat trên; phần UI của AC thuộc Kiệt, chưa có; push/PR còn chờ cổng G2.
+```
+
+### S03 (tick 07/11/2026)
+```text
+Task: S03 (WBS 2.1.1.2, 2.1.2.1) — Đổi mật khẩu, hủy session, hồ sơ chỉ xem
+Commit/PR: CHƯA push, CHƯA PR, chưa chạy CI. Worktree Orca feat-s03 (nhánh hhoangsonnw/feat-s03), nền origin/main d3d8de3 (sau PR #11), worktree sạch ở c7d0b89:
+  c852c51 feat: đổi mật khẩu, hủy session và che mock email (S03)
+  83f8682 fix: sửa theo review vòng 1 (S03)
+  c7d0b89 fix: sửa theo review vòng 2 (S03)
+Lệnh và kết quả:
+  - Bằng chứng do Sơn chạy (07/11/2026 ~11:28 +07, JDK 21.0.9, MySQL Docker mysql:8.4 cổng 3307, worktree feat-s03 ở c7d0b89):
+      cd backend && ./mvnw -B -ntp -Pintegration verify
+      BUILD SUCCESS (50,978 s, kết thúc 11:28:59). Log Sơn dán: "Tests run: 80, Failures: 0, Errors: 0, Skipped: 0" (pha failsafe).
+  - Verifier đối chiếu độc lập các báo cáo trong worktree: surefire 103 test (21 file) và failsafe 80 test (11 file), 0 failure, 0 error, 0 skipped; failsafe-summary completed=80; mỗi lớp *Test/*IT trong src/test có đúng một báo cáo; report đóng dấu 11:28:10–11:28:59, sau commit c7d0b89 (11:16:45), sau nguồn mới nhất (11:16:18) và sau lần biên dịch cuối (11:16:26), nên thuộc đúng c7d0b89 (không báo cáo nào còn mtime của các lần chạy lỗi 11:18–11:22). Không có dấu vết cờ bỏ qua test trong pom hay báo cáo. PasswordChangeIT 5 test, PasswordChangeServiceTest 7, PasswordChangeApiTest 5, LoginAttemptServiceTest 5, MustChangePasswordGuardTest 3, đều xanh.
+  - Verifier và Claude KHÔNG chạy được Maven (sandbox không ghi target/ ở worktree Orca). Ba lần chạy trước của Sơn (11:18, 11:20, 11:22) lỗi do môi trường (JDK 25 bị enforcer từ chối; sai cổng MySQL: cổng 3306 là một mysqld khác trên máy, MySQL của dự án ở 3307), không do code. Dòng lệnh đầy đủ kèm biến DB_* Sơn gõ không có trong hồ sơ ngoài đoạn log dán.
+  - Quá trình sửa: review rủi ro vòng 0 (lỗi chặn: D23 gắn sai nhãn và thiếu Q3/A3) và vòng sửa 1 (lỗi chặn: test GET/PUT xanh giả) do subagent độc lập; cả hai lỗi chặn đã sửa ở vòng 1 và vòng 2. Vòng sửa 2 (c7d0b89) chỉ Claude đọc diff, không có reviewer độc lập kiểm lại. Hết hạn mức 2 vòng. Copilot QA chạy một lần (trên c852c51): verify xanh theo Copilot, chỉ ra thiếu test cho LoginAttemptService sau refactor (đã bổ sung); kết quả là lời chưa kiểm chứng, không dùng làm bằng chứng tick.
+AC (TASKS.md S03: "Kiểm tra mật khẩu cũ/mới, tối thiểu 8 ký tự; đổi xong các session cũ bị từ chối; DTO không lộ hash."):
+  - Kiểm tra mật khẩu cũ: đạt (PasswordChangeServiceTest.wrongCurrentCountsAndAudits; PasswordChangeIT.incorrectOldPasswordCommitsCounterAndLocksNonAdmin; PasswordChangeApiTest.errorsNeverEchoSecrets, mã CURRENT_PASSWORD_INCORRECT 400).
+  - Mật khẩu mới tối thiểu 8 ký tự (và theo D23: chữ hoa/thường Unicode, số, ký tự đặc biệt, tối đa 72 byte, không trùng mật khẩu hiện tại): đạt ở mức unit và slice (validatesInOrderWithoutCountingNewPasswordErrors, unicodeWhitespaceAndLengthBoundaries, weakPrecedesSame, errorsNeverEchoSecrets); IT trên MySQL chỉ chạy các mật khẩu mới hợp lệ, chưa có ca HTTP thật cho PASSWORD_WEAK/PASSWORD_TOO_SHORT.
+  - Đổi xong các session cũ bị từ chối: đạt (PasswordChangeIT.threeCookiesAreRevokedAndTemporaryMailIsRedacted, MySQL, cookie thật: 3 session của một account, đổi bằng một cái, cả 3 cookie kể cả cookie đang gọi nhận 401 trên /auth/me; SPRING_SESSION không còn dòng của principal; 204 trả bình thường; mật khẩu cũ đăng nhập 401, mật khẩu mới 200 với mustChangePassword=false; session ADMIN khác không bị ảnh hưởng).
+  - DTO không lộ hash: đạt (ChangePasswordRequest chỉ có 2 trường mật khẩu, toString che; 204 không body; lỗi không chứa mật khẩu, "passwordHash", "$2" (PasswordChangeApiTest); AuthApiTest (có sẵn) khẳng định /auth/me không có passwordHash/email).
+  - Hợp đồng đã duyệt (D23): đếm và khóa khi sai mật khẩu cũ, ADMIN miễn (IT và unit); đang khóa thì 401 không đổi (IT, unit); thành công đặt lại bộ đếm (chỉ unit); audit mỗi lần sai chỉ id và số lần, không lộ mật khẩu (IT, unit); che mock_emails.body khi cờ từng TRUE, giữ recipient_email/subject/status, dòng account khác nguyên (IT); rollback toàn bộ khi audit lỗi (IT: hash, cờ, mock_emails, session nguyên, không có audit PASSWORD_CHANGED); hai request đổi đồng thời chỉ một thắng (IT, một lần chạy); luồng đầy đủ qua S02 mật khẩu tạm -> 403 PASSWORD_CHANGE_REQUIRED -> đổi -> đăng nhập lại (IT); 401 chưa đăng nhập, 403 thiếu/sai CSRF, mọi vai trò đổi được, userId/username trong body bị bỏ qua (slice, service mock); account không ACTIVE thì 401 (chỉ unit); log không chứa mật khẩu (IT); chéo hộ không áp dụng vì endpoint chỉ đổi cho chính principal; không migration.
+  - UI (WBS 2.1.1.2, phần UI của 2.1.2.1): CHƯA. Theo hợp đồng (`_agents_workspace/S03/01_contract.md`) phần UI thuộc Kiệt; task này chỉ kiểm phía server.
+Đầu ra giao cho: Kiệt (POST /api/v1/auth/change-password, mọi vai trò đã đăng nhập kể cả khi đang bị cờ, cần X-CSRF-TOKEN, body {currentPassword, newPassword}; 204 nghĩa là đã đăng xuất mọi nơi nên xóa state client, gọi lại GET /auth/csrf rồi về màn đăng nhập; 400 có code CURRENT_PASSWORD_INCORRECT, PASSWORD_TOO_SHORT, PASSWORD_TOO_LONG, PASSWORD_WEAK, PASSWORD_SAME_AS_CURRENT; 401 cũng là phản hồi khi đang bị khóa đăng nhập hoặc account không còn ACTIVE, và 401 do khóa KHÔNG có nghĩa session đã bị hủy; hồ sơ chỉ xem qua GET /auth/me; đọc `code` không đọc `detail`); Tuấn (review, test bảo mật EP-01 WBS 2.1.1.3 kiểm session sau đổi mật khẩu).
+Assumption đã xác nhận (qua lời Sơn, 07/11/2026, ghi ở DECISIONS D23): Q1 (độ mạnh, chữ hoa/thường theo Unicode), Q2 (tối đa 72 byte UTF-8), Q3 (từ chối trùng mật khẩu hiện tại), Q4(a) (đếm và khóa như đăng nhập, ADMIN miễn; đang khóa chặn đổi; thành công đặt lại bộ đếm; mỗi lần sai ghi audit), Q5 (hủy hết session kể cả session đang dùng), A3 (đường dẫn, 204, 400 CURRENT_PASSWORD_INCORRECT), Q6 P0 (hồ sơ chỉ xem; chỉ ADMIN sửa full_name; users.full_name phải khớp residents.full_name, cách nối CHƯA CHỐT); người nhận Kiệt đồng ý (lời Sơn).
+  CHƯA xác nhận: chưa có văn bản của Kiệt, Tuấn hay Quân; việc Kiệt đồng ý chỉ là lời Sơn.
+Lỗi còn lại, điều chưa kiểm thử:
+  - Race đăng nhập bằng mật khẩu cũ ngay trước lúc đổi: một login commit trước nhưng tạo session sau lệnh DELETE có thể sống sót; đóng được cần phiên bản mật khẩu hoặc cột mới (migration), nguồn không yêu cầu. Chưa có test; ghi ở ARCHITECTURE.
+  - Vòng sửa 2 không có reviewer độc lập kiểm lại; Copilot QA chỉ chạy trên c852c51 và là lời chưa kiểm chứng.
+  - UI chưa có (Kiệt). Chưa có văn bản của Kiệt/Tuấn/Quân.
+  - Khi non-ADMIN tự khóa qua đổi mật khẩu, endpoint trả 401 nhưng không hủy session; ai giữ session sống vẫn dùng được các endpoint khác. Đánh đổi đã nêu ở Q4: kẻ giữ session sống có thể khóa đăng nhập của người thật.
+  - Cách nối users↔residents cho yêu cầu full_name khớp nhau chưa chốt và không thuộc S03 (sẽ chạm S02, S05, có thể migration).
+  - Test đồng thời chỉ chạy một lần; không có test đua login-trong-lúc-đổi. IT không phủ: account INACTIVE (chỉ unit), đặt lại bộ đếm khi thành công (chỉ unit), ca cờ FALSE không che mock email (chỉ unit), PASSWORD_WEAK/TOO_SHORT qua HTTP thật, "nhiều account khác" (chỉ một ADMIN khác).
+  - Bên thua trong đua đổi đồng thời có thể bị tính một lần sai mật khẩu cũ vì mật khẩu đã đổi; chưa quyết có chấp nhận.
+  - Chưa push/PR/CI trên remote; chưa chạy Windows hay máy thứ hai.
+  - Code S03 dồn nhiều lệnh vào một dòng dài (service, test), khó đọc; chưa dọn.
+  - Tiền nhiệm S01 đã tick.
+Kết luận: tick theo bằng chứng chạy thật của Sơn (surefire 103 + failsafe 80 xanh, BUILD SUCCESS ở c7d0b89 trên MySQL), đã đối chiếu độc lập báo cáo đúng HEAD, kèm các caveat trên; phần UI của AC thuộc Kiệt, chưa có; push/PR còn chờ cổng G2.
 ```

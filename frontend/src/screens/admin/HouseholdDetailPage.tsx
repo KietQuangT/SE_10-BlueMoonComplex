@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAppState } from '../../state/AppStateContext';
 import { formatAreaM2, formatBusinessDate } from '../../lib/format';
@@ -11,7 +11,11 @@ import { ErrorPage } from '../common/ErrorPage';
 /** M-13 — Chi tiết hộ: thông tin, thành viên, lịch sử biến động, tài khoản gắn hộ (đề xuất). */
 export function HouseholdDetailPage(): React.ReactElement {
   const { id } = useParams();
-  const { households, residents, residencyChanges, accounts } = useAppState();
+  const { households, residents, residencyChanges, accounts, mode, loadHouseholdDetail } = useAppState();
+  useEffect(() => {
+    if (mode === 'api' && id) void loadHouseholdDetail(Number(id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, id]);
   const household = households.find((h) => String(h.id) === id);
   if (!household) return <ErrorPage code={404} />;
 
@@ -29,7 +33,7 @@ export function HouseholdDetailPage(): React.ReactElement {
       <ScreenHeader
         screenCode="M-13"
         title={`Hộ ${household.householdCode} · Căn ${household.apartmentCode}`}
-        contract="db-ready"
+        contract={mode === 'api' ? 'api-live' : 'db-ready'}
         tierLabel="Mức B"
         actions={
           <>
@@ -154,7 +158,7 @@ export function HouseholdDetailPage(): React.ReactElement {
                     <td>{changeTypeLabel(c.changeType)}</td>
                     <td>{nameOf(c.residentId)}</td>
                     <td className="tabular">{formatBusinessDate(c.effectiveDate)}</td>
-                    <td>{c.reason}</td>
+                    <td>{c.reason || '—'}</td>
                     <td>
                       <ChangeStatusBadge status={c.status} />
                     </td>

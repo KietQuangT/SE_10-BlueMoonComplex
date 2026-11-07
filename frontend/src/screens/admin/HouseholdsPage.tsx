@@ -11,7 +11,7 @@ import { Icon } from '../../components/Icon';
 
 /** M-12 — Danh sách hộ (tìm theo mã căn/mã hộ, phân trang phía server). */
 export function HouseholdsPage(): React.ReactElement {
-  const { households, forcedUiState, setForcedUiState } = useAppState();
+  const { households, mode, dataLoadError, reloadHouseholds, forcedUiState, setForcedUiState } = useAppState();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('ALL');
@@ -33,7 +33,7 @@ export function HouseholdsPage(): React.ReactElement {
       screenCode="M-12"
       title="Hộ gia đình"
       description="Tra cứu theo mã căn hộ hoặc mã hộ. Danh sách tìm và phân trang trên máy chủ (≤ 3 giây với 10.000 hồ sơ)."
-      contract="db-ready"
+      contract={mode === 'api' ? 'api-live' : 'db-ready'}
       tierLabel="Mức B"
       actions={
         <Link to="/admin/households/new" className="btn btn-primary">
@@ -46,6 +46,7 @@ export function HouseholdsPage(): React.ReactElement {
 
   if (forcedUiState === 'loading') return <>{header}<SkeletonRows rows={6} /></>;
   if (forcedUiState === 'error') return <>{header}<ErrorRetryPanel onRetry={() => setForcedUiState('normal')} /></>;
+  if (dataLoadError) return <>{header}<ErrorRetryPanel onRetry={reloadHouseholds} /></>;
 
   const noData = households.length === 0 || forcedUiState === 'empty';
 
@@ -120,7 +121,7 @@ export function HouseholdsPage(): React.ReactElement {
                       </td>
                       <td className="align-right tabular">{formatAreaM2(h.areaM2)}</td>
                       <td>{h.address}</td>
-                      <td className="align-right tabular">{h.currentResidents}</td>
+                      <td className="align-right tabular">{h.currentResidents ?? '—'}</td>
                       <td>
                         {h.status === 'ACTIVE' ? (
                           <StatusBadge tone="paid" label="Hoạt động" />
