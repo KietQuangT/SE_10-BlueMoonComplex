@@ -25,7 +25,7 @@ class MustChangePasswordGuardTest {
     @Test void allowsOnlyTheSpecifiedMethodAndPaths() throws Exception {
         for (String path : List.of("/api/v1/auth/me", "/api/v1/auth/csrf", "/actuator/health", "/actuator/health/readiness", "/api/v1/system/info"))
             assertThat(request("GET",path,true,true).getStatus()).isEqualTo(200);
-        for (String path : List.of("/api/v1/auth/login", "/api/v1/auth/logout"))
+        for (String path : List.of("/api/v1/auth/login", "/api/v1/auth/logout", "/api/v1/auth/change-password"))
             assertThat(request("POST",path,true,true).getStatus()).isEqualTo(200);
         for (String path : List.of("/api/v1/accounts", "/missing", "/api/v1/auth/me")) {
             var response=request("POST",path,true,true);

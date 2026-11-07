@@ -177,3 +177,42 @@ export async function createAccountApi(
 ): Promise<CreatedAccountDto> {
   return sendAuthenticatedWrite<CreatedAccountDto>('/api/v1/accounts', 'POST', payload);
 }
+
+/** Authenticated GET with the same error shape as the writes (ApiHttpError carries status, code, requestId). */
+export async function getAuthenticated<TResponse>(url: string): Promise<TResponse> {
+  const res = await fetch(url, {
+    method: 'GET',
+    credentials: 'include',
+    headers: { Accept: 'application/json' },
+  });
+  if (!res.ok) {
+    throw new ApiHttpError(await parseProblem(res));
+  }
+  return (await res.json()) as TResponse;
+}
+
+/**
+ * S03: đổi mật khẩu của chính người đang đăng nhập, trả 204. Thành công nghĩa là MỌI session của
+ * tài khoản (kể cả session này) đã bị hủy: lấy lại CSRF rồi đăng nhập lại. Lỗi 400 có `code`:
+ * CURRENT_PASSWORD_INCORRECT, PASSWORD_TOO_SHORT, PASSWORD_TOO_LONG, PASSWORD_WEAK, PASSWORD_SAME_AS_CURRENT.
+ * 401 khi session còn sống nghĩa là tài khoản đang bị khóa do nhập sai (session KHÔNG bị hủy).
+ */
+export async function changePasswordApi(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  await sendAuthenticatedWrite<void>('/api/v1/auth/change-password', 'POST', {
+    currentPassword,
+    newPassword,
+  });
+  clearCsrfMemory();
+  await fetchCsrfToken().catch(() => undefined);
+}
+
+/** S04: ADMIN only, 204. Disabling revokes every session of the account on the server. */
+export async function manageAccountApi(
+  id: number,
+  action: 'disable' | 'enable' | 'unlock',
+): Promise<void> {
+  await sendAuthenticatedWrite<void>(`/api/v1/accounts/${id}/${action}`, 'POST');
+}

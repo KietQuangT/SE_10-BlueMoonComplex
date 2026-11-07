@@ -3,12 +3,17 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppState } from '../../state/AppStateContext';
 import { formatAreaM2, roleDisplayName } from '../../lib/format';
 import { ScreenHeader } from '../../components/ScreenHeader';
-import { ContractBadge } from '../../components/Badge';
 import { Icon } from '../../components/Icon';
+import { ApiHttpError, changePasswordApi, fetchCurrentUser } from '../../api/client';
+import { messageForError } from '../../api/errors';
+import { passwordRuleChecks, passwordRulesOk } from '../../lib/passwordRules';
 
 type PwStatus = 'idle' | 'submitting' | 'wrong-current' | 'success';
 
-/** M-03 — Hồ sơ cá nhân (chỉ xem, từ /auth/me) và Đổi mật khẩu (S03 chưa có API). */
+const LOCKED_MESSAGE =
+  'Tài khoản tạm thời bị khóa do nhập sai mật khẩu nhiều lần. Đợi hết thời gian khóa rồi thử lại.';
+
+/** M-03 — Hồ sơ cá nhân (chỉ xem, từ /auth/me) và Đổi mật khẩu (S03: POST /api/v1/auth/change-password). */
 export function ProfilePage(): React.ReactElement {
   const { user, households, mode, forcedUiState, completePasswordChangeDemo, logout } = useAppState();
   const navigate = useNavigate();
@@ -21,6 +26,7 @@ export function ProfilePage(): React.ReactElement {
   const [confirm, setConfirm] = useState('');
   const [touched, setTouched] = useState(false);
   const [status, setStatus] = useState<PwStatus>('idle');
+  const [apiMessage, setApiMessage] = useState<string | null>(null);
 
   const effectiveStatus: PwStatus =
     forcedUiState === 'submitting'
@@ -43,26 +49,51 @@ export function ProfilePage(): React.ReactElement {
   if (!user) return <></>;
   const household = households.find((h) => h.id === user.householdId);
 
-  const lengthOk = [...next].length >= 8;
+  const rules = passwordRuleChecks(next);
+  const rulesOk = passwordRulesOk(rules);
   const matchOk = next.length > 0 && next === confirm;
   const errors = {
     current: touched && !current ? 'Vui lòng nhập mật khẩu hiện tại.' : undefined,
-    next: touched && !lengthOk ? 'Mật khẩu mới phải có ít nhất 8 ký tự.' : undefined,
+    next: touched && !rulesOk ? 'Mật khẩu mới chưa đạt đủ quy tắc bên dưới.' : undefined,
     confirm: touched && !matchOk ? 'Mật khẩu nhập lại không khớp.' : undefined,
   };
-  const apiUnavailable = mode === 'api';
 
-  const onSubmit = (e: React.FormEvent) => {
+  const finish = () => {
+    setCurrent('');
+    setNext('');
+    setConfirm('');
+    setStatus('success');
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (!current || !lengthOk || !matchOk || apiUnavailable) return;
+    setApiMessage(null);
+    if (!current || !rulesOk || !matchOk) return;
     setStatus('submitting');
-    window.setTimeout(() => {
-      setCurrent('');
-      setNext('');
-      setConfirm('');
-      setStatus('success');
-    }, 500);
+    if (mode !== 'api') {
+      window.setTimeout(finish, 500);
+      return;
+    }
+    try {
+      await changePasswordApi(current, next);
+      finish();
+    } catch (err) {
+      setStatus('idle');
+      const problem = err instanceof ApiHttpError ? err.problem : undefined;
+      if (problem?.code === 'CURRENT_PASSWORD_INCORRECT') {
+        setStatus('wrong-current');
+      } else if (problem?.status === 401) {
+        // 401 khi phiên còn sống = tài khoản đang bị khóa do nhập sai (phiên KHÔNG bị hủy).
+        const sessionAlive = await fetchCurrentUser().then(
+          () => true,
+          () => false,
+        );
+        setApiMessage(sessionAlive ? LOCKED_MESSAGE : messageForError(err));
+      } else {
+        setApiMessage(messageForError(err));
+      }
+    }
   };
 
   return (
@@ -71,7 +102,7 @@ export function ProfilePage(): React.ReactElement {
         screenCode="M-03"
         title="Hồ sơ cá nhân và đổi mật khẩu"
         description="Thông tin hồ sơ lấy từ phiên đăng nhập. Việc sửa hồ sơ đang chờ quyết định."
-        contract={tab === 'profile' ? 'api-live' : 'pending-rule'}
+        contract={tab === 'profile' || mode === 'api' ? 'api-live' : 'pending-rule'}
         tierLabel="Mức A"
       />
 
@@ -137,14 +168,11 @@ export function ProfilePage(): React.ReactElement {
         </section>
       ) : (
         <section className="surface-box surface-box-pad narrow-form" aria-label="Đổi mật khẩu">
-          {apiUnavailable ? (
-            <div className="banner banner-info" role="status">
+          {apiMessage ? (
+            <div className="banner banner-error" role="alert">
               <div className="banner-content">
-                <Icon name="info" />
-                <span>
-                  Backend chưa có API đổi mật khẩu (task S03). Ở chế độ Backend thật, biểu mẫu chỉ
-                  kiểm tra dữ liệu; hãy đăng xuất hoặc dùng chế độ Demo để xem trọn luồng.
-                </span>
+                <Icon name="alert" />
+                <span>{apiMessage}</span>
               </div>
             </div>
           ) : null}
@@ -201,14 +229,21 @@ export function ProfilePage(): React.ReactElement {
                 aria-describedby="pw-rules"
               />
               <ul id="pw-rules" className="criteria-list">
-                <li className={lengthOk ? 'met' : ''}>
-                  <Icon name={lengthOk ? 'check' : 'info'} size={14} />
-                  Tối thiểu 8 ký tự
-                </li>
-                <li>
-                  <Icon name="info" size={14} />
-                  Quy tắc độ mạnh và độ dài tối đa: chờ chốt <ContractBadge kind="pending-rule" />
-                </li>
+                {(
+                  [
+                    ['length', 'Tối thiểu 8 ký tự'],
+                    ['upper', 'Có chữ hoa'],
+                    ['lower', 'Có chữ thường'],
+                    ['digit', 'Có chữ số'],
+                    ['special', 'Có ký tự đặc biệt (không phải chữ hoặc số, kể cả khoảng trắng)'],
+                    ['maxBytes', 'Tối đa 72 byte (chữ có dấu chiếm nhiều byte hơn)'],
+                  ] as const
+                ).map(([key, label]) => (
+                  <li key={key} className={rules[key] && next ? 'met' : ''}>
+                    <Icon name={rules[key] && next ? 'check' : 'info'} size={14} />
+                    {label}
+                  </li>
+                ))}
               </ul>
               {errors.next ? <span className="field-error">{errors.next}</span> : null}
             </div>
@@ -236,7 +271,7 @@ export function ProfilePage(): React.ReactElement {
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={effectiveStatus === 'submitting' || effectiveStatus === 'success' || apiUnavailable}
+                disabled={effectiveStatus === 'submitting' || effectiveStatus === 'success'}
               >
                 {effectiveStatus === 'submitting' ? 'Đang đổi mật khẩu...' : 'Đổi mật khẩu'}
               </button>

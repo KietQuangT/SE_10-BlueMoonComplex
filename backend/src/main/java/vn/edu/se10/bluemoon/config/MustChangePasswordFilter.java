@@ -17,7 +17,7 @@ public class MustChangePasswordFilter extends OncePerRequestFilter {
     private static final PathPatternRequestMatcher.Builder MATCHER = PathPatternRequestMatcher.withDefaults();
     private static final RequestMatcher ALLOWED = new OrRequestMatcher(
             MATCHER.matcher(HttpMethod.GET, "/api/v1/auth/me"), MATCHER.matcher(HttpMethod.GET, "/api/v1/auth/csrf"),
-            MATCHER.matcher(HttpMethod.POST, "/api/v1/auth/logout"), MATCHER.matcher(HttpMethod.POST, "/api/v1/auth/login"),
+            MATCHER.matcher(HttpMethod.POST, "/api/v1/auth/change-password"), MATCHER.matcher(HttpMethod.POST, "/api/v1/auth/logout"), MATCHER.matcher(HttpMethod.POST, "/api/v1/auth/login"),
             MATCHER.matcher(HttpMethod.GET, "/actuator/health/**"), MATCHER.matcher(HttpMethod.GET, "/api/v1/system/info"));
     @Override protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         var authentication = SecurityContextHolder.getContext().getAuthentication();

@@ -6,7 +6,21 @@ import {
   fetchCurrentUser,
   loginWithCredentials,
   logoutCurrentSession,
+  manageAccountApi,
 } from '../api/client';
+import { messageForError } from '../api/errors';
+import {
+  createHouseholdApi,
+  createResidentApi,
+  fetchHouseholds,
+  fetchMyResidents,
+  fetchResidencyChanges,
+  fetchResidents,
+  moveOutApi,
+  toHousehold,
+  toResident,
+  updateHouseholdApi,
+} from '../api/residency';
 import {
   DEMO_SESSIONS,
   INITIAL_ACCOUNTS,
@@ -83,7 +97,26 @@ interface AppStateValue {
   reportPackages: ReportPackage[];
   collectionRate: CollectionRateSummary;
 
+  // Real-API data loading (api mode only)
+  dataLoadError: boolean;
+  reloadHouseholds: () => Promise<void>;
+  loadHouseholdDetail: (householdId: number) => Promise<void>;
+
   // Domain Actions
+  saveHousehold: (
+    input: Omit<Household, 'id' | 'currentResidents'> & { id?: number },
+  ) => Promise<{ ok: boolean; error?: string; id?: number }>;
+  addResident: (input: Parameters<AppStateValue['addResidentDemo']>[0]) => Promise<{ ok: boolean; error?: string }>;
+  recordMoveOut: (
+    residentId: number,
+    effectiveDate: string,
+    reason: string,
+  ) => Promise<{ ok: boolean; error?: string }>;
+  /** S04 (api mode: real endpoint, ADMIN only; demo mode: local state). */
+  manageAccount: (
+    accountId: number,
+    action: 'disable' | 'enable' | 'unlock',
+  ) => Promise<{ ok: boolean; error?: string }>;
   provisionAccount: (payload: CreateAccountPayload) => Promise<{ emailStatus: string }>;
   disableAccountDemo: (accountId: number) => void;
   unlockAccountDemo: (accountId: number) => void;
@@ -129,6 +162,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [sessionExpiredBanner, setSessionExpiredBanner] = useState<boolean>(false);
   const [forcedUiState, setForcedUiState] = useState<ForcedUiState>('normal');
   const [qaDrawerOpen, setQaDrawerOpen] = useState<boolean>(false);
+  const [dataLoadError, setDataLoadError] = useState<boolean>(false);
 
   const [absenceDraft, setAbsenceDraft] = useState<AbsenceFormDraft>({
     residentId: '1',
@@ -184,7 +218,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const resetDemoData = () => {
+    setHouseholds(INITIAL_HOUSEHOLDS);
+    setResidents(INITIAL_RESIDENTS);
+    setAccounts(INITIAL_ACCOUNTS);
+    setResidencyChanges(INITIAL_RESIDENCY_CHANGES);
+  };
+
   const setMode = (next: DataSourceMode) => {
+    if (next === 'demo' && mode === 'api') resetDemoData();
     setModeState(next);
     setForcedUiState('normal');
   };
@@ -216,6 +258,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const loginDemoAs = (presetKey: keyof typeof DEMO_SESSIONS): SessionUser => {
     const chosen = DEMO_SESSIONS[presetKey];
+    if (mode === 'api') resetDemoData();
     setModeState('demo');
     setUser(chosen);
     setSessionExpiredBanner(false);
@@ -326,6 +369,160 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  /** Session expired mid-call: route to login and keep the page to return to. */
+  const handleCallFailure = (err: unknown): string => {
+    if (err instanceof ApiHttpError && err.problem.status === 401) {
+      triggerSessionExpired(window.location.pathname);
+    }
+    return messageForError(err);
+  };
+
+  const reloadHouseholds = async () => {
+    if (mode !== 'api' || user?.role !== 'ADMIN') return;
+    try {
+      setHouseholds(await fetchHouseholds());
+      setDataLoadError(false);
+    } catch (err) {
+      handleCallFailure(err);
+      setDataLoadError(true);
+    }
+  };
+
+  const loadHouseholdDetail = async (householdId: number) => {
+    if (mode !== 'api') return;
+    try {
+      const [members, changes] = await Promise.all([
+        fetchResidents(householdId),
+        fetchResidencyChanges(householdId),
+      ]);
+      setResidents((prev) => [...prev.filter((r) => r.householdId !== householdId), ...members]);
+      setResidencyChanges((prev) => [...prev.filter((c) => c.householdId !== householdId), ...changes]);
+      setHouseholds((prev) =>
+        prev.map((h) =>
+          h.id === householdId
+            ? { ...h, currentResidents: members.filter((m) => m.residencyStatus !== 'Đã chuyển đi').length }
+            : h,
+        ),
+      );
+      setDataLoadError(false);
+    } catch (err) {
+      handleCallFailure(err);
+      setDataLoadError(true);
+    }
+  };
+
+  // api mode: replace the seeded sample data with what the server returns for this user.
+  useEffect(() => {
+    if (mode !== 'api' || !user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        if (user.role === 'ADMIN') {
+          const list = await fetchHouseholds();
+          if (cancelled) return;
+          setHouseholds(list);
+          setResidents([]);
+          setResidencyChanges([]);
+          setAccounts([]); // no list endpoint for accounts yet: only accounts created in this session appear
+        } else if (user.role === 'RESIDENT' && user.householdId != null) {
+          const mine = await fetchMyResidents(user.householdId);
+          if (cancelled) return;
+          setHouseholds([]);
+          setResidents(mine);
+        }
+        setDataLoadError(false);
+      } catch (err) {
+        if (cancelled) return;
+        handleCallFailure(err);
+        setDataLoadError(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, user?.username]);
+
+  const saveHousehold: AppStateValue['saveHousehold'] = async (input) => {
+    if (mode !== 'api') return saveHouseholdDemo(input);
+    try {
+      if (input.id) {
+        const saved = await updateHouseholdApi(input.id, { areaM2: input.areaM2, address: input.address });
+        setHouseholds((prev) =>
+          prev.map((h) => (h.id === saved.id ? { ...toHousehold(saved), currentResidents: h.currentResidents } : h)),
+        );
+        return { ok: true, id: saved.id };
+      }
+      const created = await createHouseholdApi({
+        householdCode: input.householdCode.trim(),
+        apartmentCode: input.apartmentCode.trim(),
+        areaM2: input.areaM2,
+        address: input.address,
+      });
+      setHouseholds((prev) => [...prev, toHousehold(created)]);
+      return { ok: true, id: created.id };
+    } catch (err) {
+      return { ok: false, error: handleCallFailure(err) };
+    }
+  };
+
+  const addResident: AppStateValue['addResident'] = async (input) => {
+    if (mode !== 'api') return addResidentDemo(input);
+    try {
+      const created = await createResidentApi(input.householdId, {
+        fullName: input.fullName.trim(),
+        identityNumber: input.identityNumberRaw.trim(),
+        dateOfBirth: input.dateOfBirth,
+        phone: input.phone.trim(),
+        relationshipToHead: input.relationshipToHead.trim(),
+      });
+      setResidents((prev) => [...prev, toResident(created)]);
+      setHouseholds((prev) =>
+        prev.map((h) => (h.id === input.householdId ? { ...h, currentResidents: (h.currentResidents ?? 0) + 1 } : h)),
+      );
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: handleCallFailure(err) };
+    }
+  };
+
+  const recordMoveOut: AppStateValue['recordMoveOut'] = async (residentId, effectiveDate, reason) => {
+    if (mode !== 'api') {
+      recordMoveOutDemo(residentId, effectiveDate, reason);
+      return { ok: true };
+    }
+    try {
+      const updated = await moveOutApi(residentId, effectiveDate, reason);
+      await loadHouseholdDetail(updated.householdId);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: handleCallFailure(err) };
+    }
+  };
+
+  const manageAccount: AppStateValue['manageAccount'] = async (accountId, action) => {
+    if (mode !== 'api') {
+      if (action === 'unlock') unlockAccountDemo(accountId);
+      else if (action === 'disable') disableAccountDemo(accountId);
+      else setAccounts((prev) => prev.map((a) => (a.id === accountId ? { ...a, status: 'ACTIVE' } : a)));
+      return { ok: true };
+    }
+    try {
+      await manageAccountApi(accountId, action);
+      setAccounts((prev) =>
+        prev.map((a) => {
+          if (a.id !== accountId) return a;
+          if (action === 'disable') return { ...a, status: 'INACTIVE' };
+          if (action === 'enable') return { ...a, status: 'ACTIVE' };
+          return { ...a, locked: false, lockedForMinutes: undefined };
+        }),
+      );
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: handleCallFailure(err) };
+    }
+  };
+
   const saveHouseholdDemo: AppStateValue['saveHouseholdDemo'] = (input) => {
     const codeNorm = input.householdCode.trim().toUpperCase();
     const aptNorm = input.apartmentCode.trim().toUpperCase();
@@ -401,7 +598,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     if (input.residencyStatus !== 'Đã chuyển đi') {
       setHouseholds((prev) =>
         prev.map((h) =>
-          h.id === input.householdId ? { ...h, currentResidents: h.currentResidents + 1 } : h,
+          h.id === input.householdId ? { ...h, currentResidents: (h.currentResidents ?? 0) + 1 } : h,
         ),
       );
     }
@@ -417,7 +614,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setHouseholds((prev) =>
       prev.map((h) =>
         h.id === target.householdId
-          ? { ...h, currentResidents: Math.max(0, h.currentResidents - 1) }
+          ? { ...h, currentResidents: Math.max(0, (h.currentResidents ?? 0) - 1) }
           : h,
       ),
     );
@@ -595,6 +792,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       reportPackages,
       collectionRate,
       provisionAccount,
+      dataLoadError,
+      reloadHouseholds,
+      loadHouseholdDetail,
+      saveHousehold,
+      addResident,
+      recordMoveOut,
+      manageAccount,
       disableAccountDemo,
       unlockAccountDemo,
       saveHouseholdDemo,
