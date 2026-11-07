@@ -80,13 +80,17 @@ function DemoAbsencePage(): React.ReactElement {
     if (!absenceDraft.residentId || !members.some((m) => String(m.id) === absenceDraft.residentId)) {
       next.residentId = 'Chọn một thành viên đang cư trú trong hộ.';
     }
-    if (!absenceDraft.effectiveDate) next.effectiveDate = 'Chọn ngày bắt đầu vắng mặt.';
-    if (absenceDraft.endDateAssumed && absenceDraft.effectiveDate && absenceDraft.endDateAssumed < absenceDraft.effectiveDate) {
+    if ((document.getElementById('abs-from') as HTMLInputElement).validity.badInput) next.effectiveDate = 'Từ ngày chưa đúng định dạng.';
+    else if (!absenceDraft.effectiveDate) next.effectiveDate = 'Chọn ngày bắt đầu vắng mặt.';
+    if ((document.getElementById('abs-to') as HTMLInputElement).validity.badInput) next.endDateAssumed = 'Đến ngày chưa đúng định dạng.';
+    else if (absenceDraft.endDateAssumed && absenceDraft.effectiveDate && absenceDraft.endDateAssumed < absenceDraft.effectiveDate) {
       next.endDateAssumed = 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.';
     }
     if (!absenceDraft.reason.trim()) next.reason = 'Nhập lý do vắng mặt.';
     else if (absenceDraft.reason.length > 255) next.reason = 'Lý do tối đa 255 ký tự.';
     setErrors(next);
+    if (next.effectiveDate === 'Từ ngày chưa đúng định dạng.') document.getElementById('abs-from')?.focus();
+    else if (next.endDateAssumed === 'Đến ngày chưa đúng định dạng.') document.getElementById('abs-to')?.focus();
     if (Object.keys(next).length) return;
 
     setStatus('submitting');
@@ -186,10 +190,10 @@ function DemoAbsencePage(): React.ReactElement {
               value={absenceDraft.endDateAssumed}
               onChange={(e) => update('endDateAssumed', e.target.value)}
               aria-invalid={Boolean(errors.endDateAssumed)}
-              aria-describedby="abs-to-hint"
+              aria-describedby={errors.endDateAssumed ? 'abs-to-err' : 'abs-to-hint'}
             />
             {errors.endDateAssumed ? (
-              <span className="field-error">{errors.endDateAssumed}</span>
+              <span id="abs-to-err" className="field-error">{errors.endDateAssumed}</span>
             ) : (
               <span id="abs-to-hint" className="field-hint">
                 Chưa có cột trong DB.

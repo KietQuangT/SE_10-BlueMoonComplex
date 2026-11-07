@@ -46,6 +46,8 @@ it('reloads mine after creating and cancelling', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Hủy đơn' }));
   fireEvent.click(within(document.querySelector('dialog')!).getByText('Hủy đơn'));
   await waitFor(() => expect(api.fetchMyDeclarations).toHaveBeenCalledTimes(3));
+  const confirmation = await screen.findByText('Đã hủy đơn.');
+  expect(confirmation.closest('form')).toBeNull();
 });
 it('reloads mine after a failed cancellation and shows one error', async () => {
   vi.mocked(api.cancelDeclaration).mockRejectedValueOnce(new Error('conflict'));
@@ -72,5 +74,23 @@ it('shows rejection note on a separate labeled line', async () => {
   vi.mocked(api.fetchMyDeclarations).mockResolvedValueOnce({ content: [{ ...declaration, status: 'REJECTED', decisionNote: 'Thiếu thông tin', cancellable: false } as api.DeclarationDto], page: 0, size: 10, totalElements: 1, totalPages: 1 });
   render(<ApiAbsencePage />);
   const note = await screen.findByText('Lý do từ chối: Thiếu thông tin');
-  expect(note.tagName).toBe('P'); expect(note).toHaveClass('field-error');
+  expect(note.tagName).toBe('P'); expect(note).toHaveClass('field-hint');
+});
+it.each([['Từ ngày', 'Từ ngày chưa đúng định dạng.'], ['Đến ngày (không bắt buộc)', 'Đến ngày chưa đúng định dạng.']])('blocks incomplete date in %s', async (label, message) => {
+  render(<ApiAbsencePage />); await screen.findByRole('button', { name: 'Hủy đơn' });
+  set('Người vắng mặt', '12'); set('Từ ngày', '2099-01-01'); set(/Lý do \(/, 'Đi làm');
+  const input = screen.getByLabelText(label) as HTMLInputElement;
+  Object.defineProperty(input, 'validity', { configurable: true, value: { badInput: true } });
+  submit();
+  expect(screen.getByRole('alert')).toHaveTextContent(message);
+  expect(input).toHaveFocus(); expect(input).toHaveAttribute('aria-describedby', 'absence-error');
+  expect(api.createDeclaration).not.toHaveBeenCalled();
+});
+it('clears cancellation failure when closing the dialog', async () => {
+  vi.mocked(api.cancelDeclaration).mockRejectedValueOnce(new Error('conflict'));
+  render(<ApiAbsencePage />); fireEvent.click(await screen.findByRole('button', { name: 'Hủy đơn' }));
+  fireEvent.click(within(document.querySelector('dialog')!).getByText('Hủy đơn'));
+  await screen.findByText('Lỗi thao tác');
+  fireEvent.click(within(document.querySelector('dialog')!).getByText('Hủy', { selector: 'button' }));
+  expect(screen.queryByText('Lỗi thao tác')).not.toBeInTheDocument();
 });

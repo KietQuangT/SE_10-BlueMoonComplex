@@ -68,6 +68,7 @@ it('filters typed names on Enter and renders an overlay', async () => {
   await act(async () => {}); expect(api.fetchDeclarations).not.toHaveBeenCalledWith(expect.objectContaining({ q: 'a' }));
   fireEvent.change(input, { target: { value: 'an' } });
   expect(document.querySelector('.suggestion-overlay')).toHaveStyle({ position: 'absolute', width: '100%', overflowY: 'auto' });
+  expect(document.querySelector('.suggestion-overlay')?.closest('.surface-box')).toHaveClass('surface-box-overflow-visible');
   expect(document.querySelector('.suggestion-anchor')).toContainElement(document.querySelector('.suggestion-overlay'));
   fireEvent.keyDown(input, { key: 'Enter' }); await act(async () => {});
   expect(api.fetchDeclarations).toHaveBeenLastCalledWith(expect.objectContaining({ q: 'an' }));
@@ -82,4 +83,15 @@ it('clears a previous decision error when opening a new rejection', async () => 
   fireEvent.click(screen.getByText('Hủy', { selector: 'button' }));
   fireEvent.click(screen.getAllByRole('button', { name: 'Từ chối' }).at(-1)!);
   expect(screen.queryByText('Vui lòng nhập lý do từ chối.')).not.toBeInTheDocument();
+});
+
+it('selects the highlighted second suggestion instead of the typed query', async () => {
+  vi.useFakeTimers();
+  vi.mocked(api.suggestResidents).mockResolvedValueOnce([{ residentId: 1, fullName: 'An Một', householdId: 1, householdCode: 'H01', apartmentCode: 'A01' }, { residentId: 2, fullName: 'An Hai', householdId: 2, householdCode: 'H02', apartmentCode: 'A02' }]);
+  render(<ApiAbsenceApprovalsPage />); const input = screen.getByRole('combobox');
+  fireEvent.change(input, { target: { value: 'An' } });
+  await act(async () => { vi.advanceTimersByTime(250); });
+  fireEvent.keyDown(input, { key: 'ArrowDown' }); fireEvent.keyDown(input, { key: 'ArrowDown' }); fireEvent.keyDown(input, { key: 'Enter' });
+  await act(async () => {});
+  expect(input).toHaveValue('An Hai'); expect(api.fetchDeclarations).toHaveBeenLastCalledWith(expect.objectContaining({ q: 'An Hai' }));
 });

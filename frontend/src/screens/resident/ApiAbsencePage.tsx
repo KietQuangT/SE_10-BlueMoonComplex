@@ -16,6 +16,7 @@ export function ApiAbsencePage(): React.ReactElement {
   const [data, setData] = useState<DeclarationPage | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [cancelNotice, setCancelNotice] = useState('');
   const [loadError, setLoadError] = useState('');
   const [invalidField, setInvalidField] = useState('');
   const [busy, setBusy] = useState(false);
@@ -31,7 +32,9 @@ export function ApiAbsencePage(): React.ReactElement {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(''); setNotice(''); setInvalidField('');
-    const invalid = !members.some((m) => String(m.id) === draft.residentId) ? ['abs-resident', 'Vui lòng chọn người vắng mặt.']
+    const invalid = (document.getElementById('abs-from') as HTMLInputElement).validity.badInput ? ['abs-from', 'Từ ngày chưa đúng định dạng.']
+      : (document.getElementById('abs-to') as HTMLInputElement).validity.badInput ? ['abs-to', 'Đến ngày chưa đúng định dạng.']
+      : !members.some((m) => String(m.id) === draft.residentId) ? ['abs-resident', 'Vui lòng chọn người vắng mặt.']
       : !draft.effectiveDate ? ['abs-from', 'Vui lòng chọn từ ngày.']
       : draft.effectiveDate < today() ? ['abs-from', 'Từ ngày không được trước hôm nay.']
       : draft.endDateAssumed && draft.endDateAssumed < draft.effectiveDate ? ['abs-to', 'Đến ngày không được trước từ ngày.']
@@ -48,8 +51,8 @@ export function ApiAbsencePage(): React.ReactElement {
   };
   const cancel = async () => {
     if (cancelId == null) return;
-    setBusy(true); setError(''); setNotice('');
-    try { await cancelDeclaration(cancelId); setCancelId(null); await load(); await refreshAbsenceCount(); setNotice('Đã hủy đơn.'); }
+    setBusy(true); setError(''); setNotice(''); setCancelNotice('');
+    try { await cancelDeclaration(cancelId); setCancelId(null); await load(); await refreshAbsenceCount(); setCancelNotice('Đã hủy đơn.'); }
     catch (err) { setError(handleCallFailure(err)); await load(); await refreshAbsenceCount(); } finally { setBusy(false); }
   };
   return <>
@@ -65,10 +68,10 @@ export function ApiAbsencePage(): React.ReactElement {
         <div className="form-field span-2">{error && cancelId == null && <div id="absence-error" className="banner banner-error" role="alert">{error}</div>}{notice && <div className="banner banner-success" role="status">{notice}</div>}<button className="btn btn-primary" disabled={busy}>Gửi đơn khai báo</button></div>
       </form>
     </section>
-    <h2 className="section-heading">Đơn của tôi</h2><section className="surface-box">
-      {!data ? <p>Đang tải danh sách...</p> : data.content.length === 0 ? <p>Chưa có đơn của hộ.</p> : <ul className="form-history">{data.content.map((d) => <li key={d.id}><div className="mobile-row-top"><strong>{d.residentName}</strong><ChangeStatusBadge status={d.status} /></div><span>{formatBusinessDate(d.effectiveDate)}{d.endDate ? ` – ${formatBusinessDate(d.endDate)}` : ''} · {d.reason}</span>{d.status === 'REJECTED' && d.decisionNote && <p className="field-error">Lý do từ chối: {d.decisionNote}</p>}{d.cancellable && <button className="btn btn-secondary" type="button" onClick={() => { setError(''); setNotice(''); setInvalidField(''); setCancelId(d.id); }}>Hủy đơn</button>}</li>)}</ul>}
+    <h2 className="section-heading">Đơn của tôi</h2>{cancelNotice && <div className="banner banner-success" role="status">{cancelNotice}</div>}<section className="surface-box">
+      {!data ? <p>Đang tải danh sách...</p> : data.content.length === 0 ? <p>Chưa có đơn của hộ.</p> : <ul className="form-history">{data.content.map((d) => <li key={d.id}><div className="mobile-row-top"><strong>{d.residentName}</strong><ChangeStatusBadge status={d.status} /></div><span>{formatBusinessDate(d.effectiveDate)}{d.endDate ? ` – ${formatBusinessDate(d.endDate)}` : ''} · {d.reason}</span>{d.status === 'REJECTED' && d.decisionNote && <p className="field-hint">Lý do từ chối: {d.decisionNote}</p>}{d.cancellable && <button className="btn btn-secondary" type="button" onClick={() => { setError(''); setNotice(''); setCancelNotice(''); setInvalidField(''); setCancelId(d.id); }}>Hủy đơn</button>}</li>)}</ul>}
       {data && <PaginationBar page={page} pageSize={size} totalItems={data.totalElements} onPageChange={setPage} onPageSizeChange={setSize} />}
     </section>
-    <ConfirmDialog open={cancelId != null} title="Hủy đơn tạm vắng?" consequence="Đơn sẽ được lưu với trạng thái Đã hủy." confirmLabel="Hủy đơn" confirmTone="danger" busy={busy} onCancel={() => setCancelId(null)} onConfirm={() => void cancel()}>{error && <p className="field-error" role="alert">{error}</p>}</ConfirmDialog>
+    <ConfirmDialog open={cancelId != null} title="Hủy đơn tạm vắng?" consequence="Đơn sẽ được lưu với trạng thái Đã hủy." confirmLabel="Hủy đơn" confirmTone="danger" busy={busy} onCancel={() => { setCancelId(null); setError(''); }} onConfirm={() => void cancel()}>{error && <p className="field-error" role="alert">{error}</p>}</ConfirmDialog>
   </>;
 }
