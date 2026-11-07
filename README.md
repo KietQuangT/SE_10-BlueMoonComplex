@@ -4,7 +4,7 @@ BlueMoon Complex là hệ thống quản lý chung cư được phát triển tr
 
 Dự án tổ chức theo mô hình monorepo, gồm backend Spring Boot, frontend React và cơ sở dữ liệu MySQL.
 
-> **Trạng thái cập nhật: 07/11/2026.** Nội dung dưới đây phản ánh tiến độ trên nhánh `main` cục bộ của Sơn (commit `cef9b93`, **chưa push**): `origin/main` sau PR #11 (S01, S02, S04, S05) cộng thêm S03 (`feat/s03-change-password`), backend S06 (`feat/s06-residency-declarations`) và giao diện S06 (`feat/s06-ui`). Các nhánh S03 và S06 đã push lên GitHub nhưng chưa mở PR. Một số chức năng vẫn đang phát triển; giao diện đã có không đồng nghĩa với API tương ứng đã hoàn thành.
+> **Trạng thái cập nhật: 07/11/2026.** Nội dung dưới đây phản ánh tiến độ được ghi nhận trên nhánh `feat/s06-residency-declarations` (backend S06, nền `main` sau S04 và S05). Một số chức năng vẫn đang phát triển; giao diện đã có không đồng nghĩa với API tương ứng đã hoàn thành.
 
 ## 1. Công nghệ sử dụng
 
@@ -29,7 +29,7 @@ Dự án tổ chức theo mô hình monorepo, gồm backend Spring Boot, fronten
 - **Đổi mật khẩu (S03):** `POST /api/v1/auth/change-password` cho mọi vai trò đã đăng nhập, kể cả tài khoản đang bị buộc đổi mật khẩu lần đầu. Kiểm tra mật khẩu hiện tại; mật khẩu mới phải có tối thiểu 8 ký tự, chữ hoa, chữ thường, chữ số và ký tự đặc biệt, tối đa 72 byte UTF-8, và khác mật khẩu hiện tại (D23). Đổi thành công thì mọi phiên của tài khoản, kể cả phiên đang dùng, bị hủy và phải đăng nhập lại; nội dung email mô phỏng chứa mật khẩu tạm bị che. Sai mật khẩu hiện tại được đếm và khóa như đăng nhập sai (ADMIN không bị khóa). Hồ sơ cá nhân ở v1 chỉ xem qua `GET /auth/me`.
 - **Hộ và nhân khẩu (S05):** tạo, cập nhật, tra cứu hộ; thêm, sửa, tra cứu nhân khẩu; ghi nhận chuyển đi và lịch sử biến động. Cư dân có thể xem danh sách thành viên trong hộ của mình.
 - **Khai báo tạm vắng (S06, backend):** cư dân khai báo cho thành viên trong hộ của mình; ADMIN duyệt hoặc từ chối (kèm lý do); cư dân hủy đơn đang chờ; ADMIN ghi nhận "đã quay lại" để đưa nhân khẩu về `RESIDING`. Có hàng chờ toàn hệ thống lọc theo trạng thái, căn hộ và tên, cùng gợi ý tên nhân khẩu (không trả số giấy tờ hay số điện thoại). Khi ghi nhận chuyển đi, các đơn tạm vắng đang chờ của người đó tự chuyển sang `CANCELLED`. Đơn, kết quả duyệt và lý do từ chối được lưu trong `residency_changes` (migration V7); thông báo kết quả chỉ là trạng thái trong danh sách "Đơn của tôi", chưa có hộp thư. Chưa làm tạm trú.
-- **Frontend:** đã xây dựng giao diện cho 24 màn hình v1, hỗ trợ giao diện sáng/tối. Các luồng S01, S02, S04, S05 và S06 (M-31 khai báo, M-16 duyệt, M-13 "Đã quay lại", gợi ý tên) đã kết nối API; các phần còn lại sử dụng dữ liệu mẫu. Backend S03 đã sẵn sàng; phần giao diện đổi mật khẩu nối API thuộc Kiệt. Giao diện S06 có test đơn vị và đã kiểm thủ công trên Chrome với backend S06; chưa có PR.
+- **Frontend:** đã xây dựng giao diện cho 24 màn hình v1, hỗ trợ giao diện sáng/tối. Các luồng S01, S02, S04 và S05 đã kết nối API; các phần còn lại sử dụng dữ liệu mẫu. Giao diện S06 (M-31 khai báo, M-16 duyệt, M-13 "Đã quay lại") nằm ở nhánh `feat/s06-ui`, xếp trên `feat/s03-change-password`; đã có test đơn vị và kiểm tra thủ công trên Chrome với backend S06, chưa có PR.
 
 ### Đang phát triển hoặc chưa có
 
