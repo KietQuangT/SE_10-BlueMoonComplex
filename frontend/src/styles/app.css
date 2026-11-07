@@ -1945,3 +1945,5 @@
     display: none;
   }
 }
+
+[role="option"][aria-selected="true"] { background: var(--surface-muted); outline: 2px solid var(--text-primary); }
