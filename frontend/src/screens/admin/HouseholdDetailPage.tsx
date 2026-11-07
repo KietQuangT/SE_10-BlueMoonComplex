@@ -85,7 +85,7 @@ export function HouseholdDetailPage(): React.ReactElement {
       </section>
 
       {returnError && returnId == null && <div className="banner banner-error" role="alert">{returnError}</div>}
-      <h2 className="section-heading">Thành viên đang cư trú ({members.length})</h2>
+      <h2 className="section-heading">Thành viên hiện tại ({members.length})</h2><p>Gồm người đang tạm vắng.</p>
       <section className="surface-box">
         {members.length === 0 ? (
           <div className="state-panel">
@@ -123,7 +123,7 @@ export function HouseholdDetailPage(): React.ReactElement {
                       <ResidencyBadge status={m.residencyStatus} />
                     </td>
                     <td className="align-right">
-                      {mode === 'api' && user?.role === 'ADMIN' && m.residencyStatus === 'Tạm vắng' && <button type="button" className="btn btn-secondary" onClick={() => setReturnId(m.id)}>Đã quay lại</button>}
+                      {mode === 'api' && user?.role === 'ADMIN' && m.residencyStatus === 'Tạm vắng' && <button type="button" className="btn btn-secondary" onClick={() => { setReturnError(''); setReturnId(m.id); }}>Đã quay lại</button>}
                       <Link to={`/admin/move-outs?resident=${m.id}`} className="btn btn-ghost btn-sm">
                         Ghi nhận chuyển đi
                       </Link>
