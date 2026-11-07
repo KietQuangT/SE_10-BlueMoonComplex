@@ -12,7 +12,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 | ☑ | S03 | M | Kiệt + Sơn | Đổi mật khẩu, hồ sơ; WBS 2.1.1.2,2.1.2.1 | S01 | Kiểm tra mật khẩu cũ/mới, tối thiểu 8 ký tự; đổi xong các session cũ bị từ chối; DTO không lộ hash. |
 | ☑ | S04 | M | Sơn + Tuấn | Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3 | S01 | Khóa xong request mới với cookie cũ thất bại; thử nhiều session và server role; UI cần test tích hợp để đóng. |
 | ☑ | S05 | L | Sơn + Tuấn | Hộ/nhân khẩu/biến động; WBS 2.2.1.1 | F01,S01 | CRUD/tra cứu, ownership; chuyển đi đổi trạng thái cư trú (không xóa bản ghi, DECISIONS D20) kèm lịch sử biến động và audit; validate trường đã chốt, test hộ khác bị chặn. |
-| ☐ | S06 | L | Kiệt + Sơn + Tuấn | Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3 | S05 bản API đầu | Chờ duyệt → duyệt/từ chối đúng quyền; lưu trạng thái/lịch sử, thông báo trong app/mock theo AC; cuối cùng ghép UI. |
+| ☑ | S06 | L | Kiệt + Sơn + Tuấn | Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3 | S05 bản API đầu | Chờ duyệt → duyệt/từ chối đúng quyền; lưu trạng thái/lịch sử, thông báo trong app/mock theo AC; cuối cùng ghép UI. |
 | ☐ | S07 | M | Quân + Kiệt; Tuấn kiểm tra | Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3 | F01,F02 | BigDecimal; 50m² × 10.000 = 500.000; hiệu lực/rounding đã chốt; không áp thay giá vào hóa đơn cũ. |
 | ☐ | S08 | L | Quân + Tuấn | Kỳ thu/tự nguyện; WBS 2.3.1.2–3 | S07; S05 để ghép cuối | Không trùng kỳ/hộ/loại; tự nguyện không cộng nợ; giao dữ liệu thật cho thu tiền và đối chiếu độc lập. |
 | ☐ | S09 | L | Quân + Sơn | Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1 | S05,S08 | Thu đúng số tiền, nợ giảm đúng, transaction/audit; duplicate/concurrent không thu hai lần; chốt thu thiếu/thừa/sửa/hủy. |
@@ -33,7 +33,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 - [x] S03 — Đổi mật khẩu, hồ sơ; WBS 2.1.1.2,2.1.2.1
 - [ ] S04 — Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3
 - [x] S05 — Hộ/nhân khẩu/biến động; WBS 2.2.1.1
-- [ ] S06 — Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3
+- [x] S06 — Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3 (tick 08/11/2026 theo lời Sơn, có caveat UI: xem mục S06 UI)
 - [ ] S07 — Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3
 - [ ] S08 — Kỳ thu/tự nguyện; WBS 2.3.1.2–3
 - [ ] S09 — Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1
@@ -286,9 +286,9 @@ Lỗi còn lại, điều chưa kiểm thử:
 Kết luận: tick theo bằng chứng chạy thật của Sơn (surefire 103 + failsafe 80 xanh, BUILD SUCCESS ở c7d0b89 trên MySQL), đã đối chiếu độc lập báo cáo đúng HEAD, kèm các caveat trên; phần UI của AC thuộc Kiệt, chưa có; push/PR còn chờ cổng G2.
 ```
 
-### S06 backend (CHƯA tick; 07/11/2026): khai báo, duyệt, tra cứu tạm vắng
+### S06 backend (tick 08/11/2026, theo lời Sơn; caveat UI ở mục "S06 UI"): khai báo, duyệt, tra cứu tạm vắng
 ```text
-Task: S06 (WBS 2.2.1.2–3), lượt backend; AC còn "cuối cùng ghép UI" nên task chưa tick (Sơn chọn 07/11/2026)
+Task: S06 (WBS 2.2.1.2–3), lượt backend; tick cùng S06 UI theo lời Sơn 08/11/2026 (AC "cuối cùng ghép UI" chưa kiểm trên Chrome)
 Commit/PR: CHƯA push, CHƯA PR, chưa chạy CI. Worktree Orca feat-s06 (nhánh hhoangsonnw/feat-s06), nền main d3d8de3, sạch ở 7b9828e:
   82e5829 fix: hoàn thiện kiểm thử tạm vắng (S06)   (reset --soft main, gồm cả code vòng 0 ac06225)
   7b9828e fix: hủy đơn tạm vắng khi chuyển đi (S06)
@@ -311,12 +311,13 @@ Lỗi còn lại, điều chưa kiểm thử:
   - N+1 ở danh sách (~200 truy vấn/trang 100 dòng); `cancellable` luôn false ở phản hồi tạo/hủy; q rỗng ở hàng chờ trả 400; đơn bị hủy do move-out chỉ có nguyên nhân trong audit.
   - Ảnh hưởng của TEMPORARILY_ABSENT tới phí (S08/S09) và báo cáo (S11) chưa có quy tắc.
   - Code worker dồn nhiều lệnh vào một dòng dài, khó đọc; chưa dọn.
-Kết luận: backend đủ bằng chứng; chưa tick S06 vì thiếu UI. Push/PR chờ cổng G2/G3.
+Kết luận: backend đủ bằng chứng server và tick cùng S06 theo lời Sơn. Push/PR chờ cổng G2/G3.
 ```
 
-### S06 UI (CHƯA tick; 07/11/2026): khai báo, duyệt, quay lại, gợi ý tên tạm vắng (frontend)
+### S06 UI (tick 08/11/2026, theo lời Sơn; CAVEAT: chưa kiểm Chrome với backend thật, M-31 phía cư dân chưa kiểm): khai báo, duyệt, quay lại, gợi ý tên tạm vắng (frontend)
 ```text
 Task: S06 (WBS 2.2.1.2–3), lượt UI (phần của Kiệt), chế độ Backend thật `api`
+Vòng sửa 3 (commit fa786147, bản ghi tại `_agents_workspace/S06/ui/02_impl.md`): worker báo vitest 13 file / 65 test đạt, tsc và build đạt; chưa kiểm Chrome, 360px, sáng/tối, backend thật (lời worker, chưa kiểm chứng ở mức trình duyệt).
 Commit/PR: CHƯA push, CHƯA PR. Worktree Orca feat-s06-ui (nhánh hhoangsonnw/feat-s06-ui), xếp trên feat/s03-change-password (3ee97ca, chưa merge vào main), sạch ở 70c06c7:
   b78dadf feat: ghép giao diện khai báo tạm vắng (S06 UI)
   70c06c7 fix: bảo vệ biểu mẫu tạm vắng (S06 UI)
@@ -328,5 +329,5 @@ Lệnh và kết quả:
 AC "cuối cùng ghép UI": M-31, M-16, M-13 đã ghép API S06 ở mức mã và test đơn vị (fetch giả). CHƯA chạy trên Chrome với backend S06 thật, chưa kiểm 360px/screen reader.
 Đầu ra giao cho: Kiệt (PR frontend riêng); Kiệt đồng ý chỉ theo lời Sơn.
 Lỗi còn lại: lỗi cũ không tự xóa ở M-16/M-13; hộp M-16 mở sau quyết định thất bại; thiếu test Esc, đổi tên đăng nhập, api→demo→api, tải lại sau duyệt/từ chối thất bại; npm báo 3 vulnerabilities; README/PRODUCT còn dòng lỗi thời nhỏ.
-Kết luận: UI đủ bằng chứng ở mức mã và test đơn vị; chưa tick S06 vì chưa thử tích hợp thật trên trình duyệt.
+Kết luận: tick S06 theo lời Sơn 08/11/2026 khi UI mới đủ bằng chứng ở mức mã và test đơn vị. Còn mở: kiểm Chrome với backend S06 thật (M-31 phía cư dân, M-16 gợi ý, 360px, sáng/tối) và lỗi còn lại ở trên. Nếu kiểm sau thấy lỗi, mở lại task này.
 ```
