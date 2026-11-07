@@ -36,4 +36,20 @@ class ResidentServiceTest {
   service.moveOut(1,new MoveOutRequest(LocalDate.of(2026,11,7),null),1);var order=inOrder(households,residents);order.verify(households).lockIdentityGuard();order.verify(residents).lockById(1);
  }
  @Test void excessiveReasonUsesValidationCode(){when(households.lockIdentityGuard()).thenReturn(1L);assertThatThrownBy(()->service.moveOut(1,new MoveOutRequest(LocalDate.of(2026,11,7),"x".repeat(256)),1)).isInstanceOfSatisfying(BadRequestException.class,e->assertThat(e.code()).isEqualTo("VALIDATION"));}
+ @Test void moveOutCancelsPendingAbsencesAndAuditsCause(){
+  when(households.lockIdentityGuard()).thenReturn(1L); Resident r=new Resident(1,"Name",null,null,null,null,clock.instant()); ReflectionTestUtils.setField(r,"id",1L); when(residents.lockById(1)).thenReturn(Optional.of(r));
+  ResidencyChange c=ResidencyChange.absence(r,LocalDate.of(2026,11,7),null,"private reason",7L,clock.instant()); ReflectionTestUtils.setField(c,"id",42L);
+  when(changes.findByResidentIdAndChangeTypeAndStatus(1L,"TEMPORARY_ABSENCE","PENDING")).thenReturn(List.of(c));
+  service.moveOut(1,new MoveOutRequest(LocalDate.of(2026,11,7),null),9L);
+  assertThat(c.getStatus()).isEqualTo("CANCELLED"); assertThat(c.getDecidedAt()).isEqualTo(clock.instant()); assertThat(c.getDecisionNote()).isNull();
+  verify(audit).record(9L,"ABSENCE_CANCELLED","ResidencyChange","42",Map.of("id","42","residentId","1","householdId","1","effectiveDate","2026-11-07","cause","MOVE_OUT"));
+ }
+ @Test void moveOutWithoutPendingAbsenceDoesNotAuditCancellation(){
+  when(households.lockIdentityGuard()).thenReturn(1L); Resident r=new Resident(1,"Name",null,null,null,null,clock.instant()); ReflectionTestUtils.setField(r,"id",1L); when(residents.lockById(1)).thenReturn(Optional.of(r));
+  service.moveOut(1,new MoveOutRequest(LocalDate.of(2026,11,7),null),9L); verify(audit,never()).record(anyLong(),eq("ABSENCE_CANCELLED"),anyString(),anyString(),anyMap());
+ }
+ @Test void moveOutAllowsTemporarilyAbsentResident(){
+  when(households.lockIdentityGuard()).thenReturn(1L); Resident r=new Resident(1,"Name",null,null,null,null,clock.instant()); ReflectionTestUtils.setField(r,"id",1L); r.setResidencyStatus(ResidencyStatus.TEMPORARILY_ABSENT,clock.instant()); when(residents.lockById(1)).thenReturn(Optional.of(r));
+  service.moveOut(1,new MoveOutRequest(LocalDate.of(2026,11,7),null),9L); assertThat(r.getResidencyStatus()).isEqualTo(ResidencyStatus.MOVED_OUT);
+ }
 }

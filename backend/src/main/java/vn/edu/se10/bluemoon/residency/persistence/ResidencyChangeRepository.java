@@ -1,10 +1,12 @@
 package vn.edu.se10.bluemoon.residency.persistence;
 import java.util.Optional;
+import java.util.List;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 public interface ResidencyChangeRepository extends JpaRepository<ResidencyChange,Long> {
+ List<ResidencyChange> findByResidentIdAndChangeTypeAndStatus(Long residentId,String type,String status);
  Page<ResidencyChange> findByHouseholdId(Long householdId,Pageable pageable);
  boolean existsByResidentIdAndChangeTypeAndStatus(Long residentId,String type,String status);
  @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select c from ResidencyChange c where c.id=:id") Optional<ResidencyChange> lockById(@Param("id") long id);
