@@ -37,7 +37,12 @@ public class ResidentService {
   if(request.reason()!=null && request.reason().length()>255)throw new BadRequestException("VALIDATION");
   if(request.effectiveDate()==null || request.effectiveDate().isAfter(today()))throw new BadRequestException("INVALID_DATE");
   Resident r=locked(id); if(r.getResidencyStatus()==ResidencyStatus.MOVED_OUT)throw new ConflictException("RESIDENT_ALREADY_MOVED_OUT");
-  Instant now=clock.instant(); r.moveOut(now); changes.save(new ResidencyChange(r,request.effectiveDate(),request.reason(),actor,now));
+  Instant now=clock.instant();
+  for(ResidencyChange c:changes.findByResidentIdAndChangeTypeAndStatus(id,"TEMPORARY_ABSENCE","PENDING")){
+   c.decide("CANCELLED",null,null,now);
+   audit.record(actor,"ABSENCE_CANCELLED","ResidencyChange",c.getId().toString(),Map.of("id",c.getId().toString(),"residentId",c.getResidentId().toString(),"householdId",c.getHouseholdId().toString(),"effectiveDate",c.getEffectiveDate().toString(),"cause","MOVE_OUT"));
+  }
+  r.moveOut(now); changes.save(new ResidencyChange(r,request.effectiveDate(),request.reason(),actor,now));
   audit.record(actor,"RESIDENT_MOVED_OUT","Resident",r.getId().toString(),Map.of("id",r.getId().toString(),"householdId",r.getHouseholdId().toString(),"effectiveDate",request.effectiveDate().toString())); return ResidentResponse.from(r);
  }
  @Transactional(readOnly=true) public ResidentResponse get(long id){return ResidentResponse.from(residents.findById(id).orElseThrow(()->new NotFoundException("RESIDENT_NOT_FOUND")));}

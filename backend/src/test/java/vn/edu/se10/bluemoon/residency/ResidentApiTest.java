@@ -84,10 +84,10 @@ class ResidentApiTest {
   when(service.update(eq(1L),any(),eq(7L))).thenReturn(response);when(service.moveOut(eq(1L),any(),eq(7L))).thenReturn(response);
   when(service.create(eq(1L),any(),eq(7L))).thenReturn(response);
   when(service.list(eq(1L),isNull(),eq(0),eq(20))).thenReturn(new PageImpl<>(List.of(response),PageRequest.of(0,20),1));
-  when(service.history(1L,0,20)).thenReturn(new PageImpl<>(List.of(new ResidencyChangeResponse(2L,1L,"MOVE_OUT",LocalDate.of(2020,1,1),"APPROVED",1L,Instant.EPOCH)),PageRequest.of(0,20),1));
+  when(service.history(1L,0,20)).thenReturn(new PageImpl<>(List.of(new ResidencyChangeResponse(2L,1L,"MOVE_OUT",LocalDate.of(2020,1,1),"APPROVED",1L,Instant.EPOCH,null,null,null,null)),PageRequest.of(0,20),1));
   mvc.perform(post("/api/v1/households/1/residents").with(admin).with(csrf()).contentType("application/json").content(BODY)).andExpect(status().isCreated()).andExpect(jsonPath("$.householdId").value(1));
   mvc.perform(get("/api/v1/households/1/residents").with(admin)).andExpect(status().isOk()).andExpect(jsonPath("$.content[0].id").value(1)).andExpect(jsonPath("$.totalElements").value(1));
-  mvc.perform(get("/api/v1/households/1/residency-changes").with(admin)).andExpect(status().isOk()).andExpect(jsonPath("$.content[0].id").value(2)).andExpect(jsonPath("$.content[0].reason").doesNotExist());
+  mvc.perform(get("/api/v1/households/1/residency-changes").with(admin)).andExpect(status().isOk()).andExpect(jsonPath("$.content[0].id").value(2)).andExpect(jsonPath("$.content[0].reason").value(org.hamcrest.Matchers.nullValue()));
   mvc.perform(patch("/api/v1/residents/1").with(admin).with(csrf()).contentType("application/json").content(BODY)).andExpect(status().isOk()).andExpect(jsonPath("$.identityNumber").value("secret"));
   mvc.perform(post("/api/v1/residents/1/move-out").with(admin).with(csrf()).contentType("application/json").content(MOVE)).andExpect(status().isOk()).andExpect(jsonPath("$.id").value(1));
   verify(service).create(eq(1L),any(),eq(7L));verify(service).update(eq(1L),any(),eq(7L));verify(service).moveOut(eq(1L),any(),eq(7L));
@@ -102,10 +102,10 @@ class ResidentApiTest {
   when(service.mine(1L)).thenReturn(List.of(new MyResidentResponse(2L,"Name",null,null,ResidencyStatus.RESIDING)));
   String mine=mvc.perform(get("/api/v1/households/me/residents").with(authentication(principal("RESIDENT",false)))).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
   assertThat(keys(mapper.readTree(mine).get(0))).containsExactlyInAnyOrder("id","fullName","dateOfBirth","relationshipToHead","residencyStatus");
-  when(service.history(1L,0,20)).thenReturn(new PageImpl<>(List.of(new ResidencyChangeResponse(2L,1L,"MOVE_OUT",LocalDate.of(2020,1,1),"APPROVED",7L,Instant.EPOCH)),PageRequest.of(0,20),1));
+  when(service.history(1L,0,20)).thenReturn(new PageImpl<>(List.of(new ResidencyChangeResponse(2L,1L,"MOVE_OUT",LocalDate.of(2020,1,1),"APPROVED",7L,Instant.EPOCH,null,null,null,null)),PageRequest.of(0,20),1));
   String page=mvc.perform(get("/api/v1/households/1/residency-changes").with(admin)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();var tree=mapper.readTree(page);
   assertThat(keys(tree)).containsExactlyInAnyOrder("content","page","size","totalElements","totalPages");
-  assertThat(keys(tree.get("content").get(0))).containsExactlyInAnyOrder("id","residentId","changeType","effectiveDate","status","recordedBy","createdAt");
+  assertThat(keys(tree.get("content").get(0))).containsExactlyInAnyOrder("id","residentId","changeType","effectiveDate","status","recordedBy","createdAt","reason","endDate","decisionNote","decidedAt");
  }
  private static Set<String> keys(tools.jackson.databind.JsonNode node){var keys=new java.util.HashSet<String>();node.propertyNames().forEach(keys::add);return keys;}
 
