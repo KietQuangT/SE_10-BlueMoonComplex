@@ -9,4 +9,5 @@ public interface ResidentRepository extends JpaRepository<Resident,Long> {
  @Lock(LockModeType.PESSIMISTIC_WRITE) @Query("select r from Resident r where r.identityNumber=:identity and r.residencyStatus in :statuses and (:exclude is null or r.id<>:exclude)") List<Resident> findConflicts(@Param("identity") String identity,@Param("statuses") Collection<ResidencyStatus> statuses,@Param("exclude") Long exclude);
  Page<Resident> findByHouseholdIdAndResidencyStatusIn(Long householdId,Collection<ResidencyStatus> statuses,Pageable pageable);
  List<Resident> findByHouseholdIdAndResidencyStatusInOrderById(Long householdId,Collection<ResidencyStatus> statuses);
+ @Query("select r from Resident r where r.residencyStatus in :statuses and r.fullName like :name escape '!' order by r.fullName, r.id") List<Resident> suggest(@Param("statuses") Collection<ResidencyStatus> statuses,@Param("name") String name,Pageable pageable);
 }

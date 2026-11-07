@@ -4,7 +4,7 @@ BlueMoon Complex là hệ thống quản lý chung cư được phát triển tr
 
 Dự án tổ chức theo mô hình monorepo, gồm backend Spring Boot, frontend React và cơ sở dữ liệu MySQL.
 
-> **Trạng thái cập nhật: 07/11/2026.** Nội dung dưới đây phản ánh tiến độ được ghi nhận trên nhánh `feat/s03-change-password` (nền `main` sau PR #11, đã gồm S01, S02, S04 và S05). Một số chức năng vẫn đang phát triển; giao diện đã có không đồng nghĩa với API tương ứng đã hoàn thành.
+> **Trạng thái cập nhật: 07/11/2026.** Nội dung dưới đây phản ánh tiến độ được ghi nhận trên nhánh `feat/s06-residency-declarations` (backend S06, nền `main` sau S04 và S05). Một số chức năng vẫn đang phát triển; giao diện đã có không đồng nghĩa với API tương ứng đã hoàn thành.
 
 ## 1. Công nghệ sử dụng
 
@@ -28,14 +28,15 @@ Dự án tổ chức theo mô hình monorepo, gồm backend Spring Boot, fronten
 - **Quản lý tài khoản (S04):** vô hiệu hóa, kích hoạt lại, mở khóa tài khoản và hủy phiên đăng nhập. Trạng thái, vai trò và hộ liên kết được kiểm tra lại từ cơ sở dữ liệu ở mỗi request.
 - **Đổi mật khẩu (S03):** `POST /api/v1/auth/change-password` cho mọi vai trò đã đăng nhập, kể cả tài khoản đang bị buộc đổi mật khẩu lần đầu. Kiểm tra mật khẩu hiện tại; mật khẩu mới phải có tối thiểu 8 ký tự, chữ hoa, chữ thường, chữ số và ký tự đặc biệt, tối đa 72 byte UTF-8, và khác mật khẩu hiện tại (D23). Đổi thành công thì mọi phiên của tài khoản, kể cả phiên đang dùng, bị hủy và phải đăng nhập lại; nội dung email mô phỏng chứa mật khẩu tạm bị che. Sai mật khẩu hiện tại được đếm và khóa như đăng nhập sai (ADMIN không bị khóa). Hồ sơ cá nhân ở v1 chỉ xem qua `GET /auth/me`.
 - **Hộ và nhân khẩu (S05):** tạo, cập nhật, tra cứu hộ; thêm, sửa, tra cứu nhân khẩu; ghi nhận chuyển đi và lịch sử biến động. Cư dân có thể xem danh sách thành viên trong hộ của mình.
-- **Frontend:** đã xây dựng giao diện cho 24 màn hình v1, hỗ trợ giao diện sáng/tối. Các luồng S01, S02, S04 và S05 đã kết nối API; các phần còn lại sử dụng dữ liệu mẫu. Backend S03 đã sẵn sàng; phần giao diện đổi mật khẩu nối API thuộc Kiệt.
+- **Khai báo tạm vắng (S06, backend):** cư dân khai báo cho thành viên trong hộ của mình; ADMIN duyệt hoặc từ chối (kèm lý do); cư dân hủy đơn đang chờ; ADMIN ghi nhận "đã quay lại" để đưa nhân khẩu về `RESIDING`. Có hàng chờ toàn hệ thống lọc theo trạng thái, căn hộ và tên, cùng gợi ý tên nhân khẩu (không trả số giấy tờ hay số điện thoại). Khi ghi nhận chuyển đi, các đơn tạm vắng đang chờ của người đó tự chuyển sang `CANCELLED`. Đơn, kết quả duyệt và lý do từ chối được lưu trong `residency_changes` (migration V7); thông báo kết quả chỉ là trạng thái trong danh sách "Đơn của tôi", chưa có hộp thư. Chưa làm tạm trú.
+- **Frontend:** đã xây dựng giao diện cho 24 màn hình v1, hỗ trợ giao diện sáng/tối. Các luồng S01, S02, S04 và S05 đã kết nối API; các phần còn lại sử dụng dữ liệu mẫu. Giao diện S06 (M-31 khai báo, M-16 duyệt, M-13 "Đã quay lại") nằm ở nhánh `feat/s06-ui`, xếp trên `feat/s03-change-password`; đã có test đơn vị và kiểm tra thủ công trên Chrome với backend S06, chưa có PR.
 
 ### Đang phát triển hoặc chưa có
 
 - Giao diện đổi mật khẩu nối API S03 (Kiệt) và quyết định đồng bộ `users.full_name` với `residents.full_name` (chưa chốt cách nối; ngoài S03).
 - Email thật: v1 chỉ có email mô phỏng (bảng `mock_emails`, xem bằng SQL); gửi email thật cần quyết định của nhóm.
 - API liệt kê tài khoản; giao diện danh sách tài khoản hiện chưa lấy dữ liệu đầy đủ từ backend.
-- Khai báo cư trú, phê duyệt, tạm vắng và quay lại cư trú (S06).
+- S06: backend đã xong và qua integration trên MySQL cục bộ, nhưng task chưa tick; còn chờ PR, ghép giao diện (nhánh `feat/s06-ui`) và xác nhận của Tuấn, Kiệt, Quân (V7 cần thống nhất với S07 và vai trò thứ tư). Tạm trú và tự hết hạn tạm vắng chưa làm.
 - Đơn giá, kỳ thu, thu tiền, báo cáo, sao lưu và các công việc kiểm thử/bàn giao còn lại (S07–S15).
 
 **Lưu ý:** Tài khoản được ADMIN cấp có cờ `must_change_password = true`. Tài khoản có thể đăng nhập nhưng phần lớn API trả `403 PASSWORD_CHANGE_REQUIRED` cho đến khi gọi `POST /api/v1/auth/change-password`; sau khi đổi, mọi phiên bị hủy và cần đăng nhập lại bằng mật khẩu mới. Tài khoản ADMIN được tạo bằng bootstrap không gặp giới hạn này.
@@ -192,9 +193,9 @@ Cách này chạy MySQL và backend bằng Docker. Không chạy thêm backend J
 
 | Vai trò | Quyền chính hiện có |
 | --- | --- |
-| `ADMIN` | Quản lý tài khoản, hộ gia đình và nhân khẩu |
-| `ACCOUNTANT` | Đăng nhập; các chức năng phí đang phát triển |
-| `RESIDENT` | Đăng nhập và xem nhân khẩu của hộ được gắn với tài khoản |
+| `ADMIN` | Quản lý tài khoản, hộ gia đình và nhân khẩu; duyệt hoặc từ chối đơn tạm vắng, ghi nhận "đã quay lại" |
+| `ACCOUNTANT` | Đăng nhập; các chức năng phí đang phát triển (các route khai báo tạm vắng trả `403`) |
+| `RESIDENT` | Đăng nhập, xem nhân khẩu của hộ được gắn với tài khoản, khai báo và hủy đơn tạm vắng của hộ mình |
 
 Hệ thống áp dụng nguyên tắc **mặc định từ chối truy cập**: API chưa khai báo quyền sẽ không tự động được mở. Quyền truy cập hộ được kiểm tra ở backend, không chỉ ở giao diện.
 
@@ -212,6 +213,8 @@ Tiền tố chung: `/api/v1`.
 | Nhân khẩu | `POST /households/{id}/residents`, `GET /households/{id}/residents`, `GET /residents/{id}`, `PATCH /residents/{id}` | Tạo, xem, cập nhật nhân khẩu |
 | Biến động | `POST /residents/{id}/move-out`, `GET /households/{id}/residency-changes` | Chuyển đi và xem lịch sử |
 | Cư dân | `GET /households/me/residents` | Xem thành viên của hộ mình |
+| Khai báo tạm vắng (cư dân) | `POST /residency-declarations`, `GET /residency-declarations/mine`, `POST /residency-declarations/{id}/cancel` | Gửi đơn cho nhân khẩu trong hộ mình, xem đơn của hộ, hủy đơn đang chờ do chính mình gửi |
+| Duyệt tạm vắng (ADMIN) | `GET /residency-declarations`, `POST /residency-declarations/{id}/approve`, `POST /residency-declarations/{id}/reject`, `POST /residents/{id}/return`, `GET /residents/suggest?q=` | Hàng chờ (lọc `status`, `apartment`, `q`), duyệt, từ chối kèm lý do, ghi nhận đã quay lại, gợi ý tên (tối thiểu 2 ký tự, tối đa 10 kết quả) |
 
 Các request thay đổi dữ liệu cần CSRF token trong header `X-CSRF-TOKEN`. Session lưu trong MySQL, cookie `SESSION` sử dụng `HttpOnly` và `SameSite=Lax`; thời hạn phiên là 30 phút.
 
@@ -229,6 +232,7 @@ Luồng xác thực thông thường:
 - **Khóa tài khoản:** lần đầu khóa sau 5 lần nhập sai liên tiếp; các lần khóa sau tăng theo bậc. ADMIN hiện không bị khóa tự động. Đây là giới hạn bảo mật cần lưu ý.
 - **Vô hiệu tài khoản:** hủy các session đang tồn tại; request kế tiếp của tài khoản đó bị từ chối. Không thể tự vô hiệu chính mình hoặc vô hiệu ADMIN đang hoạt động cuối cùng.
 - **Nhân khẩu:** trạng thái cư trú gồm `RESIDING`, `TEMPORARILY_ABSENT`, `MOVED_OUT`. Chuyển đi chỉ cập nhật trạng thái và ghi lịch sử, không xóa dữ liệu.
+- **Khai báo tạm vắng (S06, quyết định D24):** ngày bắt đầu không ở quá khứ (giờ Việt Nam); `endDate` tùy chọn và chỉ để hiển thị; lý do bắt buộc, tối đa 255 ký tự. Mỗi nhân khẩu có tối đa một đơn `PENDING`; không khai khi nhân khẩu đang tạm vắng hoặc đã chuyển đi. ADMIN duyệt thì nhân khẩu sang `TEMPORARILY_ABSENT` ngay; từ chối bắt buộc có lý do và cư dân thấy lý do. Chỉ tài khoản đã gửi đơn mới hủy được (`CANCELLED`); duyệt, từ chối hoặc hủy đơn không còn chờ trả `409`. Kết thúc tạm vắng bằng `POST /residents/{id}/return` (ghi một dòng lịch sử `RETURN`). Ghi nhận chuyển đi tự hủy các đơn đang chờ của nhân khẩu đó.
 - **Quyền riêng tư:** cư dân không được xem số giấy tờ và số điện thoại của các thành viên; audit log không ghi mật khẩu, số giấy tờ hoặc thông tin cá nhân nhạy cảm.
 
 ## 6. Cơ sở dữ liệu
@@ -243,6 +247,7 @@ Flyway quản lý cấu trúc cơ sở dữ liệu. Hibernate chỉ kiểm tra s
 | V4 | Email tài khoản và liên kết hộ |
 | V5 | Các trường phục vụ cơ chế khóa tài khoản |
 | V6 | Cờ đổi mật khẩu lần đầu và email mô phỏng |
+| V7 | Quyết định khai báo tạm vắng: `approved_by`, `decided_at`, `decision_note`, `end_date`, trạng thái `CANCELLED` (CHECK `ck_rc_status_v2`) và index hàng chờ |
 
 Không sửa migration đã merge hoặc đã áp dụng trên DB của người khác. Khi cần thay đổi schema, tạo một migration mới.
 
