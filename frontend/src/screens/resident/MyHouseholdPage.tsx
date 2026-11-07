@@ -8,7 +8,7 @@ import { ResidencyBadge } from '../../components/ResidencyBadge';
 
 /** M-30 — Hộ gia đình của tôi (chỉ xem; CCCD che 4 số cuối, không hiện SĐT — Q3). */
 export function MyHouseholdPage(): React.ReactElement {
-  const { user, households, residents, forcedUiState, setForcedUiState } = useAppState();
+  const { user, households, residents, mode, forcedUiState, setForcedUiState } = useAppState();
   const household = households.find((h) => h.id === user?.householdId);
   const members =
     forcedUiState === 'empty'
@@ -24,7 +24,7 @@ export function MyHouseholdPage(): React.ReactElement {
           ? `Căn ${household.apartmentCode} · ${formatAreaM2(household.areaM2)} · Mã hộ ${household.householdCode}`
           : undefined
       }
-      contract="db-ready"
+      contract={mode === 'api' ? 'api-live' : 'db-ready'}
       tierLabel="Mức A"
     />
   );

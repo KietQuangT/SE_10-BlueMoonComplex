@@ -58,7 +58,7 @@ export interface Household {
   areaM2: string;
   address: string;
   status: 'ACTIVE' | 'INACTIVE';
-  currentResidents: number;
+  currentResidents: number | null;
 }
 
 export interface ResidentMember {
