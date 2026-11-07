@@ -107,4 +107,24 @@ class DeclarationIntegrationIT extends AccountIntegrationBase {
   } finally {reset(target);}
  }
 
+ @Test void moveOutCancelsOnlyPendingAbsencesAndAuditsWithoutReason() throws Exception {
+  long approved=createId(r1);
+  mvc.perform(post("/api/v1/residency-declarations/"+approved+"/approve").cookie(cookie).header("X-CSRF-TOKEN",csrf)).andExpect(status().isOk());
+  mvc.perform(post("/api/v1/residents/"+r1+"/return").cookie(cookie).header("X-CSRF-TOKEN",csrf)).andExpect(status().isOk());
+  long rejected=createId(r1);
+  mvc.perform(post("/api/v1/residency-declarations/"+rejected+"/reject").cookie(cookie).header("X-CSRF-TOKEN",csrf).contentType("application/json").content("{\"decisionNote\":\"no\"}")).andExpect(status().isOk());
+  long pending=createId(r1);
+  mvc.perform(post("/api/v1/residents/"+r1+"/move-out").cookie(cookie).header("X-CSRF-TOKEN",csrf).contentType("application/json").content("{\"effectiveDate\":\""+LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"))+"\"}")).andExpect(status().isOk()).andExpect(jsonPath("$.residencyStatus").value("MOVED_OUT"));
+  assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM residency_changes WHERE id=? AND status='CANCELLED' AND decided_at IS NOT NULL AND approved_by IS NULL AND decision_note IS NULL",Integer.class,pending)).isEqualTo(1);
+  assertThat(jdbc.queryForObject("SELECT status FROM residency_changes WHERE id=?",String.class,approved)).isEqualTo("APPROVED");
+  assertThat(jdbc.queryForObject("SELECT status FROM residency_changes WHERE id=?",String.class,rejected)).isEqualTo("REJECTED");
+  mvc.perform(post("/api/v1/residency-declarations/"+pending+"/approve").cookie(cookie).header("X-CSRF-TOKEN",csrf)).andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("DECLARATION_NOT_PENDING"));
+  var logs=jdbc.queryForList("SELECT changes FROM audit_log WHERE actor_user_id=? AND action IN ('ABSENCE_CANCELLED','RESIDENT_MOVED_OUT') AND JSON_UNQUOTE(JSON_EXTRACT(changes,'$.id')) IN (?,?)",String.class,adminId,Long.toString(pending),Long.toString(r1));
+  assertThat(logs).hasSize(2); assertThat(logs.toString()).contains("MOVE_OUT", "cause").doesNotContain("private reason", "Test Resident");
+ }
+ @Test void moveOutFromTemporaryAbsenceSucceeds() throws Exception {
+  long id=createId(r1); mvc.perform(post("/api/v1/residency-declarations/"+id+"/approve").cookie(cookie).header("X-CSRF-TOKEN",csrf)).andExpect(status().isOk());
+  mvc.perform(post("/api/v1/residents/"+r1+"/move-out").cookie(cookie).header("X-CSRF-TOKEN",csrf).contentType("application/json").content("{\"effectiveDate\":\""+LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"))+"\"}")).andExpect(status().isOk()).andExpect(jsonPath("$.residencyStatus").value("MOVED_OUT"));
+  assertThat(jdbc.queryForObject("SELECT status FROM residency_changes WHERE id=?",String.class,id)).isEqualTo("APPROVED");
+ }
 }
