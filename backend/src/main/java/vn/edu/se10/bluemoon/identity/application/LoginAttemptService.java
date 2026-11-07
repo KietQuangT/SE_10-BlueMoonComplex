@@ -52,26 +52,29 @@ public class LoginAttemptService {
             // Failure is returned as data so lock counters and audit commit with this transaction.
         }
         if (authentication == null || !authentication.isAuthenticated()) {
-            boolean admin = "ADMIN".equals(user.getRole().getCode());
-            if (!admin) {
-                user.failedAttempt();
-                if (user.getFailedLoginCount() >= LoginLockPolicy.failureThreshold(user.getLockLevel())) {
-                    int nextLevel = user.getLockLevel() == Integer.MAX_VALUE ? Integer.MAX_VALUE : user.getLockLevel() + 1;
-                    var until = LoginLockPolicy.lockedUntil(now, nextLevel);
-                    user.lock(until);
-                    audit.record(user.getId(), "LOGIN_FAILED", "User", user.getId().toString(), null);
-                    audit.record(user.getId(), "ACCOUNT_LOCKED", "User", user.getId().toString(),
-                            Map.of("level", Integer.toString(nextLevel), "minutes", Long.toString(LoginLockPolicy.lockDuration(nextLevel).toMinutes())));
-                    return new Result(null, false);
-                }
-            }
-            audit.record(user.getId(), "LOGIN_FAILED", "User", user.getId().toString(), null);
+            recordFailure(user, now);
             return new Result(null, false);
         }
 
         user.resetLoginFailures();
         audit.record(user.getId(), "LOGIN_SUCCESS", "User", user.getId().toString(), null);
         return new Result(new AuthenticatedUser(user.getId(), user.getUsername(), user.getFullName(), user.getRole().getCode(), user.getHouseholdId(), user.isMustChangePassword()), true);
+    }
+
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void recordFailure(User user, Instant now) {
+        if (!"ADMIN".equals(user.getRole().getCode())) {
+            user.failedAttempt();
+            if (user.getFailedLoginCount() >= LoginLockPolicy.failureThreshold(user.getLockLevel())) {
+                int level = user.getLockLevel() == Integer.MAX_VALUE ? Integer.MAX_VALUE : user.getLockLevel() + 1;
+                user.lock(LoginLockPolicy.lockedUntil(now, level));
+                audit.record(user.getId(), "LOGIN_FAILED", "User", user.getId().toString(), null);
+                audit.record(user.getId(), "ACCOUNT_LOCKED", "User", user.getId().toString(),
+                        Map.of("level", Integer.toString(level), "minutes", Long.toString(LoginLockPolicy.lockDuration(level).toMinutes())));
+                return;
+            }
+        }
+        audit.record(user.getId(), "LOGIN_FAILED", "User", user.getId().toString(), null);
     }
 
     private void dummyAuthenticate(String username, String password) {
