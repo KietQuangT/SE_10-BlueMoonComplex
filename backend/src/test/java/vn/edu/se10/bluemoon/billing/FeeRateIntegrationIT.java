@@ -1,5 +1,6 @@
 package vn.edu.se10.bluemoon.billing;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -65,8 +66,12 @@ class FeeRateIntegrationIT {
         assertEquals(2, jdbc.queryForObject("SELECT COUNT(*) FROM fee_types", Integer.class));
         service.create(new CreateFeeRateRequest(management, new BigDecimal("10000"), month), actor);
         assertThrows(DataIntegrityViolationException.class, () -> jdbc.update("INSERT INTO fee_rates (fee_type_id, unit_price, effective_from, created_by, created_at) VALUES (?, 1, ?, ?, NOW(6))", management, month, actor));
-        assertThrows(DataIntegrityViolationException.class, () -> jdbc.update("INSERT INTO fee_rates (fee_type_id, unit_price, effective_from, created_by, created_at) VALUES (?, 0, ?, ?, NOW(6))", waste, month, actor));
-        assertThrows(DataIntegrityViolationException.class, () -> jdbc.update("INSERT INTO fee_rates (fee_type_id, unit_price, effective_from, created_by, created_at) VALUES (?, 1, ?, ?, NOW(6))", waste, month.plusDays(1), actor));
+        assertThatThrownBy(() -> jdbc.update("INSERT INTO fee_rates (fee_type_id, unit_price, effective_from, created_by, created_at) VALUES (?, 0, ?, ?, NOW(6))", waste, month, actor))
+                .isInstanceOf(org.springframework.dao.DataAccessException.class)
+                .hasStackTraceContaining("ck_fee_rates_price");
+        assertThatThrownBy(() -> jdbc.update("INSERT INTO fee_rates (fee_type_id, unit_price, effective_from, created_by, created_at) VALUES (?, 1, ?, ?, NOW(6))", waste, month.plusDays(1), actor))
+                .isInstanceOf(org.springframework.dao.DataAccessException.class)
+                .hasStackTraceContaining("ck_fee_rates_first_day");
     }
 
     @Test
