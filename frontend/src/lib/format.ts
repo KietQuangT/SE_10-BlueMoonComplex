@@ -117,7 +117,7 @@ export function defaultHomeByRole(role: string): string {
 export function formatVndDecimal(value: string | number): string {
   const [integer, fraction] = String(value).trim().replace(',', '.').split('.');
   const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  return `${grouped}${fraction && !/^0+$/.test(fraction) ? `,${fraction}` : ''} đ`;
+  return `${grouped}${fraction && !/^0+$/.test(fraction) ? `,${fraction.padEnd(2, '0')}` : ''} đ`;
 }
 
 export function formatMonthYear(value: string): string {

@@ -65,7 +65,11 @@ export function FeeRatesPage() {
       setError('Đơn giá phải lớn hơn 0, tối đa 2 chữ số sau dấu phẩy.');
       return;
     }
-    if (!draft.editing && (!draft.feeTypeId || !/^\d{4}-(0[1-9]|1[0-2])$/.test(draft.month) || draft.month < nextMonth())) {
+    if (!draft.editing && !draft.feeTypeId) {
+      setError('Chọn loại phí.');
+      return;
+    }
+    if (!draft.editing && (!/^\d{4}-(0[1-9]|1[0-2])$/.test(draft.month) || draft.month < nextMonth())) {
       setError('Tháng hiệu lực không hợp lệ. Chọn tháng sau tháng hiện tại.');
       return;
     }
