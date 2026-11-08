@@ -119,4 +119,11 @@ class BillingPeriodApiTest {
         }
     }
 
+    @Test
+    void inactiveAccountIsRejectedBeforeNewApi() throws Exception {
+        org.mockito.Mockito.doReturn(null).when(currentAccount).refresh(anyLong());
+        mvc.perform(get("/api/v1/billing-periods").with(authentication(principal("ACCOUNTANT", false))))
+                .andExpect(status().isUnauthorized());
+    }
+
 }

@@ -132,4 +132,11 @@ class VoluntaryApiTest {
         }
     }
 
+    @Test
+    void inactiveAccountIsRejectedBeforeNewApi() throws Exception {
+        org.mockito.Mockito.doReturn(null).when(currentAccount).refresh(anyLong());
+        mvc.perform(get("/api/v1/voluntary-campaigns/1").with(authentication(principal("RESIDENT", false))))
+                .andExpect(status().isUnauthorized());
+    }
+
 }

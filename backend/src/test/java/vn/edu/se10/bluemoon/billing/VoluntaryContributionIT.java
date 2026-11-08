@@ -44,6 +44,7 @@ class VoluntaryContributionIT {
     long campaign;
     long household;
     long resident;
+    long billingPeriod;
 
     @TestConfiguration
     static class FixedClock {
@@ -63,11 +64,14 @@ class VoluntaryContributionIT {
         resident = jdbc.queryForObject("SELECT id FROM residents WHERE household_id=?", Long.class, household);
         jdbc.update("INSERT INTO voluntary_campaigns (name, opens_on, closes_on, status, version, created_by, created_at, published_by, published_at) VALUES ('Test', '9000-03-01', '9000-03-20', 'PUBLISHED', 0, ?, NOW(6), ?, '9000-03-05 00:00:00')", actor, actor);
         campaign = jdbc.queryForObject("SELECT id FROM voluntary_campaigns WHERE created_by=?", Long.class, actor);
+        jdbc.update("INSERT INTO billing_periods (period, due_date, status, version, revision, receipt_count, created_by, created_at) VALUES ('9000-03', '9000-03-31', 'ISSUED', 0, 1, 0, ?, NOW(6))", actor);
+        billingPeriod = jdbc.queryForObject("SELECT id FROM billing_periods WHERE created_by=?", Long.class, actor);
     }
 
     @AfterEach
     void cleanup() {
         jdbc.update("DELETE FROM audit_log WHERE actor_user_id=?", actor);
+        jdbc.update("DELETE FROM billing_periods WHERE id=?", billingPeriod);
         jdbc.update("DELETE FROM voluntary_contributions WHERE campaign_id=?", campaign);
         jdbc.update("DELETE FROM voluntary_campaigns WHERE id=?", campaign);
         jdbc.update("DELETE FROM residents WHERE id=?", resident);
@@ -85,6 +89,11 @@ class VoluntaryContributionIT {
         assertEquals("VOIDED", voided.getStatus());
         assertEquals("VOIDED", service.record(input, actor).contribution().getStatus());
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM voluntary_contributions WHERE campaign_id=? AND status='POSTED'", Integer.class, campaign));
+        var replacement = service.record(input(UUID.randomUUID().toString(), "100", LocalDate.of(9000, 3, 19), "late"), actor).contribution();
+        assertNotEquals(created.getId(), replacement.getId());
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM voluntary_contributions WHERE campaign_id=? AND status='POSTED'", Integer.class, campaign));
+        assertEquals(0L, jdbc.queryForObject("SELECT receipt_count FROM billing_periods WHERE id=?", Long.class, billingPeriod));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM invoices WHERE period_id=?", Integer.class, billingPeriod));
         assertEquals("REASON_REQUIRED", assertThrows(BadRequestException.class,
                 () -> service.record(input(UUID.randomUUID().toString(), "1", LocalDate.of(9000, 3, 19), null), actor)).code());
         assertEquals("INVALID_PAID_DATE", assertThrows(ConflictException.class,
