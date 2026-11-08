@@ -128,10 +128,11 @@ export function App(): React.ReactElement {
             <Route path="/admin/reports/packages" element={<ReportPackagesPage />} />
           </Route>
 
+          <Route element={<RequireRole roles={['ACCOUNTANT', 'ADMIN']} />}><Route path="/accountant/fee-rates" element={<FeeRatesPage />} /></Route>
+
           {/* ACCOUNTANT Routes */}
           <Route element={<RequireRole roles={['ACCOUNTANT']} />}>
             <Route path="/accountant/collections" element={<CollectionsPage />} />
-            <Route path="/accountant/fee-rates" element={<FeeRatesPage />} />
             <Route path="/accountant/collection-rate" element={<CollectionRatePage />} />
           </Route>
 

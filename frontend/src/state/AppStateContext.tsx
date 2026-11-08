@@ -30,7 +30,6 @@ import {
   DEMO_SESSIONS,
   INITIAL_ACCOUNTS,
   INITIAL_COLLECTION_RATE,
-  INITIAL_FEE_RATES,
   INITIAL_HOUSEHOLDS,
   INITIAL_INVOICES,
   INITIAL_PAYMENTS,
@@ -44,7 +43,6 @@ import type {
   AccountRecord,
   CollectionRateSummary,
   CreateAccountPayload,
-  FeeTypeRate,
   ForcedUiState,
   Household,
   InvoiceRecord,
@@ -95,7 +93,6 @@ interface AppStateValue {
   residents: ResidentMember[];
   accounts: AccountRecord[];
   residencyChanges: ResidencyChangeRecord[];
-  feeRates: FeeTypeRate[];
   invoices: InvoiceRecord[];
   payments: PaymentTransaction[];
   voluntaryCampaigns: VoluntaryCampaign[];
@@ -154,7 +151,6 @@ interface AppStateValue {
     rejectReason?: string,
   ) => Promise<void>;
   collectInvoiceCashDemo: (invoiceId: number, note?: string) => PaymentTransaction | null;
-  addFeeRateDemo: (input: Omit<FeeTypeRate, 'id'>) => { ok: boolean; error?: string };
   publishVoluntaryCampaignDemo: (name: string, description: string, opensOn: string, closesOn: string) => void;
   approveReportPackageDemo: (period: string, allowedFields: string[]) => void;
 }
@@ -191,7 +187,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [accounts, setAccounts] = useState<AccountRecord[]>(INITIAL_ACCOUNTS);
   const [residencyChanges, setResidencyChanges] =
     useState<ResidencyChangeRecord[]>([]);
-  const [feeRates, setFeeRates] = useState<FeeTypeRate[]>(INITIAL_FEE_RATES);
   const [invoices, setInvoices] = useState<InvoiceRecord[]>(INITIAL_INVOICES);
   const [payments, setPayments] = useState<PaymentTransaction[]>(INITIAL_PAYMENTS);
   const [voluntaryCampaigns, setVoluntaryCampaigns] =
@@ -751,23 +746,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     return tx;
   };
 
-  const addFeeRateDemo: AppStateValue['addFeeRateDemo'] = (input) => {
-    if (!/^[1-9]\d*$/.test(input.unitPrice.trim())) {
-      return { ok: false, error: 'Đơn giá phải là số nguyên dương (VND).' };
-    }
-    const duplicate = feeRates.some(
-      (f) => f.code === input.code && f.effectiveFrom === input.effectiveFrom,
-    );
-    if (duplicate) {
-      return {
-        ok: false,
-        error: 'Đã tồn tại mức đơn giá cùng ngày hiệu lực cho loại phí này.',
-      };
-    }
-    setFeeRates((prev) => [{ ...input, id: prev.length + 10 }, ...prev]);
-    return { ok: true };
-  };
-
   const publishVoluntaryCampaignDemo = (
     name: string,
     description: string,
@@ -831,7 +809,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       residents,
       accounts,
       residencyChanges,
-      feeRates,
       invoices,
       payments,
       voluntaryCampaigns,
@@ -856,7 +833,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       submitAbsenceDemo,
       decideAbsenceDemo,
       collectInvoiceCashDemo,
-      addFeeRateDemo,
       publishVoluntaryCampaignDemo,
       approveReportPackageDemo,
     }),
@@ -874,7 +850,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       residents,
       accounts,
       residencyChanges,
-      feeRates,
       invoices,
       payments,
       voluntaryCampaigns,

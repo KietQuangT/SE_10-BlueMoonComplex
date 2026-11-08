@@ -113,3 +113,14 @@ export function defaultHomeByRole(role: string): string {
       return '/login';
   }
 }
+
+export function formatVndDecimal(value: string | number): string {
+  const [integer, fraction] = String(value).trim().replace(',', '.').split('.');
+  const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${grouped}${fraction && !/^0+$/.test(fraction) ? `,${fraction.padEnd(2, '0')}` : ''} đ`;
+}
+
+export function formatMonthYear(value: string): string {
+  const match = /^(\d{4})-(\d{2})-\d{2}$/.exec(value);
+  return match ? `${match[2]}/${match[1]}` : value;
+}

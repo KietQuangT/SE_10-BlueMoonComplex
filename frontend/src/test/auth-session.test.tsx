@@ -48,21 +48,6 @@ describe('AppStateContext session & draft resilience', () => {
     expect(result.current.absenceDraft.effectiveDate).toBe('2026-11-20');
   });
 
-  it('rejects duplicate fee rate additions on the same effective date', () => {
-    const { result } = renderHook(() => useAppState(), { wrapper });
-
-    const duplicateAttempt = result.current.addFeeRateDemo({
-      code: 'QUAN_LY',
-      name: 'Phí quản lý',
-      unit: 'm2',
-      unitPrice: '12000',
-      effectiveFrom: '2026-01-01', // Already exists in INITIAL_FEE_RATES
-    });
-
-    expect(duplicateAttempt.ok).toBe(false);
-    expect(duplicateAttempt.error).toContain('Đã tồn tại mức đơn giá');
-  });
-
   it('safely collects cash payment and marks invoice as DA_DONG with receipt', () => {
     const { result } = renderHook(() => useAppState(), { wrapper });
 
