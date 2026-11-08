@@ -90,6 +90,10 @@ public class BillingPeriod {
         cancelReason = reason;
     }
 
+    public void incrementReceiptCount() {
+        receiptCount = Math.addExact(receiptCount, 1);
+    }
+
     public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
 
     public Long getId() { return id; }
