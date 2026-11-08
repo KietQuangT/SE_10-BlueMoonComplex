@@ -22,7 +22,6 @@ import vn.edu.se10.bluemoon.billing.persistence.BillingSnapshotStore;
 import vn.edu.se10.bluemoon.residency.application.HouseholdLookup;
 import org.junit.jupiter.api.Test;
 import vn.edu.se10.bluemoon.billing.application.BillingPeriodService;
-import vn.edu.se10.bluemoon.billing.application.BillingInputs;
 import vn.edu.se10.bluemoon.billing.persistence.CalculationMethod;
 import vn.edu.se10.bluemoon.billing.persistence.BillingPeriodRepository;
 import vn.edu.se10.bluemoon.common.audit.AuditService;
@@ -79,8 +78,9 @@ class BillingPeriodServiceTest {
         when(households.lockActiveForBilling()).thenReturn(List.of(new HouseholdLookup.BillingHousehold(2, "H2", "A2", new BigDecimal("50"))));
         when(snapshots.lockRates(any())).thenReturn(List.of(new BillingSnapshotStore.Rate(1, "MANAGEMENT_FEE", "fee", CalculationMethod.AREA, 1, BigDecimal.TEN)));
         when(snapshots.submissionId(5, 1)).thenReturn(7L);
-        when(snapshots.inputs(7)).thenReturn(new BillingInputs(List.of(new BillingInputs.Household(1, new BigDecimal("50"))),
-                List.of(new BillingInputs.Rate("MANAGEMENT_FEE", 1, BigDecimal.TEN, CalculationMethod.AREA))));
+        when(snapshots.inputs(7)).thenReturn(new BillingSnapshotStore.SnapshotInputs(
+                List.of(new BillingSnapshotStore.HouseholdInput(1, new BigDecimal("50"))),
+                List.of(new BillingSnapshotStore.RateInput("MANAGEMENT_FEE", 1, BigDecimal.TEN, CalculationMethod.AREA))));
         assertEquals("BILLING_INPUT_CHANGED", assertThrows(ConflictException.class,
                 () -> service.issue(5, 0, 1, 1)).code());
         verify(snapshots, never()).issue(anyLong(), anyLong(), any(), any());
