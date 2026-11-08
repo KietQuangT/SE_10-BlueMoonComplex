@@ -2,6 +2,8 @@ package vn.edu.se10.bluemoon.billing;
 
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -10,6 +12,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
+import java.time.Instant;
+import org.springframework.test.util.ReflectionTestUtils;
+import vn.edu.se10.bluemoon.billing.application.ContributionInput;
+import vn.edu.se10.bluemoon.billing.persistence.VoluntaryContribution;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,4 +79,33 @@ class VoluntaryApiTest {
         mvc.perform(get("/api/v1/voluntary-campaigns/7").with(authentication(principal("RESIDENT", true))))
                 .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("PASSWORD_CHANGE_REQUIRED"));
     }
+    @Test
+    void invalidPageHasStableFilterCode() throws Exception {
+        mvc.perform(get("/api/v1/voluntary-campaigns?page=abc").with(authentication(principal("RESIDENT", false))))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_FILTER"));
+    }
+
+    @Test
+    void contributionAmountStaysExactAndRetryReturns200() throws Exception {
+        String key = "6fbca292-b3b5-44de-bbb8-291b9ee1c213";
+        String amount = "9007199254740993";
+        var input = ContributionInput.parse(7, 4, amount, LocalDate.of(2026, 11, 1), null, key);
+        var contribution = new VoluntaryContribution(7, 4, 5, "Test", "H1", "A1", input.amount(), input.paidOn(),
+                null, key, input.fingerprint(), 1, Instant.EPOCH);
+        ReflectionTestUtils.setField(contribution, "id", 9L);
+        when(contributions.record(any(), eq(1L))).thenReturn(new VoluntaryContributionService.Result(contribution, false),
+                new VoluntaryContributionService.Result(contribution, true));
+        var auth = authentication(principal("ACCOUNTANT", false));
+        String body = "{\"residentId\":4,\"amount\":\"" + amount + "\",\"paidOn\":\"2026-11-01\"}";
+        mvc.perform(post("/api/v1/voluntary-campaigns/7/contributions").with(auth).with(csrf()).header("Idempotency-Key", key)
+                .contentType("application/json").content(body)).andExpect(status().isCreated()).andExpect(jsonPath("$.amount").value(amount));
+        mvc.perform(post("/api/v1/voluntary-campaigns/7/contributions").with(auth).with(csrf()).header("Idempotency-Key", key)
+                .contentType("application/json").content(body)).andExpect(status().isOk());
+        mvc.perform(post("/api/v1/voluntary-campaigns/7/contributions").with(auth).with(csrf()).header("Idempotency-Key", key)
+                .contentType("application/json").content("{\"residentId\":4,\"amount\":100,\"paidOn\":\"2026-11-01\"}"))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_AMOUNT"));
+        mvc.perform(post("/api/v1/voluntary-campaigns/7/contributions").with(authentication(principal("ADMIN", false))).with(csrf())
+                .header("Idempotency-Key", key).contentType("application/json").content(body)).andExpect(status().isForbidden());
+    }
+
 }

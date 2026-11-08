@@ -147,4 +147,25 @@ class BillingPeriodServiceTest {
         assertEquals(new BigDecimal("30000"), lines.getValue().get(1).amount());
     }
 
+    @Test
+    void noActiveHouseholdsPreventsSubmission() {
+        var period = new BillingPeriod("2026-11", LocalDate.of(2026, 11, 30), null, 1, clock.instant());
+        ReflectionTestUtils.setField(period, "id", 5L);
+        when(periods.lockById(5)).thenReturn(Optional.of(period));
+        when(households.lockActiveForBilling()).thenReturn(List.of());
+        assertEquals("NO_ACTIVE_HOUSEHOLDS", assertThrows(ConflictException.class, () -> service.submit(5, 0, 1)).code());
+        verify(snapshots, never()).save(anyLong(), anyLong(), anyLong(), any(), anyList(), anyLong(), any());
+    }
+
+    @Test
+    void staleRevisionCannotIssueEvenWhenVersionMatches() {
+        var period = new BillingPeriod("2026-11", LocalDate.of(2026, 11, 30), null, 1, clock.instant());
+        ReflectionTestUtils.setField(period, "id", 5L);
+        ReflectionTestUtils.setField(period, "status", "PENDING_APPROVAL");
+        ReflectionTestUtils.setField(period, "revision", 2L);
+        when(periods.lockById(5)).thenReturn(Optional.of(period));
+        assertEquals("STALE_VERSION", assertThrows(ConflictException.class, () -> service.issue(5, 0, 1, 1)).code());
+        verify(snapshots, never()).issue(anyLong(), anyLong(), any(), any());
+    }
+
 }

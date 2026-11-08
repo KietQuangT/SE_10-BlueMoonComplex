@@ -3,6 +3,11 @@ package vn.edu.se10.bluemoon.billing;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -22,6 +27,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import vn.edu.se10.bluemoon.common.audit.AuditService;
 import vn.edu.se10.bluemoon.billing.application.ContributionInput;
 import vn.edu.se10.bluemoon.billing.application.VoluntaryContributionService;
 import vn.edu.se10.bluemoon.common.error.BadRequestException;
@@ -32,6 +39,7 @@ import vn.edu.se10.bluemoon.common.error.ConflictException;
 class VoluntaryContributionIT {
     @Autowired JdbcTemplate jdbc;
     @Autowired VoluntaryContributionService service;
+    @MockitoSpyBean AuditService audit;
     long actor;
     long campaign;
     long household;
@@ -81,6 +89,15 @@ class VoluntaryContributionIT {
                 () -> service.record(input(UUID.randomUUID().toString(), "1", LocalDate.of(9000, 3, 19), null), actor)).code());
         assertEquals("INVALID_PAID_DATE", assertThrows(ConflictException.class,
                 () -> service.record(input(UUID.randomUUID().toString(), "1", LocalDate.of(9000, 3, 21), "late"), actor)).code());
+    }
+
+    @Test
+    void auditFailureRollsBackContribution() {
+        doThrow(new IllegalStateException("test audit failure")).when(audit)
+                .record(anyLong(), eq("VOLUNTARY_CONTRIBUTION_RECORDED"), anyString(), anyString(), anyMap());
+        var input = input(UUID.randomUUID().toString(), "100", LocalDate.of(9000, 3, 19), "late");
+        assertThrows(IllegalStateException.class, () -> service.record(input, actor));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM voluntary_contributions WHERE campaign_id=?", Integer.class, campaign));
     }
 
     @Test

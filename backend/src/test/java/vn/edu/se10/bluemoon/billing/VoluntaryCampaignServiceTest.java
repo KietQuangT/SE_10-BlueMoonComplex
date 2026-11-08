@@ -19,6 +19,7 @@ import vn.edu.se10.bluemoon.billing.persistence.VoluntaryContributionRepository;
 import vn.edu.se10.bluemoon.common.audit.AuditService;
 import vn.edu.se10.bluemoon.common.error.BadRequestException;
 import vn.edu.se10.bluemoon.common.error.ConflictException;
+import vn.edu.se10.bluemoon.common.error.NotFoundException;
 
 class VoluntaryCampaignServiceTest {
     private final VoluntaryCampaignRepository campaigns = mock(VoluntaryCampaignRepository.class);
@@ -38,4 +39,17 @@ class VoluntaryCampaignServiceTest {
         when(campaigns.lockById(2)).thenReturn(Optional.of(campaign));
         assertEquals("INVALID_STATE", assertThrows(ConflictException.class, () -> service.publish(2, 0, 1)).code());
     }
+    @Test
+    void residentCannotReadDraftButCanReadAutomaticallyClosedPublishedCampaign() {
+        var draft = new VoluntaryCampaign("Draft", null, LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 30), 1, clock.instant());
+        ReflectionTestUtils.setField(draft, "id", 2L);
+        when(campaigns.findById(2L)).thenReturn(Optional.of(draft));
+        assertEquals("CAMPAIGN_NOT_FOUND", assertThrows(NotFoundException.class, () -> service.residentDetail(2)).code());
+        var published = new VoluntaryCampaign("Old", null, LocalDate.of(2026, 11, 1), LocalDate.of(2026, 11, 7), 1, clock.instant());
+        ReflectionTestUtils.setField(published, "id", 3L);
+        published.publish(1, Instant.parse("2026-11-01T00:00:00Z"));
+        when(campaigns.findById(3L)).thenReturn(Optional.of(published));
+        assertEquals("CLOSED", service.residentDetail(3).status());
+    }
+
 }

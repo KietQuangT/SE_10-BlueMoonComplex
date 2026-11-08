@@ -52,6 +52,7 @@ class BillingPeriodServiceIT {
     void issueUsesApprovedSnapshotEvenWhenSourcesChangeAfterIssue() {
         long actor = actor();
         long household = household();
+        jdbc.update("INSERT INTO residents (household_id, full_name, residency_status, created_at, updated_at) VALUES (?, 'Absent test', 'TEMPORARILY_ABSENT', NOW(6), NOW(6))", household);
         seedRates(actor);
         var period = service.create("9000-03", LocalDate.of(9000, 3, 31), actor);
         service.submit(period.getId(), period.getVersion(), actor);
