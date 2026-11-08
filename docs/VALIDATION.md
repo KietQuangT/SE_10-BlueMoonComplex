@@ -138,3 +138,8 @@ Chưa tick foundation DoD khi các điều kiện này chưa có bằng chứng.
 ### Bản tích hợp S03 + S06, 07/11/2026
 - Bằng chứng do Sơn chạy ngày 07/11/2026 20:38 +07 ở thư mục gốc, nhánh `main` cục bộ tại `cef9b93` (`origin/main` d3d8de3 cộng S03, backend S06 và giao diện S06, chưa push): `cd backend && ./mvnw -B -ntp -Pintegration verify` (JDK 21, MySQL 8.4 cổng 3307): failsafe **94 test, 0 lỗi**, BUILD SUCCESS, 57,6 s (80 IT của S03 + 14 `DeclarationIntegrationIT`). Log Sơn dán chỉ gồm pha cuối; số test pha thông thường của bản tích hợp chưa có.
 - Chưa xác nhận: `npm test` và `npm run build` trên bản tích hợp (giao diện không đổi so với `fa78614`), CI trên remote, máy thứ hai.
+
+### S07: đơn giá phí và công thức, 08/11/2026
+- Unit trên `f5eef71` (JDK 21, `./mvnw -B -ntp verify`): 122 test, 0 lỗi (`feat-s07/.agent_out/verify.log`).
+- Integration trên `f5eef71` với MySQL 8.4 (compose project `bluemoon`, V8 đã áp): `./mvnw -B -ntp -Pintegration verify` 97 test, gồm 3 test `FeeRateIntegrationIT`, BUILD SUCCESS (Sơn chạy 08/11/2026 12:42 +07).
+- Chưa kiểm: test QA của agy trên `qa/s07-agy` chưa chạy trên cùng SHA; D25 chưa commit; PR và CI remote chưa có. Chi tiết: `docs/sprint-1/TASKS.md` mục S07.
