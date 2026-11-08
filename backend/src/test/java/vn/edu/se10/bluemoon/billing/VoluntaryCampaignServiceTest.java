@@ -52,4 +52,19 @@ class VoluntaryCampaignServiceTest {
         assertEquals("CLOSED", service.residentDetail(3).status());
     }
 
+    @Test
+    void publishedCampaignCanCloseButCannotBeReopenedOrEdited() {
+        var campaign = new VoluntaryCampaign("Test", null, LocalDate.of(2026, 11, 10), LocalDate.of(2026, 11, 30), 1, clock.instant());
+        ReflectionTestUtils.setField(campaign, "id", 4L);
+        when(campaigns.lockById(4)).thenReturn(Optional.of(campaign));
+        assertEquals("INVALID_STATE", assertThrows(ConflictException.class, () -> service.close(4, 0, 1)).code());
+        service.publish(4, 0, 1);
+        assertEquals("PUBLISHED", campaign.getStatus());
+        service.close(4, 0, 1);
+        assertEquals("CLOSED", campaign.getStatus());
+        assertEquals("INVALID_STATE", assertThrows(ConflictException.class, () -> service.publish(4, 0, 1)).code());
+        assertEquals("INVALID_STATE", assertThrows(ConflictException.class,
+                () -> service.update(4, 0, "Changed", null, LocalDate.of(2026, 11, 10), LocalDate.of(2026, 11, 30), 1)).code());
+    }
+
 }
