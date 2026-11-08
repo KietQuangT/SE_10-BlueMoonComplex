@@ -1,6 +1,10 @@
 import { ApiHttpError } from './client';
 
 const BY_CODE: Record<string, string> = {
+  PASSWORD_CHANGE_REQUIRED: 'Bạn cần đổi mật khẩu trước khi tiếp tục. Mở hồ sơ để đổi mật khẩu.',
+  BILLING_INPUT_CHANGED: 'Dữ liệu tính phí đã thay đổi. Kế toán cần rút và trình lại kỳ thu.',
+  STALE_VERSION: 'Dữ liệu đã thay đổi. Tải lại rồi kiểm tra trước khi thử lại.',
+  IDEMPOTENCY_CONFLICT: 'Thông tin ghi nhận không khớp lần thử trước. Kiểm tra sổ đóng góp trước khi thao tác tiếp.',
   FEE_RATE_FROZEN: 'Không sửa được đơn giá của tháng hiện tại hoặc tháng đã qua.',
   FEE_RATE_DUPLICATE_MONTH: 'Đã có đơn giá cho loại phí này trong tháng đó.',
   FEE_RATE_NOT_FOUND: 'Không tìm thấy đơn giá này. Tải lại danh sách.',
