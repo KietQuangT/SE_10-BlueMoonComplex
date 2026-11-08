@@ -97,4 +97,29 @@ class BillingPeriodServiceTest {
                 () -> service.cancel(5, 0, "reason", 1)).code());
     }
 
+    @Test
+    void withdrawnSubmissionKeepsRevisionAndBecomesDraft() {
+        var period = new BillingPeriod("2026-11", LocalDate.of(2026, 11, 30), null, 1, clock.instant());
+        ReflectionTestUtils.setField(period, "id", 5L);
+        ReflectionTestUtils.setField(period, "status", "PENDING_APPROVAL");
+        ReflectionTestUtils.setField(period, "revision", 2L);
+        when(periods.lockById(5)).thenReturn(Optional.of(period));
+        service.withdraw(5, 0, 1);
+        assertEquals("DRAFT", period.getStatus());
+        assertEquals(2, period.getRevision());
+    }
+
+    @Test
+    void returningSubmissionRequiresReasonAndStoresIt() {
+        var period = new BillingPeriod("2026-11", LocalDate.of(2026, 11, 30), null, 1, clock.instant());
+        ReflectionTestUtils.setField(period, "id", 5L);
+        ReflectionTestUtils.setField(period, "status", "PENDING_APPROVAL");
+        when(periods.lockById(5)).thenReturn(Optional.of(period));
+        assertEquals("REASON_REQUIRED", assertThrows(BadRequestException.class,
+                () -> service.returnToDraft(5, 0, "  ", 1)).code());
+        service.returnToDraft(5, 0, " update due date ", 1);
+        assertEquals("DRAFT", period.getStatus());
+        assertEquals("update due date", period.getReturnReason());
+    }
+
 }

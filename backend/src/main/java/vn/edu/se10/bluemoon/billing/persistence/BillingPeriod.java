@@ -44,6 +44,8 @@ public class BillingPeriod {
     @Column(name = "issued_at")
     private Instant issuedAt;
 
+    @Column(name = "return_reason", length = 255)
+    private String returnReason;
     @Column(name = "cancelled_by")
     private Long cancelledBy;
     @Column(name = "cancelled_at")
@@ -65,8 +67,14 @@ public class BillingPeriod {
     public void markSubmitted(long actor, Instant now) {
         status = "PENDING_APPROVAL";
         revision++;
+        returnReason = null;
         submittedBy = actor;
         submittedAt = now;
+    }
+
+    public void markDraft(String reason) {
+        status = "DRAFT";
+        returnReason = reason;
     }
 
     public void markIssued(long actor, Instant now) {
@@ -91,6 +99,7 @@ public class BillingPeriod {
     public long getVersion() { return version; }
     public long getRevision() { return revision; }
     public long getReceiptCount() { return receiptCount; }
+    public String getReturnReason() { return returnReason; }
     public Long getReplacesPeriodId() { return replacesPeriodId; }
     public Instant getCreatedAt() { return createdAt; }
 }
