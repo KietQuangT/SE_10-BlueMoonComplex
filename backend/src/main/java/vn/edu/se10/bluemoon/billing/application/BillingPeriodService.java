@@ -102,6 +102,27 @@ public class BillingPeriodService {
     }
 
     @Transactional
+    public BillingPeriod withdraw(long id, long version, long actor) {
+        BillingPeriod period = editablePeriod(id, version, "PENDING_APPROVAL");
+        period.markDraft(null);
+        periods.flush();
+        audit.record(actor, "BILLING_PERIOD_WITHDRAWN", "BillingPeriod", Long.toString(id),
+                Map.of("period", period.getPeriod(), "revision", Long.toString(period.getRevision()), "status", "DRAFT"));
+        return period;
+    }
+
+    @Transactional
+    public BillingPeriod returnToDraft(long id, long version, String reason, long actor) {
+        String normalizedReason = requiredReason(reason);
+        BillingPeriod period = editablePeriod(id, version, "PENDING_APPROVAL");
+        period.markDraft(normalizedReason);
+        periods.flush();
+        audit.record(actor, "BILLING_PERIOD_RETURNED", "BillingPeriod", Long.toString(id),
+                Map.of("period", period.getPeriod(), "revision", Long.toString(period.getRevision()), "status", "DRAFT"));
+        return period;
+    }
+
+    @Transactional
     public BillingPeriod cancel(long id, long version, String reason, long actor) {
         String normalizedReason = requiredReason(reason);
         BillingPeriod period = editablePeriod(id, version, "ISSUED");
