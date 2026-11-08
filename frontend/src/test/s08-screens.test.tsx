@@ -6,13 +6,13 @@ import { messageForError } from '../api/errors';
 import { ApiHttpError } from '../api/client';
 import * as billing from '../api/billing';
 import * as voluntary from '../api/voluntary';
-const state = vi.hoisted(() => ({ role: 'ADMIN' }));
-vi.mock('../state/AppStateContext', () => ({ useAppState: () => ({ user: { role: state.role, username: 'user' }, handleCallFailure: messageForError }) }));
+const state = vi.hoisted(() => ({ role: 'ADMIN', username: 'user' }));
+vi.mock('../state/AppStateContext', () => ({ useAppState: () => ({ user: { role: state.role, username: state.username }, handleCallFailure: messageForError }) }));
 vi.mock('../api/billing', () => ({ listBillingPeriods: vi.fn(), periodPreview: vi.fn(), periodInvoices: vi.fn(), periodSubmission: vi.fn(), createPeriod: vi.fn(), updatePeriod: vi.fn(), periodAction: vi.fn() }));
 vi.mock('../api/voluntary', () => ({ listCampaigns: vi.fn(), listContributions: vi.fn(), listDonors: vi.fn(), recordContribution: vi.fn(), saveCampaign: vi.fn(), campaignAction: vi.fn(), voidContribution: vi.fn() }));
 const page = <T,>(content: T[]) => ({ content, page: 0, size: 10, totalElements: content.length, totalPages: 1 });
 beforeEach(() => {
-  state.role = 'ADMIN';
+  state.role = 'ADMIN'; state.username = 'user';
   vi.mocked(billing.listBillingPeriods).mockResolvedValue(page([{ id: 1, period: '2026-11', dueDate: '2026-11-30', status: 'PENDING_APPROVAL', version: 2, latestRevision: 1, expired: false, editable: false, allowedActions: ['ISSUE', 'RETURN'], householdCount: 1, total: '999999999999999999', returnReason: null, cancelReason: null }]));
   vi.mocked(billing.periodPreview).mockResolvedValue({ revision: 1, householdCount: 1, total: '999999999999999999', version: 2, households: page([]) });
   vi.mocked(voluntary.listCampaigns).mockResolvedValue(page([{ id: 3, name: 'Quỹ học tập', description: '', opensOn: '2026-11-01', closesOn: '2026-11-30', status: 'PUBLISHED', version: 1, totalCollected: '999999999999999999', postedCount: 1 }]));
@@ -95,4 +95,58 @@ it('clears the previous ledger while a different campaign loads', async () => {
   await screen.findByText(/Người cũ/);
   fireEvent.click(screen.getAllByRole('button', { name: 'Xem chi tiết' })[1]);
   expect(screen.queryByText(/Người cũ/)).not.toBeInTheDocument();
+});
+
+it.each([new Error('network'), new ApiHttpError({ status: 503 })])('retains a pending contribution across navigation and another account after %s', async (failure) => {
+  state.role = 'ACCOUNTANT';
+  vi.mocked(voluntary.listDonors).mockResolvedValue(page([{ id: 8, fullName: 'Người thử', householdCode: 'H1', apartmentCode: 'A1' }]));
+  vi.mocked(voluntary.recordContribution).mockRejectedValueOnce(failure).mockResolvedValueOnce({ id: 1, donorNameSnapshot: '', householdCodeSnapshot: '', amount: '100', paidOn: '2026-11-08', status: 'POSTED', version: 0, voidReason: null });
+  const view = render(<ApiVoluntaryPage />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Xem chi tiết' }));
+  fireEvent.change(screen.getByLabelText('Tìm người đóng'), { target: { value: 'Người' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Tìm' }));
+  await screen.findByRole('option', { name: /Người thử/ });
+  fireEvent.change(screen.getByLabelText('Người đóng'), { target: { value: '8' } });
+  fireEvent.change(screen.getByLabelText('Số tiền (đồng)'), { target: { value: '100' } });
+  fireEvent.change(screen.getByLabelText('Ngày nhận tiền'), { target: { value: '2026-11-08' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Ghi đóng góp' }));
+  await screen.findByRole('button', { name: 'Thử ghi lại' });
+  view.unmount();
+  state.username = 'other'; const other = render(<ApiVoluntaryPage />);
+  await screen.findByText('Quỹ học tập'); expect(screen.queryByRole('button', { name: 'Thử ghi lại' })).not.toBeInTheDocument();
+  other.unmount(); state.username = 'user'; render(<ApiVoluntaryPage />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Thử ghi lại' }));
+  await waitFor(() => expect(voluntary.recordContribution).toHaveBeenCalledTimes(2));
+  expect(vi.mocked(voluntary.recordContribution).mock.calls[1]).toEqual(vi.mocked(voluntary.recordContribution).mock.calls[0]);
+});
+
+it.each(['INVALID_PAID_DATE', 'CAMPAIGN_NOT_RECEIVABLE'])('unlocks input after %s', async (code) => {
+  state.role = 'ACCOUNTANT';
+  vi.mocked(voluntary.listDonors).mockResolvedValue(page([{ id: 8, fullName: 'Người thử', householdCode: 'H1', apartmentCode: 'A1' }]));
+  vi.mocked(voluntary.recordContribution).mockRejectedValueOnce(new ApiHttpError({ status: 409, code }));
+  render(<ApiVoluntaryPage />); fireEvent.click(await screen.findByRole('button', { name: 'Xem chi tiết' }));
+  fireEvent.change(screen.getByLabelText('Tìm người đóng'), { target: { value: 'Người' } }); fireEvent.click(screen.getByRole('button', { name: 'Tìm' }));
+  await screen.findByRole('option', { name: /Người thử/ }); fireEvent.change(screen.getByLabelText('Người đóng'), { target: { value: '8' } });
+  fireEvent.change(screen.getByLabelText('Số tiền (đồng)'), { target: { value: '100' } }); fireEvent.change(screen.getByLabelText('Ngày nhận tiền'), { target: { value: '2026-11-08' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Ghi đóng góp' }));
+  await screen.findByRole('alert'); expect(screen.getByLabelText('Ngày nhận tiền')).toBeEnabled(); expect(screen.getByRole('button', { name: 'Xem chi tiết' })).toBeEnabled();
+});
+
+it.each(['DRAFT', 'PENDING_APPROVAL', 'ISSUED', 'CANCELLED'])('opens any submitted revision while period is %s', async (periodStatus) => {
+  const p = (await billing.listBillingPeriods(0)).content[0]; vi.mocked(billing.listBillingPeriods).mockResolvedValue(page([{ ...p, status: periodStatus, latestRevision: 2 }]));
+  vi.mocked(billing.periodSubmission).mockResolvedValue({ revision: 1, householdCount: 0, total: '0', version: 2, households: page([]) });
+  vi.mocked(billing.periodInvoices).mockResolvedValue(page([]));
+  render(<ApiBillingPage />); fireEvent.click(await screen.findByRole('button', { name: '2026-11' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Xem bản trình' })); fireEvent.change(screen.getByLabelText('Bản trình'), { target: { value: '1' } });
+  await waitFor(() => expect(billing.periodSubmission).toHaveBeenCalledWith(1, 1, 0));
+});
+
+it('requires reselection after a stale version reload', async () => {
+  vi.mocked(billing.periodAction).mockRejectedValueOnce(new ApiHttpError({ status: 409, code: 'STALE_VERSION' }));
+  render(<ApiBillingPage />); fireEvent.click(await screen.findByRole('button', { name: '2026-11' })); fireEvent.click(await screen.findByRole('button', { name: 'Phát hành' }));
+  fireEvent.click(document.querySelector('dialog button.btn-primary')!); await screen.findByRole('alert'); fireEvent.click(screen.getByRole('button', { name: 'Tải lại' }));
+  await screen.findByRole('button', { name: '2026-11' });
+  expect(screen.queryByRole('button', { name: 'Phát hành' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: '2026-11' }));
+  expect(await screen.findByRole('button', { name: 'Phát hành' })).toBeInTheDocument();
 });
