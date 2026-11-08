@@ -12,7 +12,7 @@ public class FeePreviewController {
     private final FeeCalculationService service;
     public FeePreviewController(FeeCalculationService service) { this.service = service; }
     @GetMapping
-    public FeePreviewResponse preview(@RequestParam long householdId, @RequestParam String period) {
+    public FeePreviewResponse preview(@RequestParam long householdId, @RequestParam(required = false) String period) {
         return service.preview(householdId, period);
     }
 }

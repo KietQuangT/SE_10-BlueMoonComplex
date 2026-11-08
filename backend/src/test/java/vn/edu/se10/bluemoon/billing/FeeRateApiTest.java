@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import vn.edu.se10.bluemoon.billing.api.*;
 import vn.edu.se10.bluemoon.billing.application.*;
 import vn.edu.se10.bluemoon.config.SecurityConfig;
+import vn.edu.se10.bluemoon.common.error.BadRequestException;
 import vn.edu.se10.bluemoon.identity.application.AuthenticatedUser;
 import vn.edu.se10.bluemoon.identity.application.CurrentAccountService;
 
@@ -79,6 +80,24 @@ class FeeRateApiTest {
                 BODY.replace("7000", "1.001"), BODY.replace("7000", "10000000000"))) {
             mvc.perform(post("/api/v1/fee-rates").with(auth).with(csrf()).contentType("application/json").content(body)).andExpect(status().isBadRequest());
         }
+        verifyNoInteractions(rates, calculation);
+    }
+
+    @Test
+    void missingPeriodReturnsInvalidPeriod() throws Exception {
+        when(calculation.preview(1L, null)).thenThrow(new BadRequestException("INVALID_PERIOD"));
+        mvc.perform(get("/api/v1/fee-preview?householdId=1")
+                .with(authentication(principal("ACCOUNTANT", false))))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_PERIOD"));
+        verify(calculation).preview(1L, null);
+        verifyNoInteractions(rates);
+    }
+
+    @Test
+    void missingHouseholdIdReturnsValidation() throws Exception {
+        mvc.perform(get("/api/v1/fee-preview?period=2026-11")
+                .with(authentication(principal("ACCOUNTANT", false))))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("VALIDATION"));
         verifyNoInteractions(rates, calculation);
     }
 
