@@ -155,3 +155,18 @@ Chưa tick foundation DoD khi các điều kiện này chưa có bằng chứng.
 - `cd frontend && npm run build`: passed.
 - Focused regression tests cover Demo route isolation, account-scoped contribution retry, definitive 409 rejection, revision selection across all period statuses, and stale-version reselection.
 - Browser checks with the real backend were not run. Unresolved contributions are retained in memory across route navigation and account changes, but not a full page reload or tab closure. No backend files or schema changed.
+
+## S08 — audit và chỉnh UI/UX theo ui-audit, 09/11/2026
+
+Kiểm chứng bản cập nhật `hhoangsonnw/feat-s08-ui-ux`, nền `f081bee87c98d80144e1d106b2cde45e54504594`. Thiết kế tham chiếu `ui-audit` SHA `68e4199e4ecf91163e2903cee42aceb9c1fdfc71`; hành vi vẫn theo hợp đồng S08 và API thật.
+
+| Lệnh / phạm vi | Kết quả |
+|---|---|
+| `cd frontend && npm test` | 20 file, 109/109 test qua, 3,17 giây; gồm 7 hồi quy UX mới |
+| `cd frontend && npm run build` | TypeScript và Vite qua; JS 507,77 kB (gzip 141,66 kB), cảnh báo chunk >500 kB |
+| Impeccable source detector: frontend/src/screens/s08 và frontend/src/api/errors.ts | Không finding tĩnh (`[]`) |
+| `git diff --check` | Qua |
+
+Báo cáo phạm vi/phát hiện/cách sửa: `frontend/S08_UI_UX_AUDIT.md`. Log thật nằm ở `.agent_out/s08-ux-tests.log`, `.agent_out/s08-ux-build.log`, `.agent_out/s08-ui-detect.json` (không commit các log). Test còn cảnh báo React `act` ở FeeRatesPage/AppStateProvider; không bỏ qua test nào.
+
+Đã xem thiết kế tham chiếu trong Arc. Chưa kiểm bằng mắt bản sau sửa ở 360px/desktop/sáng/tối, focus/Tab/Esc/zoom 200% và toàn bộ luồng trên API thật: CUA không đọc được tab :5174 người dùng mở. Không suy từ test jsdom hoặc detector mã nguồn thành chứng nhận WCAG hay bằng chứng layout. Backend/schema không đổi; không chạy Maven/MySQL IT trong lượt frontend này.
