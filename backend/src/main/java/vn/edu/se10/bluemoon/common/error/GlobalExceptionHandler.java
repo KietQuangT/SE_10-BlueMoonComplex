@@ -11,6 +11,7 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -24,6 +25,13 @@ public class GlobalExceptionHandler {
             ConstraintViolationException.class})
     ProblemDetail validation(Exception exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Dữ liệu gửi lên không hợp lệ.");
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    ProblemDetail missingParameter(MissingServletRequestParameterException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Thiếu tham số bắt buộc.");
+        problem.setProperty("code", "VALIDATION");
+        return problem;
     }
 
     @ExceptionHandler(BadRequestException.class)
