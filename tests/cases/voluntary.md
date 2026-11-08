@@ -137,6 +137,24 @@ Các ID số trong dữ liệu (`101`, `102`, `103`, `701`, `702`, `801`, `99999
 - **Trạng thái:** Not run.
 - **Nguồn:** `docs/DECISIONS.md` D26; `_agents_workspace/S08/01_contract.md:80,81,133,142,164,208`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/api/VoluntaryController.java:98`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/application/VoluntaryContributionService.java:53,107`.
 
+### VOL-05.2 — Race condition: Hai request ghi nhận đóng góp đồng thời cùng actor, cùng Idempotency-Key và cùng payload chỉ tạo một bản ghi và một audit
+
+- **Vai trò:** ACCOUNTANT.
+- **Điểm vào:** `POST /api/v1/voluntary-campaigns/{id}/contributions`.
+- **Dữ liệu vào:** Đợt `712` đang mở (`PUBLISHED`, còn hạn thu); nhân khẩu `101`; header `Idempotency-Key: 33333333-4444-5555-6666-777777777777` cố định; header `X-CSRF-TOKEN: <CSRF_TOKEN>`; body `{"residentId":101,"amount":"500000","paidOn":"<HOM_NAY>","lateReason":null}`. Hai request gửi đồng thời từ cùng tài khoản ACCOUNTANT qua test harness có rào cản đồng bộ (`CountDownLatch` / pool 2 worker hoặc curl concurrent).
+- **Các bước:**
+  1. Xác nhận đợt `712` đang mở, ghi nhận giá trị `postedCount` và `totalCollected` ban đầu.
+  2. Kích hoạt 2 luồng đồng thời gửi `POST /api/v1/voluntary-campaigns/712/contributions` với cùng actor, cùng header `Idempotency-Key` và cùng body trên qua điểm chặn barrier.
+  3. Đợi cả hai luồng hoàn tất, thu nhận HTTP status code, body JSON và thuộc tính bản ghi của từng luồng.
+  4. Kiểm tra dữ liệu trong bảng `voluntary_contributions`, `audit_log` và các chỉ số tổng của đợt trong `voluntary_campaigns`.
+- **Kỳ vọng:** Cả hai request đều thành công và trả về cùng thông tin khoản đóng góp (cùng `id`, `amount="500000"`, `paidOn="<HOM_NAY>"`). Trong đó: đúng một request tạo mới trả về HTTP 201; request còn lại được xử lý replay qua ràng buộc duy nhất trên `(recorded_by, idempotency_key)` và trả về HTTP 200 (idempotent replay). Số lượng khoản đóng góp tăng đúng 1 (`postedCount` tăng 1) và tổng thu tăng đúng 1 lần (`totalCollected` tăng `500.000 đ`), không bị tính trùng hai lần. Chỉ có duy nhất đúng 1 bản ghi audit log được sinh ra.
+- **Kiểm sau:**
+  - Truy vấn DB: `SELECT COUNT(*) FROM voluntary_contributions WHERE campaign_id=712 AND resident_id=101 AND idempotency_key='33333333-4444-5555-6666-777777777777'` trả về đúng `1`.
+  - Truy vấn `audit_log`: `SELECT COUNT(*) FROM audit_log WHERE action='VOLUNTARY_CONTRIBUTION_RECORDED' AND entity_type='VoluntaryContribution' AND entity_id='<ID_KHOAN_DONG>'` trả về đúng `1`.
+  - Kiểm tra đợt: `totalCollected` tăng đúng `500000`, `postedCount` tăng đúng `1`.
+- **Trạng thái:** Not run.
+- **Nguồn:** `docs/DECISIONS.md` D26; `_agents_workspace/S08/01_contract.md:14,80,133,156,160,164,208`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/application/VoluntaryContributionService.java:53`; `backend/src/test/java/vn/edu/se10/bluemoon/billing/VoluntaryContributionIT.java:116`.
+
 ### VOL-06.1 — ACCOUNTANT hủy khoản đóng góp (`void`), kiểm tra tính bất biến lịch sử, idempotent khi hủy lặp và cập nhật tổng thu
 
 - **Vai trò:** ACCOUNTANT, ADMIN.
@@ -195,6 +213,38 @@ Các ID số trong dữ liệu (`101`, `102`, `103`, `701`, `702`, `801`, `99999
 - **Kiểm sau:** Kiểm tra tab Network xác nhận header `Idempotency-Key` ở bước 1 và bước 2 giống hệt nhau.
 - **Trạng thái:** Not run.
 - **Nguồn:** `_agents_workspace/S08/01_contract.md:80,173,176`; `frontend/src/screens/s08/ApiVoluntaryPage.tsx:34,42`.
+
+### VOL-08.3 — Giao diện đóng góp tự nguyện: mobile viewport 360px, theme sáng/tối, điều hướng keyboard-only với focus nhìn thấy, date input badInput và hiển thị số tiền lớn
+
+- **Vai trò:** ADMIN, ACCOUNTANT, RESIDENT.
+- **Điểm vào:** `/admin/voluntary`, `/accountant/voluntary`, `/resident/voluntary`.
+- **Dữ liệu vào:** Chế độ `api`; đợt đóng góp có tổng thu lớn (`999999999999999999` VND - 18 chữ số); ngày nhận tiền hoặc ngày đợt sai định dạng; mô phỏng viewport 360px × 640px.
+  *(Lưu ý: Luồng phân quyền hiển thị, giữ `Idempotency-Key` khi mất mạng để retry và mở khóa key khi gặp 400/409 đã được kiểm thử tại [VOL-08.1](#vol-081--giao-diện-adminvoluntary-accountantvoluntary-và-residentvoluntary-theo-đúng-vai-trò) và [VOL-08.2](#vol-082--giao-diện-accountant-giữ-nguyên-idempotency-key-khi-mất-kết-nối5xx-để-thử-ghi-lại-và-mở-khóa-khi-lỗi-400409); ca này tập trung kiểm thử trải nghiệm người dùng, tính tiếp cận và độ chính xác hiển thị tiền lớn theo hợp đồng mục 11).*
+- **Các bước:**
+  1. **Kiểm tra Viewport 360px:** Mở DevTools ở kích thước màn hình `360px × 640px`:
+     - Mở `/admin/voluntary`: form tạo/sửa đợt, danh sách đợt và sổ đóng góp tự căn chỉnh vừa vặn màn hình dọc mà không tràn chiều ngang.
+     - Mở `/accountant/voluntary`: form tìm người đóng, select chọn người, ô nhập tiền, ngày nhận tiền và nút `Ghi đóng góp` hiển thị rõ ràng, không đè lấn nhau.
+     - Mở `/resident/voluntary`: các thẻ đợt đóng góp hiển thị thông tin tên, trạng thái và ngày mở/đóng ngay ngắn, chữ không bị cắt cụt.
+  2. **Kiểm tra Theme sáng/tối:**
+     - Chuyển đổi giữa Light mode và Dark mode qua nút `ThemeToggle` hoặc thiết lập hệ thống.
+     - Kiểm tra các thành phần giao diện: màu nền bề mặt (`surface-box`), màu badge trạng thái (`Sắp bắt đầu`, `Đang mở`, `Đã kết thúc`, `Đã ghi`, `Đã hủy`), màu chữ và viền hộp thông báo cảnh báo.
+     - Đảm bảo độ tương phản đáp ứng chuẩn trực quan WCAG AA, không bị lóa hoặc chìm màu chữ.
+  3. **Kiểm tra Điều hướng bàn phím (Keyboard-only):**
+     - Dùng phím `Tab` và `Shift+Tab` duyệt tuần tự qua tất cả các trường và nút tương tác trên màn hình `/admin/voluntary` và `/accountant/voluntary`.
+     - Đảm bảo đường viền focus (`:focus-visible` outline) hiển thị nổi bật trên phần tử đang chọn.
+     - Mở hộp thoại xác nhận (ví dụ `Công bố`, `Đóng đợt`, hoặc `Hủy khoản đóng góp`): tiêu điểm nhảy vào hộp thoại, có thể dùng phím `Tab` để di chuyển giữa ô nhập lý do hủy và nút `Xác nhận`/`Hủy`, dùng `Esc` để đóng dialog an toàn.
+  4. **Kiểm tra Date input ở trạng thái `badInput`:**
+     - Tại `/admin/voluntary`, gõ giá trị ngày sai định dạng vào ô `Ngày bắt đầu` hoặc `Ngày kết thúc`. Bấm `Lưu`.
+     - Tại `/accountant/voluntary`, gõ giá trị ngày sai định dạng vào ô `Ngày nhận tiền`. Bấm `Ghi đóng góp`.
+     - Trình duyệt kích hoạt cờ `validity.badInput`, phương thức `checkValidity()` trả về `false`. Giao diện chặn gửi form, hiển thị thông báo lỗi cục bộ (`Kiểm tra các ngày và thông tin đợt đóng góp.` hoặc `Chọn người đóng, nhập số tiền nguyên dương tối đa 18 chữ số và ngày hợp lệ.`), và không phát sinh HTTP request nào lên server.
+  5. **Kiểm tra Số tiền lớn dạng chuỗi không làm tròn:**
+     - Trên màn hình của ADMIN hoặc ACCOUNTANT, xem đợt có `totalCollected="999999999999999999"` và khoản đóng góp có `amount="999999999999999999"`.
+     - Kiểm tra số tiền hiển thị: phải hiển thị đầy đủ `999.999.999.999.999.999 đ` thông qua hàm `formatVndDecimal`.
+     - Xác nhận không xảy ra hiện tượng làm tròn sai (ví dụ `1.000.000.000.000.000.000 đ`) do ép kiểu số nguyên lớn về kiểu Number trong JavaScript.
+- **Kỳ vọng:** Layout 360px hiển thị hoàn chỉnh không lỗi tràn ngang; theme sáng/tối có độ tương phản đạt chuẩn; điều hướng bàn phím đầy đủ với focus ring nhìn thấy; date input `badInput` được chặn tại client; số tiền 18 chữ số hiển thị nguyên vẹn độ chính xác.
+- **Kiểm sau:** Kiểm tra tab Network xác nhận không có request gửi đi khi form gặp date `badInput`.
+- **Trạng thái:** Not run.
+- **Nguồn:** `_agents_workspace/S08/01_contract.md:15,98,168,176,209`; `frontend/src/screens/s08/ApiVoluntaryPage.tsx:9,33,34,42`; `frontend/src/lib/format.ts:8`; `frontend/src/test/s08-screens.test.tsx:25,41`.
 
 ## Điểm chưa xác định
 
