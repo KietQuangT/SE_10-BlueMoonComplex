@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,6 +88,15 @@ public class VoluntaryContributionService {
         audit.record(actor, "VOLUNTARY_CONTRIBUTION_VOIDED", "VoluntaryContribution", Long.toString(id),
                 Map.of("campaignId", Long.toString(campaignId), "amount", contribution.getAmount().toPlainString(), "status", "VOIDED"));
         return contribution;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<VoluntaryContribution> list(long campaignId, String status, int page, int size) {
+        if (page < 0 || size < 1 || size > 100 || (status != null && !java.util.List.of("POSTED", "VOIDED").contains(status))) {
+            throw new BadRequestException("INVALID_FILTER");
+        }
+        if (!campaigns.existsById(campaignId)) throw new NotFoundException("CAMPAIGN_NOT_FOUND");
+        return contributions.search(campaignId, status, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "recordedAt", "id")));
     }
 
     private Optional<Result> replay(ContributionInput input, long actor) {

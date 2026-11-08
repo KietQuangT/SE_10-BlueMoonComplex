@@ -15,6 +15,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import vn.edu.se10.bluemoon.billing.application.VoluntaryCampaignService;
 import vn.edu.se10.bluemoon.billing.persistence.VoluntaryCampaign;
 import vn.edu.se10.bluemoon.billing.persistence.VoluntaryCampaignRepository;
+import vn.edu.se10.bluemoon.billing.persistence.VoluntaryContributionRepository;
 import vn.edu.se10.bluemoon.common.audit.AuditService;
 import vn.edu.se10.bluemoon.common.error.BadRequestException;
 import vn.edu.se10.bluemoon.common.error.ConflictException;
@@ -22,7 +23,7 @@ import vn.edu.se10.bluemoon.common.error.ConflictException;
 class VoluntaryCampaignServiceTest {
     private final VoluntaryCampaignRepository campaigns = mock(VoluntaryCampaignRepository.class);
     private final Clock clock = Clock.fixed(Instant.parse("2026-11-08T00:00:00Z"), ZoneOffset.UTC);
-    private final VoluntaryCampaignService service = new VoluntaryCampaignService(campaigns, mock(AuditService.class), clock);
+    private final VoluntaryCampaignService service = new VoluntaryCampaignService(campaigns, mock(AuditService.class), clock, mock(VoluntaryContributionRepository.class));
 
     @Test
     void invalidCampaignDatesAreRejected() {
