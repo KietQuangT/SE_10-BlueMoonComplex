@@ -143,3 +143,7 @@ Chưa tick foundation DoD khi các điều kiện này chưa có bằng chứng.
 - Unit trên `f5eef71` (JDK 21, `./mvnw -B -ntp verify`): 122 test, 0 lỗi (`feat-s07/.agent_out/verify.log`).
 - Integration trên `f5eef71` với MySQL 8.4 (compose project `bluemoon`, V8 đã áp): `./mvnw -B -ntp -Pintegration verify` 97 test, gồm 3 test `FeeRateIntegrationIT`, BUILD SUCCESS (Sơn chạy 08/11/2026 12:42 +07).
 - Chưa kiểm: test QA của agy trên `qa/s07-agy` chưa chạy trên cùng SHA; D25 chưa commit; PR và CI remote chưa có. Chi tiết: `docs/sprint-1/TASKS.md` mục S07.
+
+### S08: sửa kiểm thử tích hợp PR #20, 09/11/2026
+- Trên nền `ac4cd20aaca4e6f26921841658e5284df08d68a9`, ba lớp billing tái hiện 1 failure, 7 errors với MySQL 8.4 riêng; lỗi stub spy qua proxy MANDATORY làm Mockito dở dang, và truy vấn DATETIME sai kiểu `Instant`.
+- Sau sửa test và ngày fixture đóng góp, `cd backend && ./mvnw -B -ntp -Pintegration verify` với JDK 21.0.9 và container MySQL 8.4 riêng: 213 unit, 120 integration, 0 lỗi, BUILD SUCCESS (1 phút 39 giây). Không dùng DB hoặc volume chia sẻ; CI remote cần kiểm sau push.

@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.util.AopTestUtils;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import vn.edu.se10.bluemoon.common.audit.AuditService;
 import vn.edu.se10.bluemoon.billing.application.ContributionInput;
@@ -102,11 +103,13 @@ class VoluntaryContributionIT {
 
     @Test
     void auditFailureRollsBackContribution() {
-        doThrow(new IllegalStateException("test audit failure")).when(audit)
+        AuditService target = AopTestUtils.getUltimateTargetObject(audit);
+        doThrow(new IllegalStateException("test audit failure")).when(target)
                 .record(anyLong(), eq("VOLUNTARY_CONTRIBUTION_RECORDED"), anyString(), anyString(), anyMap());
         var input = input(UUID.randomUUID().toString(), "100", LocalDate.of(9000, 3, 19), "late");
         assertThrows(IllegalStateException.class, () -> service.record(input, actor));
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM voluntary_contributions WHERE campaign_id=?", Integer.class, campaign));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id=? AND action='VOLUNTARY_CONTRIBUTION_RECORDED'", Integer.class, actor));
     }
 
     @Test
@@ -123,7 +126,7 @@ class VoluntaryContributionIT {
             assertEquals(a.contribution().getId(), b.contribution().getId());
             assertNotEquals(a.replay(), b.replay());
             assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM voluntary_contributions WHERE campaign_id=?", Integer.class, campaign));
-            assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id=? AND action='VOLUNTARY_CONTRIBUTION_RECORDED'", Integer.class, actor));
+            assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id=? AND action='VOLUNTARY_CONTRIBUTION_RECORDED' AND entity_type='VoluntaryContribution' AND entity_id=?", Integer.class, actor, a.contribution().getId().toString()));
         } finally {
             pool.shutdownNow();
         }

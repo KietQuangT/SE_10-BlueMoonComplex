@@ -1,7 +1,6 @@
 package vn.edu.se10.bluemoon.billing;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -14,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.util.AopTestUtils;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import vn.edu.se10.bluemoon.billing.application.BillingPeriodService;
 import vn.edu.se10.bluemoon.billing.application.ContributionInput;
@@ -99,7 +100,7 @@ class BillingPeriodCancelAndAuditRollbackIT {
         var issued = billingService.issue(period, submitted.getVersion(), submitted.getRevision(), actor);
 
         assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM invoices WHERE period_id=? AND status='ISSUED'", Integer.class, period));
-        assertNull(jdbc.queryForObject("SELECT cancelled_at FROM invoices WHERE period_id=?", Instant.class, period));
+        assertNull(jdbc.queryForObject("SELECT cancelled_at FROM invoices WHERE period_id=?", LocalDateTime.class, period));
 
         var cancelled = billingService.cancel(period, issued.getVersion(), "Hủy kỳ để sửa diện tích", actor);
         assertEquals("CANCELLED", cancelled.getStatus());
@@ -108,7 +109,7 @@ class BillingPeriodCancelAndAuditRollbackIT {
         // Assert invoices are CANCELLED with timestamp
         assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM invoices WHERE period_id=? AND status='ISSUED'", Integer.class, period));
         assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM invoices WHERE period_id=? AND status='CANCELLED'", Integer.class, period));
-        assertNotNull(jdbc.queryForObject("SELECT cancelled_at FROM invoices WHERE period_id=?", Instant.class, period));
+        assertEquals(LocalDateTime.of(9000, 7, 15, 0, 0), jdbc.queryForObject("SELECT cancelled_at FROM invoices WHERE period_id=?", LocalDateTime.class, period));
 
         // Assert submission and lines snapshots are kept intact
         assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM billing_submissions WHERE period_id=?", Integer.class, period));
@@ -126,7 +127,8 @@ class BillingPeriodCancelAndAuditRollbackIT {
         var submitted = billingService.submit(period, 0L, actor);
         var issued = billingService.issue(period, submitted.getVersion(), submitted.getRevision(), actor);
 
-        doThrow(new IllegalStateException("simulated audit failure")).when(audit)
+        AuditService target = AopTestUtils.getUltimateTargetObject(audit);
+        doThrow(new IllegalStateException("simulated audit failure")).when(target)
                 .record(anyLong(), eq("BILLING_PERIOD_CANCELLED"), anyString(), anyString(), anyMap());
 
         assertThrows(IllegalStateException.class,
@@ -140,11 +142,12 @@ class BillingPeriodCancelAndAuditRollbackIT {
 
     @Test
     void auditFailureRollsBackVoidContribution() {
-        var input = ContributionInput.parse(campaign, resident, "200000", LocalDate.of(9000, 7, 10),
+        var input = ContributionInput.parse(campaign, resident, "200000", LocalDate.of(9000, 7, 15),
                 null, UUID.randomUUID().toString());
         var recorded = contributionService.record(input, actor).contribution();
 
-        doThrow(new IllegalStateException("simulated audit failure")).when(audit)
+        AuditService target = AopTestUtils.getUltimateTargetObject(audit);
+        doThrow(new IllegalStateException("simulated audit failure")).when(target)
                 .record(anyLong(), eq("VOLUNTARY_CONTRIBUTION_VOIDED"), anyString(), anyString(), anyMap());
 
         assertThrows(IllegalStateException.class,
