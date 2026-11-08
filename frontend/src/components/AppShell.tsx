@@ -81,6 +81,8 @@ function useNavGroups(role: RoleCode): NavGroup[] {
           items: [
             { to: '/accountant/collections', label: 'Thu tiền mặt', icon: 'wallet' },
             { to: '/accountant/fee-rates', label: 'Đơn giá phí', icon: 'coins' },
+            { to: '/accountant/billing-periods', label: 'Kỳ thu bắt buộc', icon: 'receipt' },
+            { to: '/accountant/voluntary', label: 'Đóng góp tự nguyện', icon: 'heart' },
           ],
         },
         {
