@@ -4,7 +4,7 @@ BlueMoon Complex là hệ thống quản lý chung cư được phát triển tr
 
 Dự án tổ chức theo mô hình monorepo, gồm backend Spring Boot, frontend React và cơ sở dữ liệu MySQL.
 
-> **Trạng thái cập nhật: 07/11/2026.** Nội dung dưới đây phản ánh tiến độ được ghi nhận trên nhánh `feat/s06-residency-declarations` (backend S06, nền `main` sau S04 và S05). Một số chức năng vẫn đang phát triển; giao diện đã có không đồng nghĩa với API tương ứng đã hoàn thành.
+> **Trạng thái cập nhật: 07/11/2026.** Nội dung dưới đây phản ánh tiến độ trên nhánh `main` cục bộ của Sơn (commit `cef9b93`, **chưa push**): `origin/main` sau PR #11 (S01, S02, S04, S05) cộng thêm S03 (`feat/s03-change-password`), backend S06 (`feat/s06-residency-declarations`) và giao diện S06 (`feat/s06-ui`). Các nhánh S03 và S06 đã push lên GitHub nhưng chưa mở PR. Một số chức năng vẫn đang phát triển; giao diện đã có không đồng nghĩa với API tương ứng đã hoàn thành.
 
 ## 1. Công nghệ sử dụng
 
@@ -29,7 +29,7 @@ Dự án tổ chức theo mô hình monorepo, gồm backend Spring Boot, fronten
 - **Đổi mật khẩu (S03):** `POST /api/v1/auth/change-password` cho mọi vai trò đã đăng nhập, kể cả tài khoản đang bị buộc đổi mật khẩu lần đầu. Kiểm tra mật khẩu hiện tại; mật khẩu mới phải có tối thiểu 8 ký tự, chữ hoa, chữ thường, chữ số và ký tự đặc biệt, tối đa 72 byte UTF-8, và khác mật khẩu hiện tại (D23). Đổi thành công thì mọi phiên của tài khoản, kể cả phiên đang dùng, bị hủy và phải đăng nhập lại; nội dung email mô phỏng chứa mật khẩu tạm bị che. Sai mật khẩu hiện tại được đếm và khóa như đăng nhập sai (ADMIN không bị khóa). Hồ sơ cá nhân ở v1 chỉ xem qua `GET /auth/me`.
 - **Hộ và nhân khẩu (S05):** tạo, cập nhật, tra cứu hộ; thêm, sửa, tra cứu nhân khẩu; ghi nhận chuyển đi và lịch sử biến động. Cư dân có thể xem danh sách thành viên trong hộ của mình.
 - **Khai báo tạm vắng (S06, backend):** cư dân khai báo cho thành viên trong hộ của mình; ADMIN duyệt hoặc từ chối (kèm lý do); cư dân hủy đơn đang chờ; ADMIN ghi nhận "đã quay lại" để đưa nhân khẩu về `RESIDING`. Có hàng chờ toàn hệ thống lọc theo trạng thái, căn hộ và tên, cùng gợi ý tên nhân khẩu (không trả số giấy tờ hay số điện thoại). Khi ghi nhận chuyển đi, các đơn tạm vắng đang chờ của người đó tự chuyển sang `CANCELLED`. Đơn, kết quả duyệt và lý do từ chối được lưu trong `residency_changes` (migration V7); thông báo kết quả chỉ là trạng thái trong danh sách "Đơn của tôi", chưa có hộp thư. Chưa làm tạm trú.
-- **Frontend:** đã xây dựng giao diện cho 24 màn hình v1, hỗ trợ giao diện sáng/tối. Các luồng S01, S02, S04 và S05 đã kết nối API; các phần còn lại sử dụng dữ liệu mẫu. Giao diện S06 (M-31 khai báo, M-16 duyệt, M-13 "Đã quay lại") nằm ở nhánh `feat/s06-ui`, xếp trên `feat/s03-change-password`; đã có test đơn vị và kiểm tra thủ công trên Chrome với backend S06, chưa có PR.
+- **Frontend:** đã xây dựng giao diện cho 24 màn hình v1, hỗ trợ giao diện sáng/tối. Các luồng S01, S02, S04, S05 và S06 (M-31 khai báo, M-16 duyệt, M-13 "Đã quay lại", gợi ý tên) đã kết nối API; các phần còn lại sử dụng dữ liệu mẫu. Backend S03 đã sẵn sàng; phần giao diện đổi mật khẩu nối API thuộc Kiệt. Giao diện S06 có test đơn vị và đã kiểm thủ công trên Chrome với backend S06; chưa có PR.
 
 ### Đang phát triển hoặc chưa có
 
@@ -41,7 +41,7 @@ Dự án tổ chức theo mô hình monorepo, gồm backend Spring Boot, fronten
 
 **Lưu ý:** Tài khoản được ADMIN cấp có cờ `must_change_password = true`. Tài khoản có thể đăng nhập nhưng phần lớn API trả `403 PASSWORD_CHANGE_REQUIRED` cho đến khi gọi `POST /api/v1/auth/change-password`; sau khi đổi, mọi phiên bị hủy và cần đăng nhập lại bằng mật khẩu mới. Tài khoản ADMIN được tạo bằng bootstrap không gặp giới hạn này.
 
-Tiến độ và bằng chứng hoàn thành từng task được quản lý tại [`docs/sprint-1/TASKS.md`](docs/sprint-1/TASKS.md). S04 đã merge qua PR #11. S03 đã được kiểm thử trên nhánh `feat/s03-change-password`, chưa mở PR tại thời điểm cập nhật README và còn chờ review; phần giao diện thuộc Kiệt.
+Tiến độ và bằng chứng hoàn thành từng task được quản lý tại [`docs/sprint-1/TASKS.md`](docs/sprint-1/TASKS.md). S04 đã merge qua PR #11. S03 (tick, kiểm thử trên nhánh `feat/s03-change-password`) và S06 (chưa tick, còn chờ ghép UI cuối và xác nhận của nhóm) chưa có PR vào `main`; phần giao diện đổi mật khẩu thuộc Kiệt.
 
 ## 3. Cấu trúc thư mục
 
@@ -87,8 +87,11 @@ Khuyến nghị khi lập trình: **MySQL chạy trong Docker, backend chạy t�
 git clone https://github.com/KietQuangT/SE_10-BlueMoonComplex.git
 cd SE_10-BlueMoonComplex
 
-# Chuyển sang nhánh S03 (đổi mật khẩu, chưa merge) khi cần kiểm tra chức năng mới
-git switch feat/s03-change-password
+# Cho tới khi PR S03 và S06 được merge vào `main` trên GitHub, `origin/main` chưa có đổi mật khẩu
+# và khai báo tạm vắng. Khi cần kiểm tra chức năng mới, chuyển sang nhánh tương ứng:
+#   git switch feat/s03-change-password              # S03: đổi mật khẩu
+#   git switch feat/s06-residency-declarations       # S06 backend (nền main, chưa có S03)
+#   git switch feat/s06-ui                           # S06 giao diện (xếp trên nhánh S03)
 
 cp .env.example .env
 ```
@@ -273,7 +276,7 @@ cd backend
 ./mvnw -B -ntp -Pintegration verify
 ```
 
-Kết quả kiểm thử S03 ngày 07/11/2026 tại commit `c7d0b89` (chạy `-Pintegration verify` trên JDK 21.0.9 và MySQL 8.4 trong Docker): **103 test ở bộ kiểm tra thông thường và 80 integration test**, không lỗi (chi tiết trong `docs/VALIDATION.md`). Lần kiểm thử S04 ngày 06/11/2026 có 86 và 75. Đây là kết quả tại thời điểm ghi nhận, không phải cam kết cho mọi commit sau đó.
+Kết quả kiểm thử S03 ngày 07/11/2026 tại commit `c7d0b89` (chạy `-Pintegration verify` trên JDK 21.0.9 và MySQL 8.4 trong Docker): **103 test ở bộ kiểm tra thông thường và 80 integration test**, không lỗi (chi tiết trong `docs/VALIDATION.md`). Lần kiểm thử S04 ngày 06/11/2026 có 86 và 75. S06 ngày 07/11/2026: nhánh `feat/s06-residency-declarations` tại `7b9828e` có **93 test thông thường và 89 integration test**, không lỗi; giao diện `feat/s06-ui` tại `fa78614` có **65 test vitest** (13 file), `tsc` và build đạt. Bản tích hợp S03 + S06 tại `cef9b93` (`-Pintegration verify`, JDK 21, MySQL 8.4 cổng 3307) có **94 integration test**, không lỗi (chi tiết trong `docs/VALIDATION.md`). Đây là kết quả tại thời điểm ghi nhận, không phải cam kết cho mọi commit sau đó.
 
 **Cảnh báo:** integration test ghi và xóa dữ liệu fixture, thực hiện migration khi cần và có thể thay đổi dữ liệu tạm thời trong database. Chỉ chạy trên DB local dành riêng cho kiểm thử, không chạy trên DB dùng chung hoặc có dữ liệu thật.
 
