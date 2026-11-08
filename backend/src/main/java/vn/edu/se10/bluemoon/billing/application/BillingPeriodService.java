@@ -267,11 +267,21 @@ public class BillingPeriodService {
 
     private BillingSubmissionResponse submissionFor(BillingPeriod period, long revision, int page, int size) {
         var submission = reads.submission(period.getId(), revision);
+        var content = householdResponses(reads.items(submission.id(), page, size));
+        var households = new PageResponse<>(content, page, size, submission.count(), pages(submission.count(), size));
         return new BillingSubmissionResponse(submission.revision(), submission.submittedAt(), submission.submittedBy(),
-                submission.count(), submission.total().toPlainString(), period.getVersion(), householdsPage(reads.items(submission.id()), page, size));
+                submission.count(), submission.total().toPlainString(), period.getVersion(), households);
     }
 
     private PageResponse<BillingHouseholdResponse> householdsPage(List<BillingReadStore.Item> items, int page, int size) {
+        var all = householdResponses(items);
+        long start = (long) page * size;
+        int from = (int) Math.min(start, all.size());
+        int to = Math.min(from + size, all.size());
+        return new PageResponse<>(all.subList(from, to), page, size, all.size(), pages(all.size(), size));
+    }
+
+    private List<BillingHouseholdResponse> householdResponses(List<BillingReadStore.Item> items) {
         Map<Long, List<BillingReadStore.Item>> grouped = new LinkedHashMap<>();
         for (var item : items) grouped.computeIfAbsent(item.householdId(), ignored -> new ArrayList<>()).add(item);
         var all = new ArrayList<BillingHouseholdResponse>();
@@ -284,10 +294,7 @@ public class BillingPeriodService {
             all.add(new BillingHouseholdResponse(first.householdId(), first.householdCode(), first.apartmentCode(),
                     area == null ? null : area.toPlainString(), lines, total.toPlainString()));
         }
-        long start = (long) page * size;
-        int from = (int) Math.min(start, all.size());
-        int to = Math.min(from + size, all.size());
-        return new PageResponse<>(all.subList(from, to), page, size, all.size(), pages(all.size(), size));
+        return all;
     }
 
     private List<InvoiceResponse> invoiceResponses(List<BillingReadStore.InvoiceRow> rows) {

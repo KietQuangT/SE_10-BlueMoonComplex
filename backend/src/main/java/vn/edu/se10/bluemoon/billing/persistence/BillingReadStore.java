@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,15 +48,25 @@ public class BillingReadStore {
         return result.getFirst();
     }
 
-    public List<Item> items(long submissionId) {
+    public List<Item> items(long submissionId, int page, int size) {
+        List<Long> householdIds = jdbc.queryForList("""
+                SELECT DISTINCT household_id FROM billing_submission_items
+                WHERE submission_id=? ORDER BY household_id LIMIT ? OFFSET ?
+                """, Long.class, submissionId, size, (long) page * size);
+        if (householdIds.isEmpty()) return List.of();
+        String params = String.join(",", Collections.nCopies(householdIds.size(), "?"));
+        List<Object> arguments = new ArrayList<>();
+        arguments.add(submissionId);
+        arguments.addAll(householdIds);
         return jdbc.query("""
                 SELECT household_id, household_code, apartment_code, area_m2, fee_type_code, fee_type_name,
                        calculation_method, quantity, unit_price, fee_rate_id, amount
-                FROM billing_submission_items WHERE submission_id=? ORDER BY household_id, fee_type_id
-                """, (rs, row) -> new Item(rs.getLong("household_id"), rs.getString("household_code"), rs.getString("apartment_code"),
+                FROM billing_submission_items WHERE submission_id=? AND household_id IN (
+                """ + params + ") ORDER BY household_id, fee_type_id", (rs, row) -> new Item(
+                rs.getLong("household_id"), rs.getString("household_code"), rs.getString("apartment_code"),
                 rs.getBigDecimal("area_m2"), rs.getString("fee_type_code"), rs.getString("fee_type_name"),
                 CalculationMethod.valueOf(rs.getString("calculation_method")), rs.getBigDecimal("quantity"),
-                rs.getBigDecimal("unit_price"), rs.getLong("fee_rate_id"), rs.getBigDecimal("amount")), submissionId);
+                rs.getBigDecimal("unit_price"), rs.getLong("fee_rate_id"), rs.getBigDecimal("amount")), arguments.toArray());
     }
 
     public long invoiceCount(long periodId) {

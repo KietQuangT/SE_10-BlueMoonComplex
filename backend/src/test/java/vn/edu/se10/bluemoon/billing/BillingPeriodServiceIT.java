@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import vn.edu.se10.bluemoon.billing.application.BillingPeriodService;
+import vn.edu.se10.bluemoon.billing.persistence.BillingReadStore;
 import vn.edu.se10.bluemoon.common.error.ConflictException;
 
 @SpringBootTest
@@ -27,6 +28,7 @@ import vn.edu.se10.bluemoon.common.error.ConflictException;
 class BillingPeriodServiceIT {
     @Autowired JdbcTemplate jdbc;
     @Autowired BillingPeriodService service;
+    @Autowired BillingReadStore reads;
 
     @TestConfiguration
     static class FixedClock {
@@ -74,6 +76,35 @@ class BillingPeriodServiceIT {
         jdbc.update("UPDATE households SET area_m2=60 WHERE id=?", household);
         assertEquals("BILLING_INPUT_CHANGED", assertThrows(ConflictException.class,
                 () -> service.issue(period.getId(), period.getVersion(), period.getRevision(), actor)).code());
+    }
+
+    @Test
+    void snapshotStoreLoadsOnlyRequestedHouseholdsAndTheirTwoLines() {
+        long actor = actor();
+        household();
+        household();
+        household();
+        seedRates(actor);
+        var period = service.create("9000-03", LocalDate.of(9000, 3, 31), actor);
+        service.submit(period.getId(), period.getVersion(), actor);
+        long submissionId = jdbc.queryForObject("SELECT id FROM billing_submissions WHERE period_id=? AND revision=?",
+                Long.class, period.getId(), period.getRevision());
+        long count = jdbc.queryForObject("SELECT COUNT(DISTINCT household_id) FROM billing_submission_items WHERE submission_id=?",
+                Long.class, submissionId);
+        var firstId = jdbc.queryForObject("SELECT MIN(household_id) FROM billing_submission_items WHERE submission_id=?",
+                Long.class, submissionId);
+        var lastId = jdbc.queryForObject("SELECT MAX(household_id) FROM billing_submission_items WHERE submission_id=?",
+                Long.class, submissionId);
+        var first = reads.items(submissionId, 0, 1);
+        var last = reads.items(submissionId, Math.toIntExact(count - 1), 1);
+        var empty = reads.items(submissionId, Math.toIntExact(count), 1);
+        assertEquals(2, first.size());
+        assertEquals(java.util.Set.of(firstId), first.stream().map(BillingReadStore.Item::householdId).collect(java.util.stream.Collectors.toSet()));
+        assertEquals(2, last.size());
+        assertEquals(java.util.Set.of(lastId), last.stream().map(BillingReadStore.Item::householdId).collect(java.util.stream.Collectors.toSet()));
+        assertEquals(java.util.List.of(), empty);
+        assertEquals(count, service.preview(period.getId(), 0, 1).households().totalElements());
+        assertEquals(count, service.submission(period.getId(), period.getRevision(), Math.toIntExact(count), 1).households().totalElements());
     }
 
     private long actor() {
