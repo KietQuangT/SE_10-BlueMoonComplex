@@ -1,7 +1,6 @@
 import type {
   AccountRecord,
   CollectionRateSummary,
-  FeeTypeRate,
   FieldChangeProposal,
   Household,
   InvoiceRecord,
@@ -202,25 +201,6 @@ export const INITIAL_RESIDENCY_CHANGES: ResidencyChangeRecord[] = [
     status: 'REJECTED',
     recordedBy: 3,
     rejectReasonAssumed: 'Thiếu thông tin ngày kết thúc',
-  },
-];
-
-export const INITIAL_FEE_RATES: FeeTypeRate[] = [
-  {
-    id: 1,
-    code: 'QUAN_LY',
-    name: 'Phí quản lý',
-    unit: 'm2',
-    unitPrice: '10000',
-    effectiveFrom: '2026-01-01',
-  },
-  {
-    id: 2,
-    code: 'RAC',
-    name: 'Phí rác',
-    unit: 'hộ',
-    unitPrice: '60000',
-    effectiveFrom: '2026-01-01',
   },
 ];
 
