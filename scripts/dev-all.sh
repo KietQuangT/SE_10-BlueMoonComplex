@@ -10,6 +10,22 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+ports=(3306 8080 5173)
+busy=()
+for port in "${ports[@]}"; do
+  if lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
+    busy+=("$port")
+  fi
+done
+if ((${#busy[@]})); then
+  echo "Các cổng dev đang bị chiếm: ${busy[*]}" >&2
+  for port in "${busy[@]}"; do
+    lsof -nP -iTCP:"$port" -sTCP:LISTEN >&2 || true
+  done
+  echo 'Chạy scripts/free-dev-ports.sh để xem và giải phóng cổng, rồi chạy lại scripts/dev-all.sh.' >&2
+  exit 1
+fi
+
 echo '==> Docker Compose: db và backend'
 docker compose up --build -d
 docker compose ps

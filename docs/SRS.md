@@ -98,11 +98,12 @@ Mỗi yêu cầu có mã ổn định để liên kết với test và task.
 | FR-BIL-001 | Tạo và quản lý loại khoản thu, phân biệt `MANDATORY` và `VOLUNTARY` | ADMIN, ACCOUNTANT | Must |
 | FR-BIL-002 | Quản lý đơn giá theo thời gian hiệu lực; không sửa lịch sử đã áp dụng | ACCOUNTANT | Must |
 | FR-BIL-003 | Tính khoản phí theo công thức đã duyệt, gồm diện tích × đơn giá khi áp dụng | ACCOUNTANT | Must |
-| FR-BIL-004 | Tạo kỳ thu cho danh sách hộ, loại phí và hạn nộp được chọn | ADMIN, ACCOUNTANT | Must |
-| FR-BIL-005 | Từ chối tạo trùng kỳ/bảng kê theo khóa nghiệp vụ được duyệt | Hệ thống | Must |
-| FR-BIL-006 | Hóa đơn/khoản phải thu lưu snapshot diện tích, đơn giá, số lượng, thành tiền và loại phí | Hệ thống | Must |
-| FR-BIL-007 | Đóng góp tự nguyện lưu theo đợt, người đóng và số tiền; không cộng vào công nợ bắt buộc | ADMIN, ACCOUNTANT | Must |
+| FR-BIL-004 | Theo D26: ACCOUNTANT lập nháp/trình, ADMIN duyệt kỳ tháng hiện tại cho toàn bộ hộ ACTIVE, gồm hai loại phí D25 và hạn nộp chung trong tháng; trả lại có lý do, rút trình để sửa | ACCOUNTANT lập/trình; ADMIN duyệt/trả lại | Must |
+| FR-BIL-005 | Một kỳ chưa hủy mỗi tháng kể cả nháp; chống trùng invoice/hộ/loại, kiểm cạnh tranh. ADMIN chỉ hủy cả kỳ chưa từng có khoản thu trong tháng hiện tại, giữ lịch sử để lập lại theo D26 | Hệ thống; ADMIN hủy | Must |
+| FR-BIL-006 | Lưu revision khi trình; chặn duyệt nếu hộ/diện tích/đơn giá áp dụng đổi; phát hành snapshot hóa đơn bất biến và audit nguyên tử. Hộ ACTIVE sau phát hành tính từ kỳ sau, tạm vắng không giảm phí | Hệ thống | Must |
+| FR-BIL-007 | ADMIN quản lý đợt, ACCOUNTANT ghi/hủy đóng góp theo D26; nguyên VND dương, idempotency, ngày thực thu riêng ngày nhập, nhập muộn có lý do; giữ lịch sử và không cộng nợ bắt buộc | ADMIN quản lý đợt; ACCOUNTANT ghi/hủy | Must |
 | FR-BIL-008 | Resident xem chi tiết và lịch sử hóa đơn của đúng household, có lọc/phân trang | RESIDENT | Must |
+| FR-BIL-009 | S08: cư dân chỉ xem tên, mô tả, thời gian và trạng thái đợt tự nguyện đã công bố; không danh sách người đóng hoặc tổng/số tiền đóng góp | RESIDENT | Must |
 
 ### 4.4. Payment
 
