@@ -60,6 +60,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/households").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/v1/households", "/api/v1/households/*").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/households/*").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/fee-types", "/api/v1/fee-rates", "/api/v1/fee-preview").hasAnyRole("ADMIN", "ACCOUNTANT")
+                .requestMatchers(HttpMethod.POST, "/api/v1/fee-rates").hasRole("ACCOUNTANT")
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/fee-rates/*").hasRole("ACCOUNTANT")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/fee-rates/*").hasRole("ACCOUNTANT")
                 .anyRequest().denyAll())
             .securityContext(context -> context.securityContextRepository(contextRepository))
             .exceptionHandling(errors -> errors
