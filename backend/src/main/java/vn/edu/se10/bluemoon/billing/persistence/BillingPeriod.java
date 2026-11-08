@@ -46,6 +46,8 @@ public class BillingPeriod {
         this.createdAt = createdAt;
     }
 
+    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+
     public Long getId() { return id; }
     public String getPeriod() { return period; }
     public LocalDate getDueDate() { return dueDate; }
