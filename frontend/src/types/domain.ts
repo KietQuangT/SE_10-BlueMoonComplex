@@ -100,15 +100,6 @@ export interface ResidencyChangeRecord {
   rejectReasonAssumed?: string | null;
 }
 
-export interface FeeTypeRate {
-  id: number;
-  code: string;
-  name: string;
-  unit: 'm2' | 'hộ';
-  unitPrice: string;
-  effectiveFrom: string;
-}
-
 export interface InvoiceLine {
   feeCode: string;
   feeName: string;
