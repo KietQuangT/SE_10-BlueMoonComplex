@@ -64,6 +64,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/fee-rates").hasRole("ACCOUNTANT")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/fee-rates/*").hasRole("ACCOUNTANT")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/fee-rates/*").hasRole("ACCOUNTANT")
+                .requestMatchers(HttpMethod.GET, "/api/v1/voluntary-campaigns/*/contributions").hasAnyRole("ADMIN", "ACCOUNTANT")
+                .requestMatchers(HttpMethod.GET, "/api/v1/voluntary-donors").hasRole("ACCOUNTANT")
+                .requestMatchers(HttpMethod.GET, "/api/v1/voluntary-campaigns", "/api/v1/voluntary-campaigns/*").hasAnyRole("ADMIN", "ACCOUNTANT", "RESIDENT")
+                .requestMatchers(HttpMethod.POST, "/api/v1/voluntary-campaigns", "/api/v1/voluntary-campaigns/*/publish", "/api/v1/voluntary-campaigns/*/close").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/api/v1/voluntary-campaigns/*").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/voluntary-campaigns/*/contributions", "/api/v1/voluntary-contributions/*/void").hasRole("ACCOUNTANT")
                 .anyRequest().denyAll())
             .securityContext(context -> context.securityContextRepository(contextRepository))
             .exceptionHandling(errors -> errors
@@ -90,7 +96,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(origin));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Content-Type", "X-CSRF-TOKEN"));
+        config.setAllowedHeaders(List.of("Content-Type", "X-CSRF-TOKEN", "Idempotency-Key"));
         config.setExposedHeaders(List.of("X-Request-Id"));
         config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
