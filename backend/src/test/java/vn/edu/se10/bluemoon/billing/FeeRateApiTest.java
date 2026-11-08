@@ -49,6 +49,13 @@ class FeeRateApiTest {
             mvc.perform(get(path).with(authentication(principal("ACCOUNTANT", true))))
                     .andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("PASSWORD_CHANGE_REQUIRED"));
         }
+        mvc.perform(post("/api/v1/fee-rates").with(csrf()).contentType("application/json").content(BODY)).andExpect(status().isUnauthorized());
+        mvc.perform(patch("/api/v1/fee-rates/1").with(csrf()).contentType("application/json").content("{\"unitPrice\":1}")).andExpect(status().isUnauthorized());
+        mvc.perform(delete("/api/v1/fee-rates/1").with(csrf())).andExpect(status().isUnauthorized());
+        var restricted = authentication(principal("ACCOUNTANT", true));
+        mvc.perform(post("/api/v1/fee-rates").with(restricted).with(csrf()).contentType("application/json").content(BODY)).andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("PASSWORD_CHANGE_REQUIRED"));
+        mvc.perform(patch("/api/v1/fee-rates/1").with(restricted).with(csrf()).contentType("application/json").content("{\"unitPrice\":1}")).andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("PASSWORD_CHANGE_REQUIRED"));
+        mvc.perform(delete("/api/v1/fee-rates/1").with(restricted).with(csrf())).andExpect(status().isForbidden()).andExpect(jsonPath("$.code").value("PASSWORD_CHANGE_REQUIRED"));
         for (String role : List.of("ADMIN", "RESIDENT")) {
             var auth = authentication(principal(role, false));
             mvc.perform(post("/api/v1/fee-rates").with(auth).with(csrf()).contentType("application/json").content(BODY)).andExpect(status().isForbidden());
@@ -58,6 +65,10 @@ class FeeRateApiTest {
         var accountant = authentication(principal("ACCOUNTANT", false));
         mvc.perform(post("/api/v1/fee-rates").with(accountant).contentType("application/json").content(BODY)).andExpect(status().isForbidden());
         mvc.perform(post("/api/v1/fee-rates").with(accountant).with(csrf().useInvalidToken()).contentType("application/json").content(BODY)).andExpect(status().isForbidden());
+        mvc.perform(patch("/api/v1/fee-rates/1").with(accountant).contentType("application/json").content("{\"unitPrice\":1}")).andExpect(status().isForbidden());
+        mvc.perform(patch("/api/v1/fee-rates/1").with(accountant).with(csrf().useInvalidToken()).contentType("application/json").content("{\"unitPrice\":1}")).andExpect(status().isForbidden());
+        mvc.perform(delete("/api/v1/fee-rates/1").with(accountant)).andExpect(status().isForbidden());
+        mvc.perform(delete("/api/v1/fee-rates/1").with(accountant).with(csrf().useInvalidToken())).andExpect(status().isForbidden());
         verifyNoInteractions(rates, calculation);
     }
 
