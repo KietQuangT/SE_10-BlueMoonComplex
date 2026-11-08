@@ -75,6 +75,18 @@ class VoluntaryContributionServiceTest {
         verifyNoInteractions(donors, audit);
     }
 
+    @Test
+    void receiptDateUsesVietnamesePublicationDayAtUtcBoundary() {
+        var input = ContributionInput.parse(3, 4, "100", LocalDate.of(2026, 11, 7), null, key);
+        var campaign = new VoluntaryCampaign("Test", null, LocalDate.of(2026, 11, 7), LocalDate.of(2026, 11, 30), 1, clock.instant());
+        campaign.publish(1, Instant.parse("2026-11-07T17:30:00Z"));
+        when(campaigns.lockById(3)).thenReturn(Optional.of(campaign));
+        when(contributions.findByRecordedByAndIdempotencyKey(8, key)).thenReturn(Optional.empty());
+        when(manager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
+        assertEquals("INVALID_PAID_DATE", assertThrows(ConflictException.class, () -> service.record(input, 8)).code());
+        verifyNoInteractions(donors, audit);
+    }
+
     private VoluntaryContribution makeContribution(ContributionInput input, ResidentDonorLookup.Donor donor) {
         return new VoluntaryContribution(input.campaignId(), donor.id(), donor.householdId(), donor.fullName(),
                 donor.householdCode(), donor.apartmentCode(), input.amount(), input.paidOn(), input.lateReason(),
