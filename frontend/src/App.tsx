@@ -135,8 +135,8 @@ export function App(): React.ReactElement {
 
           {/* ACCOUNTANT Routes */}
           <Route element={<RequireRole roles={['ACCOUNTANT']} />}>
-            <Route path="/accountant/billing-periods" element={<ApiBillingPage />} />
-            <Route path="/accountant/voluntary" element={<ApiVoluntaryPage />} />
+            <Route path="/accountant/billing-periods" element={mode === 'api' ? <ApiBillingPage /> : <div className="wayfinding-page">Kỳ thu chưa khả dụng trong chế độ Demo.</div>} />
+            <Route path="/accountant/voluntary" element={mode === 'api' ? <ApiVoluntaryPage /> : <div className="wayfinding-page">Đóng góp chưa khả dụng trong chế độ Demo.</div>} />
             <Route path="/accountant/collections" element={<CollectionsPage />} />
             <Route path="/accountant/collection-rate" element={<CollectionRatePage />} />
           </Route>

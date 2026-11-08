@@ -147,3 +147,11 @@ Chưa tick foundation DoD khi các điều kiện này chưa có bằng chứng.
 ### S08: sửa kiểm thử tích hợp PR #20, 09/11/2026
 - Trên nền `ac4cd20aaca4e6f26921841658e5284df08d68a9`, ba lớp billing tái hiện 1 failure, 7 errors với MySQL 8.4 riêng; lỗi stub spy qua proxy MANDATORY làm Mockito dở dang, và truy vấn DATETIME sai kiểu `Instant`.
 - Sau sửa test và ngày fixture đóng góp, `cd backend && ./mvnw -B -ntp -Pintegration verify` với JDK 21.0.9 và container MySQL 8.4 riêng: 213 unit, 120 integration, 0 lỗi, BUILD SUCCESS (1 phút 39 giây). Không dùng DB hoặc volume chia sẻ; CI remote cần kiểm sau push.
+
+### S08 UI review fixes (08/11/2026)
+
+- `cd frontend && npm test`: 19 files, 102 tests passed; React `act(...)` warnings in existing fee-rates and auth-session tests.
+- `cd frontend && npx tsc -b`: passed.
+- `cd frontend && npm run build`: passed.
+- Focused regression tests cover Demo route isolation, account-scoped contribution retry, definitive 409 rejection, revision selection across all period statuses, and stale-version reselection.
+- Browser checks with the real backend were not run. Unresolved contributions are retained in memory across route navigation and account changes, but not a full page reload or tab closure. No backend files or schema changed.
