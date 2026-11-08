@@ -40,7 +40,7 @@ public class VoluntaryCampaignService {
     @Transactional
     public VoluntaryCampaign create(String name, String description, LocalDate opensOn, LocalDate closesOn, long actor) {
         validate(name, description, opensOn, closesOn);
-        var campaign = campaigns.saveAndFlush(new VoluntaryCampaign(name.trim(), trim(description), opensOn, closesOn, actor, clock.instant()));
+        var campaign = campaigns.saveAndFlush(new VoluntaryCampaign(name.strip(), trim(description), opensOn, closesOn, actor, clock.instant()));
         record(actor, "VOLUNTARY_CAMPAIGN_CREATED", campaign);
         return campaign;
     }
@@ -49,7 +49,7 @@ public class VoluntaryCampaignService {
     public VoluntaryCampaign update(long id, long version, String name, String description, LocalDate opensOn, LocalDate closesOn, long actor) {
         validate(name, description, opensOn, closesOn);
         var campaign = locked(id, version, "DRAFT");
-        campaign.update(name.trim(), trim(description), opensOn, closesOn);
+        campaign.update(name.strip(), trim(description), opensOn, closesOn);
         campaigns.flush();
         record(actor, "VOLUNTARY_CAMPAIGN_UPDATED", campaign);
         return campaign;
@@ -144,7 +144,7 @@ public class VoluntaryCampaignService {
     }
 
     private void validate(String name, String description, LocalDate opensOn, LocalDate closesOn) {
-        if (name == null || name.isBlank() || name.trim().length() > 150 || (description != null && description.trim().length() > 2000)) {
+        if (name == null || name.isBlank() || name.strip().codePointCount(0, name.strip().length()) > 150 || (description != null && description.strip().codePointCount(0, description.strip().length()) > 2000)) {
             throw new BadRequestException("VALIDATION");
         }
         if (opensOn == null || closesOn == null || closesOn.isBefore(opensOn)) throw new BadRequestException("INVALID_DATE");
@@ -155,6 +155,6 @@ public class VoluntaryCampaignService {
                 "status", campaign.getStatus(), "opensOn", campaign.getOpensOn().toString(), "closesOn", campaign.getClosesOn().toString()));
     }
 
-    private static String trim(String value) { return value == null ? null : value.trim(); }
+    private static String trim(String value) { return value == null ? null : value.strip(); }
     private LocalDate today() { return LocalDate.now(clock.withZone(BUSINESS_ZONE)); }
 }

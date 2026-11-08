@@ -22,8 +22,8 @@ public record ContributionInput(long campaignId, long residentId, BigDecimal amo
         if (key == null || !key.matches("(?i)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
             throw new BadRequestException("INVALID_IDEMPOTENCY_KEY");
         }
-        String normalizedReason = lateReason == null || lateReason.isBlank() ? null : lateReason.trim();
-        if (normalizedReason != null && normalizedReason.length() > 255) throw new BadRequestException("REASON_REQUIRED");
+        String normalizedReason = lateReason == null || lateReason.isBlank() ? null : lateReason.strip();
+        if (normalizedReason != null && normalizedReason.codePointCount(0, normalizedReason.length()) > 255) throw new BadRequestException("REASON_REQUIRED");
         String normalizedKey = UUID.fromString(key).toString();
         return new ContributionInput(campaignId, residentId, money, paidOn, normalizedReason, normalizedKey,
                 fingerprint(campaignId, residentId, money, paidOn, normalizedReason));

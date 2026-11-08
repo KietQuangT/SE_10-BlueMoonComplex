@@ -157,10 +157,10 @@ public class BillingPeriodService {
     }
 
     private String requiredReason(String reason) {
-        if (reason == null || reason.isBlank() || reason.trim().length() > 255) {
+        if (reason == null || reason.isBlank() || reason.strip().codePointCount(0, reason.strip().length()) > 255) {
             throw new BadRequestException("REASON_REQUIRED");
         }
-        return reason.trim();
+        return reason.strip();
     }
 
     private record Source(List<HouseholdLookup.BillingHousehold> households, List<BillingSnapshotStore.Rate> rates) {
