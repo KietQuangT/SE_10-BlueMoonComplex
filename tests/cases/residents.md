@@ -1,91 +1,200 @@
-# Ca kiểm thử RES
+# Ca kiểm thử residents
 
-Tiền tố `/api/v1` áp dụng cho endpoint API viết rút gọn; thời gian nghiệp vụ dùng Asia/Ho_Chi_Minh.
+### RES-01.1 — Thêm nhân khẩu hợp lệ
 
-## RES-01 — Thêm nhân khẩu vào hộ.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `POST /api/v1/households/{id}/residents`.
+- **Dữ liệu vào:** Hộ `<HOUSEHOLD_ID>` ACTIVE; JSON `{"fullName":"Test Person","identityNumber":"<TEST_IDENTITY_NUMBER>","dateOfBirth":"1990-01-01","phone":"<TEST_PHONE>","relationshipToHead":"Con"}`; các giá trị định danh chỉ dùng cho thử nghiệm.
+- **Các bước:**
+  1. Lấy CSRF trong phiên ADMIN.
+  2. Gửi JSON tới `/api/v1/households/<HOUSEHOLD_ID>/residents` với token.
+  3. Lưu ID nhân khẩu từ response.
+- **Kỳ vọng:** HTTP 201; `residencyStatus=RESIDING`, `householdId=<HOUSEHOLD_ID>`.
+- **Kiểm sau:** GET `/api/v1/residents/<RESIDENT_ID>`; có audit `RESIDENT_CREATED`.
+- **Nguồn:** RES-01; `backend/src/main/java/vn/edu/se10/bluemoon/residency/application/ResidentService.java:17`.
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
+### RES-01.2 — Từ chối giấy tờ đã dùng bởi nhân khẩu hiện cư trú
 
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `POST /api/v1/households/{id}/residents`.
+- **Dữ liệu vào:** Đã có nhân khẩu RESIDING dùng `<TEST_IDENTITY_NUMBER>`; JSON `{"fullName":"Other Test","identityNumber":"<TEST_IDENTITY_NUMBER>","dateOfBirth":"1991-01-01"}`.
+- **Các bước:**
+  1. Lấy CSRF trong phiên ADMIN.
+  2. Gửi JSON tới `/api/v1/households/<HOUSEHOLD_ID>/residents` với token.
+  3. Đọc response đã che dữ liệu.
+- **Kỳ vọng:** HTTP 409; `code=IDENTITY_NUMBER_ALREADY_USED`; lỗi không chứa số giấy tờ.
+- **Kiểm sau:** GET danh sách hộ: không thêm nhân khẩu `Other Test`.
+- **Nguồn:** RES-01; `backend/src/main/java/vn/edu/se10/bluemoon/residency/application/ResidentService.java:17`.
 
-**Điều kiện và kết quả mong đợi:**
-- **RES-01.1:** ADMIN, `POST /households/{id}/residents`, màn `/admin/households/:id/residents/new`. Trạng thái cư trú: `RESIDING`, `TEMPORARILY_ABSENT`, `MOVED_OUT`.
-- **RES-01.2:** Trùng số giấy tờ (`identity_number`) trong nhóm `RESIDING` và `TEMPORARILY_ABSENT` trên toàn hệ thống trả `409`, lỗi không chứa số giấy tờ.
-- **RES-01.3:** Ngày sinh không ở tương lai.
+### RES-01.3 — Từ chối ngày sinh trong tương lai
 
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `POST /api/v1/households/{id}/residents`.
+- **Dữ liệu vào:** JSON `{"fullName":"Future Test","dateOfBirth":"<TOMORROW_YYYY-MM-DD>"}`; ngày mai theo múi giờ Việt Nam.
+- **Các bước:**
+  1. Lấy CSRF trong phiên ADMIN.
+  2. Gửi JSON tới `/api/v1/households/<HOUSEHOLD_ID>/residents` với token.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 400; `code=INVALID_RESIDENT`.
+- **Kiểm sau:** GET danh sách hộ: không có `Future Test`.
+- **Nguồn:** RES-01; `backend/src/main/java/vn/edu/se10/bluemoon/residency/application/ResidentService.java:17`.
 
-## RES-02 — Danh sách nhân khẩu của hộ.
+### RES-02.1 — Lọc nhân khẩu theo trạng thái
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `GET /api/v1/households/{id}/residents?status=MOVED_OUT&page=0&size=10`.
+- **Dữ liệu vào:** Hộ có một nhân khẩu MOVED_OUT và một RESIDING.
+- **Các bước:**
+  1. Đăng nhập ADMIN.
+  2. Gọi `/api/v1/households/<HOUSEHOLD_ID>/residents?status=MOVED_OUT&page=0&size=10`.
+  3. Đọc danh sách.
+- **Kỳ vọng:** HTTP 200; chỉ có nhân khẩu MOVED_OUT của hộ.
+- **Kiểm sau:** Đối chiếu `residencyStatus` của từng phần tử.
+- **Nguồn:** RES-02; `backend/src/main/java/vn/edu/se10/bluemoon/residency/application/ResidentService.java:17`.
 
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
+### RES-02.2 — Cư dân bị từ chối danh sách quản trị
 
-**Điều kiện và kết quả mong đợi:**
-- **RES-02.1:** ADMIN gọi `GET /households/{id}/residents` với `status` và phân trang: kết quả chỉ chứa nhân khẩu của hộ có trạng thái đã chọn.
-- **RES-02.2:** Quyền xem số giấy tờ và số điện thoại chỉ có ADMIN; cư dân không thấy.
+- **Vai trò:** RESIDENT.
+- **Điểm vào:** `GET /api/v1/households/{id}/residents`.
+- **Dữ liệu vào:** Phiên RESIDENT thuộc hộ `<HOUSEHOLD_ID>`.
+- **Các bước:**
+  1. Đăng nhập RESIDENT đã đổi mật khẩu.
+  2. Gọi `GET /api/v1/households/<HOUSEHOLD_ID>/residents`.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 403; không trả danh sách chứa giấy tờ hoặc số điện thoại.
+- **Kiểm sau:** Gọi `/api/v1/households/me/residents` để kiểm dữ liệu của chính hộ.
+- **Nguồn:** RES-02; `backend/src/main/java/vn/edu/se10/bluemoon/config/SecurityConfig.java:44`.
 
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
+### RES-03.1 — Xem thông tin nhân khẩu
 
-## RES-03 — Xem và sửa nhân khẩu.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `GET /api/v1/residents/{id}`.
+- **Dữ liệu vào:** Nhân khẩu `<RESIDENT_ID>` có `fullName=Test Person`.
+- **Các bước:**
+  1. Đăng nhập ADMIN.
+  2. Gọi `GET /api/v1/residents/<RESIDENT_ID>`.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 200; `id=<RESIDENT_ID>` và `fullName=Test Person`.
+- **Kiểm sau:** Đối chiếu hộ của nhân khẩu qua `householdId`.
+- **Nguồn:** RES-03; `backend/src/main/java/vn/edu/se10/bluemoon/residency/application/ResidentService.java:17`.
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
+### RES-03.2 — Sửa tên nhân khẩu
 
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `PATCH /api/v1/residents/{id}`.
+- **Dữ liệu vào:** Nhân khẩu `<RESIDENT_ID>` tồn tại; JSON `{"fullName":"Test Person Updated"}`.
+- **Các bước:**
+  1. Lấy CSRF trong phiên ADMIN.
+  2. Gửi PATCH `/api/v1/residents/<RESIDENT_ID>` với JSON và token.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 200; `fullName=Test Person Updated`.
+- **Kiểm sau:** GET lại nhân khẩu; có audit `RESIDENT_UPDATED`.
+- **Nguồn:** RES-03; `backend/src/main/java/vn/edu/se10/bluemoon/residency/application/ResidentService.java:17`.
 
-**Điều kiện và kết quả mong đợi:**
-- **RES-03.1:** ADMIN xem một nhân khẩu đã tạo bằng `GET /residents/{id}`, sửa trường hợp lệ bằng `PATCH`, rồi GET lại: trường sửa có giá trị mới.
+### RES-04.1 — Chuyển đi hủy đơn đang chờ
 
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `POST /api/v1/residents/{id}/move-out`.
+- **Dữ liệu vào:** Nhân khẩu `<RESIDENT_ID>` RESIDING có hai đơn tạm vắng PENDING; JSON `{"effectiveDate":"<TODAY_YYYY-MM-DD>","reason":"Chuyen di thu nghiem"}`.
+- **Các bước:**
+  1. Lấy CSRF trong phiên ADMIN.
+  2. Gửi POST `/api/v1/residents/<RESIDENT_ID>/move-out` với JSON và token.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 200; `residencyStatus=MOVED_OUT`.
+- **Kiểm sau:** GET lại nhân khẩu và lịch sử hộ; hai đơn thành CANCELLED, mỗi đơn có audit `ABSENCE_CANCELLED`; tài khoản và hộ không tự đổi trạng thái.
+- **Nguồn:** RES-04; `backend/src/main/java/vn/edu/se10/bluemoon/residency/application/ResidentService.java:17`.
 
-## RES-04 — Chuyển đi.
+### RES-04.2 — Từ chối chuyển đi lần hai
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `POST /api/v1/residents/{id}/move-out`.
+- **Dữ liệu vào:** Nhân khẩu `<RESIDENT_ID>` đã MOVED_OUT; JSON `{"effectiveDate":"<TODAY_YYYY-MM-DD>"}`.
+- **Các bước:**
+  1. Lấy CSRF trong phiên ADMIN.
+  2. Gửi POST `/api/v1/residents/<RESIDENT_ID>/move-out` với token.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 409; `code=RESIDENT_ALREADY_MOVED_OUT`.
+- **Kiểm sau:** GET lịch sử hộ: không thêm dòng MOVE_OUT thứ hai.
+- **Nguồn:** RES-04; `backend/src/main/java/vn/edu/se10/bluemoon/residency/application/ResidentService.java:17`.
 
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
+### RES-05.1 — Lịch sử có bản ghi chuyển đi
 
-**Điều kiện và kết quả mong đợi:**
-- **RES-04.1:** ADMIN, `POST /residents/{id}/move-out`, màn `/admin/move-outs`. Trạng thái sang `MOVED_OUT`; không xóa bản ghi; ghi lịch sử.
-- **RES-04.2:** Không có ngày tương lai; lý do không bắt buộc; chuyển đi lần hai trả 409; không hoàn tác.
-- **RES-04.3:** Chuyển đi không tự khóa tài khoản và không tự đóng hộ.
-- **RES-04.4:** Mọi đơn tạm vắng đang chờ của người đó tự chuyển `CANCELLED`, mỗi đơn một audit `ABSENCE_CANCELLED`.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `GET /api/v1/households/{id}/residency-changes?page=0&size=20`.
+- **Dữ liệu vào:** Hộ `<HOUSEHOLD_ID>` có nhân khẩu vừa chuyển đi.
+- **Các bước:**
+  1. Đăng nhập ADMIN.
+  2. Gọi `GET /api/v1/households/<HOUSEHOLD_ID>/residency-changes?page=0&size=20`.
+  3. Đọc các bản ghi.
+- **Kỳ vọng:** HTTP 200; có bản ghi `changeType=MOVE_OUT` cho nhân khẩu đã chuyển.
+- **Kiểm sau:** Đối chiếu ID nhân khẩu và ngày hiệu lực với thao tác chuyển đi.
+- **Nguồn:** RES-05; `backend/src/main/java/vn/edu/se10/bluemoon/residency/api/ResidentController.java:16`.
 
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
+### RES-05.2 — Lịch sử hộ không tồn tại
 
-## RES-05 — Lịch sử biến động.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `GET /api/v1/households/{id}/residency-changes`.
+- **Dữ liệu vào:** `<MISSING_HOUSEHOLD_ID>` không tồn tại.
+- **Các bước:**
+  1. Đăng nhập ADMIN.
+  2. Gọi `GET /api/v1/households/<MISSING_HOUSEHOLD_ID>/residency-changes`.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 404; `code=HOUSEHOLD_NOT_FOUND`.
+- **Kiểm sau:** SQL xác nhận không có hộ với ID đó.
+- **Nguồn:** RES-05; `backend/src/main/java/vn/edu/se10/bluemoon/residency/application/ResidentService.java:17`.
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
+### RES-06.1 — Cư dân xem thành viên hộ của mình
 
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
+- **Vai trò:** RESIDENT.
+- **Điểm vào:** `GET /api/v1/households/me/residents`.
+- **Dữ liệu vào:** RESIDENT thuộc hộ A; hộ A có `Test Person`, hộ B có `Other Person`.
+- **Các bước:**
+  1. Đăng nhập RESIDENT thuộc hộ A.
+  2. Gọi `GET /api/v1/households/me/residents`.
+  3. Đọc từng phần tử.
+- **Kỳ vọng:** HTTP 200; có `Test Person`, không có `Other Person`; không có `identityNumber` hoặc `phone`.
+- **Kiểm sau:** Đối chiếu danh sách với dữ liệu hộ A qua phiên ADMIN.
+- **Nguồn:** RES-06; `backend/src/main/java/vn/edu/se10/bluemoon/residency/application/ResidentService.java:17`.
 
-**Điều kiện và kết quả mong đợi:**
-- **RES-05.1:** ADMIN gọi `GET /households/{id}/residency-changes` sau khi tạo biến động: danh sách phân trang chứa biến động của hộ đã chọn. Dòng `change_type` gồm `MOVE_OUT`, `TEMPORARY_ABSENCE`, `RETURN`.
+### RES-06.2 — ADMIN không được gọi endpoint cư dân
 
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `GET /api/v1/households/me/residents`.
+- **Dữ liệu vào:** Phiên ADMIN đã đổi mật khẩu.
+- **Các bước:**
+  1. Đăng nhập ADMIN.
+  2. Gọi `GET /api/v1/households/me/residents`.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 403; không có danh sách thành viên.
+- **Kiểm sau:** Gọi endpoint ADMIN `/api/v1/households/<HOUSEHOLD_ID>/residents` để kiểm quyền quản trị.
+- **Nguồn:** RES-06; `backend/src/main/java/vn/edu/se10/bluemoon/config/SecurityConfig.java:44`.
 
-## RES-06 — Thành viên hộ của cư dân.
+### RES-07.1 — Gợi ý theo tên hợp lệ
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `GET /api/v1/residents/suggest?q=Test`.
+- **Dữ liệu vào:** Có nhân khẩu `Test Person` RESIDING và `Test Former` MOVED_OUT.
+- **Các bước:**
+  1. Đăng nhập ADMIN.
+  2. Gọi `GET /api/v1/residents/suggest?q=Test`.
+  3. Đọc mảng response.
+- **Kỳ vọng:** HTTP 200; tối đa 10 kết quả, có `Test Person`, không có `Test Former`; không có số giấy tờ hoặc điện thoại.
+- **Kiểm sau:** Đối chiếu trạng thái từng kết quả bằng GET nhân khẩu.
+- **Nguồn:** RES-07; `backend/src/main/java/vn/edu/se10/bluemoon/residency/api/DeclarationController.java:19`.
 
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
+### RES-07.2 — Từ chối từ khóa một ký tự
 
-**Điều kiện và kết quả mong đợi:**
-- **RES-06.1:** RESIDENT, `GET /households/me/residents`; chỉ thấy hộ của chính mình; không thấy số giấy tờ và số điện thoại.
-- **RES-06.2:** Mở `/resident/household`: chỉ thấy thành viên hộ của tài khoản, không có số giấy tờ hoặc số điện thoại.
-
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
-
-## RES-07 — Gợi ý tên nhân khẩu.
-
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
-
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
-
-**Điều kiện và kết quả mong đợi:**
-- **RES-07.1:** ADMIN, `GET /residents/suggest?q=`: tối thiểu 2 ký tự (ngắn hơn trả `400 INVALID_FILTER`), tối đa 10 kết quả, chỉ nhân khẩu `RESIDING` hoặc `TEMPORARILY_ABSENT`, không trả CCCD hay SĐT.
-
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `GET /api/v1/residents/suggest?q=T`.
+- **Dữ liệu vào:** Query `q=T`.
+- **Các bước:**
+  1. Đăng nhập ADMIN.
+  2. Gọi `GET /api/v1/residents/suggest?q=T`.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 400; `code=INVALID_FILTER`.
+- **Kiểm sau:** Gọi lại `GET /api/v1/residents/suggest?q=Test`: HTTP 200.
+- **Nguồn:** RES-07; `backend/src/main/java/vn/edu/se10/bluemoon/residency/api/DeclarationController.java:19`.
 
 ## Điểm chưa xác định
 
-Các nhánh không nêu mã HTTP hoặc nội dung chính xác trong outline: ghi thực tế và đối chiếu mã nguồn trước khi kết luận; không tự suy đoán mã.
+Không có điểm chưa xác định trong các ca hiện tại.
