@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ApiBillingPage } from '../screens/s08/ApiBillingPage';
 import { ApiVoluntaryPage } from '../screens/s08/ApiVoluntaryPage';
@@ -149,4 +149,36 @@ it('requires reselection after a stale version reload', async () => {
   expect(screen.queryByRole('button', { name: 'Phát hành' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: '2026-11' }));
   expect(await screen.findByRole('button', { name: 'Phát hành' })).toBeInTheDocument();
+});
+
+it('confirms cancellation against the issued period total while inspecting an older submission', async () => {
+  const p = (await billing.listBillingPeriods(0)).content[0];
+  vi.mocked(billing.listBillingPeriods).mockResolvedValue(page([{ ...p, status: 'ISSUED', latestRevision: 2, total: '530000', allowedActions: ['CANCEL'] }]));
+  vi.mocked(billing.periodInvoices).mockResolvedValue(page([]));
+  vi.mocked(billing.periodSubmission).mockResolvedValue({ revision: 1, householdCount: 1, total: '500000', version: 2, households: page([]) });
+  render(<ApiBillingPage />);
+  fireEvent.click(await screen.findByRole('button', { name: '2026-11' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Xem bản trình' }));
+  fireEvent.change(screen.getByLabelText('Bản trình'), { target: { value: '1' } });
+  await screen.findByText(/500\.000 đ/);
+  fireEvent.click(screen.getByRole('button', { name: 'Hủy kỳ' }));
+  const dialog = document.querySelector('dialog')!;
+  expect(within(dialog).getByText(/tổng 530\.000 đ/)).toBeInTheDocument();
+  expect(billing.periodAction).not.toHaveBeenCalled();
+});
+
+it('requires the current preview before submitting a draft instead of an old revision', async () => {
+  state.role = 'ACCOUNTANT';
+  const p = (await billing.listBillingPeriods(0)).content[0];
+  vi.mocked(billing.listBillingPeriods).mockResolvedValue(page([{ ...p, status: 'DRAFT', allowedActions: ['SUBMIT'] }]));
+  vi.mocked(billing.periodPreview).mockResolvedValue({ revision: null, householdCount: 1, total: '530000', version: 2, households: page([]) });
+  vi.mocked(billing.periodSubmission).mockResolvedValue({ revision: 1, householdCount: 1, total: '500000', version: 2, households: page([]) });
+  render(<ApiBillingPage />);
+  fireEvent.click(await screen.findByRole('button', { name: '2026-11' }));
+  await screen.findByRole('button', { name: 'Trình duyệt' });
+  fireEvent.click(screen.getByRole('button', { name: 'Xem bản trình' }));
+  await screen.findByText(/500\.000 đ/);
+  expect(screen.queryByRole('button', { name: 'Trình duyệt' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Xem hiện tại' }));
+  expect(await screen.findByRole('button', { name: 'Trình duyệt' })).toBeInTheDocument();
 });
