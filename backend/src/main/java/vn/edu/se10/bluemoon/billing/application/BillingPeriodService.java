@@ -3,6 +3,7 @@ package vn.edu.se10.bluemoon.billing.application;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import vn.edu.se10.bluemoon.billing.persistence.BillingPeriod;
 import vn.edu.se10.bluemoon.billing.persistence.BillingPeriodRepository;
 import vn.edu.se10.bluemoon.common.audit.AuditService;
 import vn.edu.se10.bluemoon.common.error.ConflictException;
+import vn.edu.se10.bluemoon.common.error.NotFoundException;
 
 @Service
 public class BillingPeriodService {
@@ -44,6 +46,26 @@ public class BillingPeriodService {
         audit.record(actor, "BILLING_PERIOD_CREATED", "BillingPeriod", created.getId().toString(),
                 Map.of("period", period, "status", "DRAFT", "dueDate", dueDate.toString()));
         return created;
+    }
+
+    @Transactional
+    public BillingPeriod updateDueDate(long id, LocalDate dueDate, long version, long actor) {
+        BillingPeriod period = editablePeriod(id, version, "DRAFT");
+        rules.requireDueDateInMonth(YearMonth.parse(period.getPeriod()), dueDate);
+        period.setDueDate(dueDate);
+        periods.flush();
+        audit.record(actor, "BILLING_PERIOD_UPDATED", "BillingPeriod", Long.toString(id),
+                Map.of("period", period.getPeriod(), "dueDate", dueDate.toString()));
+        return period;
+    }
+
+    private BillingPeriod editablePeriod(long id, long version, String expectedStatus) {
+        BillingPeriod period = periods.lockById(id)
+                .orElseThrow(() -> new NotFoundException("BILLING_PERIOD_NOT_FOUND"));
+        if (period.getVersion() != version) throw new ConflictException("STALE_VERSION");
+        rules.requireCurrent(period.getPeriod());
+        if (!expectedStatus.equals(period.getStatus())) throw new ConflictException("INVALID_STATE");
+        return period;
     }
 
     private boolean duplicateActiveMonth(Throwable failure) {
