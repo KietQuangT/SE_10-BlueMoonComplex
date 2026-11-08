@@ -26,6 +26,18 @@ it('shows actions only for editable rows', async () => {
   expect(screen.getAllByRole('button', { name: 'Xóa' })).toHaveLength(1);
   expect(screen.getByText('Đã khóa')).toBeInTheDocument();
 });
+it('opens the edit form above the table with the current price focused and cancels it', async () => {
+  render(<FeeRatesPage />);
+  await screen.findByText('7.000,50 đ');
+  fireEvent.click(screen.getByRole('button', { name: 'Sửa' }));
+  const form = screen.getByRole('region', { name: 'Sửa đơn giá' });
+  const price = screen.getByLabelText('Đơn giá');
+  expect(form.compareDocumentPosition(screen.getByRole('table')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(price).toHaveValue(String(rates[0].unitPrice));
+  expect(price).toHaveFocus();
+  fireEvent.click(screen.getByRole('button', { name: 'Hủy' }));
+  expect(screen.queryByRole('region', { name: 'Sửa đơn giá' })).not.toBeInTheDocument();
+});
 it('shows administrators read-only access', async () => {
   state.role = 'ADMIN';
   render(<FeeRatesPage />);
