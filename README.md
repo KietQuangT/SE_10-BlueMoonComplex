@@ -99,6 +99,30 @@ cp .env.example .env
 
 Mở `.env` và thiết lập `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` cùng các giá trị cần thiết cho môi trường local. Không commit `.env` hoặc chia sẻ mật khẩu trong issue, chat và log.
 
+### Chạy toàn bộ môi trường bằng script
+
+Sau khi cấu hình `.env`, mở terminal tại thư mục gốc và chạy:
+
+```bash
+scripts/dev-all.sh
+```
+
+Script khởi động MySQL và backend bằng Docker Compose, chờ backend khỏe tại `http://localhost:8080`, rồi chạy frontend bằng Vite tại `http://localhost:5173`. Nhấn `Ctrl+C` để dừng Vite; MySQL và backend tiếp tục chạy.
+
+Script cần các cổng `3306` (MySQL), `8080` (backend) và `5173` (frontend) còn trống. Nếu báo cổng đang bị chiếm, xem tiến trình và giải phóng cổng có xác nhận:
+
+```bash
+scripts/free-dev-ports.sh
+```
+
+Nhập `y` để dừng tiến trình/container được liệt kê hoặc `N` để giữ. Script chỉ gửi `SIGTERM` cho tiến trình thường và dùng `docker stop` cho container; sau đó chạy lại `scripts/dev-all.sh`.
+
+Để dừng riêng MySQL và backend sau khi kết thúc:
+
+```bash
+docker compose stop
+```
+
 ### 4.3. Khởi động MySQL
 
 Tại thư mục gốc dự án:
@@ -309,7 +333,8 @@ Phân công hiện tại: Kiệt (repository, frontend, API), Sơn (nền tảng
 | Vấn đề | Hướng xử lý |
 | --- | --- |
 | Maven báo sai phiên bản JDK | Kiểm tra `java -version` và cấu hình `JAVA_HOME` về JDK 21. |
-| Cổng `8080` đã được sử dụng | Chỉ chạy một backend; dừng container hoặc tiến trình JAR/IDE đang chiếm cổng. |
+| `scripts/dev-all.sh` báo cổng đang bị chiếm | Chạy `scripts/free-dev-ports.sh`, xác nhận dừng đúng tiến trình/container, rồi chạy lại `scripts/dev-all.sh`. |
+| Cổng `8080` đã được sử dụng | Chỉ chạy một backend; dùng `scripts/free-dev-ports.sh` hoặc dừng backend cũ trước khi khởi động. |
 | `GET /api/v1/auth/csrf` trả `401` | Kiểm tra có backend cũ đang chạy trên cổng `8080` hay không. |
 | MySQL báo `Access denied` | Đối chiếu `DB_*` và giá trị trong `.env`; mật khẩu trong volume MySQL cũ không tự đổi khi sửa `.env`. |
 | Đăng nhập `401` trên DB mới | Kiểm tra đã bootstrap ADMIN hay chưa. |
