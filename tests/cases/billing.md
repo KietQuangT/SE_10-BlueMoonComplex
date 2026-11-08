@@ -419,4 +419,3 @@ Các ID số trong dữ liệu (`1`, `10`, `20`, `501`, `601`, `999999`) là ID 
 
 - Khi gọi `GET /api/v1/billing-periods/{id}/submissions?revision=99` với `revision` chưa tồn tại, `BillingReadStore.java:47` trả HTTP 404 với `code=BILLING_SUBMISSION_NOT_FOUND`; mã này chưa được liệt kê tường minh trong dòng tóm tắt 404 tại `_agents_workspace/S08/01_contract.md:142` (hợp đồng mới liệt kê `BILLING_PERIOD_NOT_FOUND/INVOICE_NOT_FOUND/CAMPAIGN_NOT_FOUND/RESIDENT_NOT_FOUND`).
 - Trên giao diện `ApiBillingPage.tsx:33`, bộ lọc danh sách kỳ thu theo `period` và `status` (`GET /api/v1/billing-periods?period=&status=`) đã hỗ trợ ở backend nhưng chưa có ô lọc trên màn hình (giao diện hiện gọi `listBillingPeriods(page)` theo trang).
-

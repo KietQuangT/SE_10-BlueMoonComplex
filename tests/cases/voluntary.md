@@ -250,4 +250,3 @@ Các ID số trong dữ liệu (`101`, `102`, `103`, `701`, `702`, `801`, `99999
 
 - Khi gọi `POST /api/v1/voluntary-contributions/{id}/void` với `id` không tồn tại, `VoluntaryContributionService.java:86,88` trả HTTP 404 với `code=CONTRIBUTION_NOT_FOUND`; mã `CONTRIBUTION_NOT_FOUND` chưa được liệt kê tường minh trong dòng tóm tắt 404 tại `_agents_workspace/S08/01_contract.md:142` (hợp đồng mới liệt kê `BILLING_PERIOD_NOT_FOUND/INVOICE_NOT_FOUND/CAMPAIGN_NOT_FOUND/RESIDENT_NOT_FOUND`).
 - Khi gọi `GET /api/v1/voluntary-campaigns` hoặc `GET /api/v1/voluntary-campaigns/{id}/contributions` từ giao diện `ApiVoluntaryPage.tsx:28,29`, backend hỗ trợ tham số lọc `?status=` nhưng giao diện hiện chưa có điều khiển lọc theo `status`.
-
