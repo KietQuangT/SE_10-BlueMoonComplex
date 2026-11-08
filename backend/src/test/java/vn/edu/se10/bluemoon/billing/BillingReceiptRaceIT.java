@@ -96,6 +96,42 @@ class BillingReceiptRaceIT {
         }
     }
 
+    @Test
+    void cancellationCommittedFirstBlocksReceipt() throws Exception {
+        var tx = new TransactionTemplate(manager);
+        var locked = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        var receiptStarted = new CountDownLatch(1);
+        var pool = Executors.newFixedThreadPool(2);
+        try {
+            var cancellation = pool.submit(() -> tx.executeWithoutResult(status -> {
+                periods.cancel(period, 0, "test", actor);
+                locked.countDown();
+                await(release);
+            }));
+            assertTrue(locked.await(10, TimeUnit.SECONDS));
+            var receipt = pool.submit(() -> {
+                receiptStarted.countDown();
+                try {
+                    tx.executeWithoutResult(status -> receipts.recordReceipt(period));
+                    return "recorded";
+                } catch (ConflictException ex) {
+                    return ex.code();
+                }
+            });
+            assertTrue(receiptStarted.await(10, TimeUnit.SECONDS));
+            Thread.sleep(300);
+            assertFalse(receipt.isDone());
+            release.countDown();
+            cancellation.get(10, TimeUnit.SECONDS);
+            assertEquals("INVALID_STATE", receipt.get(10, TimeUnit.SECONDS));
+            assertEquals(0L, jdbc.queryForObject("SELECT receipt_count FROM billing_periods WHERE id=?", Long.class, period));
+        } finally {
+            release.countDown();
+            pool.shutdownNow();
+        }
+    }
+
     private static void await(CountDownLatch latch) {
         try {
             if (!latch.await(10, TimeUnit.SECONDS)) throw new AssertionError("timed out");

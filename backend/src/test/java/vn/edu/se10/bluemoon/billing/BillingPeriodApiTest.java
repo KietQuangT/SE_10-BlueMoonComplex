@@ -2,6 +2,8 @@ package vn.edu.se10.bluemoon.billing;
 
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -10,6 +12,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.time.Instant;
+import java.time.LocalDate;
+import org.springframework.test.util.ReflectionTestUtils;
+import vn.edu.se10.bluemoon.billing.persistence.BillingPeriod;
+import vn.edu.se10.bluemoon.billing.api.BillingPeriodResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,4 +69,27 @@ class BillingPeriodApiTest {
         mvc.perform(post("/api/v1/billing-periods/1/issue").with(authentication(principal("ACCOUNTANT", false))).with(csrf()).contentType("application/json").content(issue)).andExpect(status().isForbidden());
         mvc.perform(post("/api/v1/billing-periods/1/submit").with(authentication(principal("ADMIN", false))).with(csrf()).contentType("application/json").content("{\"version\":0}")).andExpect(status().isForbidden());
     }
+    @Test
+    void invalidPageHasStableFilterCode() throws Exception {
+        mvc.perform(get("/api/v1/billing-periods?page=abc").with(authentication(principal("ACCOUNTANT", false))))
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_FILTER"));
+    }
+
+    @Test
+    void accountantCanCreateAndAdminCanApprove() throws Exception {
+        var period = new BillingPeriod("2026-11", LocalDate.of(2026, 11, 30), null, 1, Instant.EPOCH);
+        ReflectionTestUtils.setField(period, "id", 5L);
+        when(periods.create("2026-11", LocalDate.of(2026, 11, 30), 1)).thenReturn(period);
+        var response = new BillingPeriodResponse(5, "2026-11", LocalDate.of(2026, 11, 30), "DRAFT", 0, 0,
+                false, true, List.of("UPDATE", "SUBMIT"), null, null, Instant.EPOCH, null, null, null, null, null, null, 0);
+        when(periods.detail(5, "ACCOUNTANT")).thenReturn(response);
+        mvc.perform(post("/api/v1/billing-periods").with(authentication(principal("ACCOUNTANT", false))).with(csrf())
+                .contentType("application/json").content("{\"period\":\"2026-11\",\"dueDate\":\"2026-11-30\"}"))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.id").value(5));
+        mvc.perform(post("/api/v1/billing-periods/5/issue").with(authentication(principal("ADMIN", false))).with(csrf())
+                .contentType("application/json").content("{\"version\":3,\"revision\":2}"))
+                .andExpect(status().isOk());
+        verify(periods).issue(eq(5L), eq(3L), eq(2L), eq(1L));
+    }
+
 }
