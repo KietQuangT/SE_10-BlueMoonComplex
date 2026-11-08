@@ -1,6 +1,10 @@
 import { ApiHttpError } from './client';
 
 const BY_CODE: Record<string, string> = {
+  FEE_RATE_FROZEN: 'Không sửa được đơn giá của tháng hiện tại hoặc tháng đã qua.',
+  FEE_RATE_DUPLICATE_MONTH: 'Đã có đơn giá cho loại phí này trong tháng đó.',
+  FEE_RATE_NOT_FOUND: 'Không tìm thấy đơn giá này. Tải lại danh sách.',
+  FEE_TYPE_NOT_FOUND: 'Không tìm thấy loại phí.',
   HOUSEHOLD_CONFLICT: 'Mã hộ hoặc mã căn hộ đã tồn tại. Kiểm tra lại rồi thử lần nữa.',
   HOUSEHOLD_NOT_FOUND: 'Không tìm thấy hộ này.',
   HOUSEHOLD_INVALID: 'Hộ không tồn tại hoặc không còn hoạt động.',

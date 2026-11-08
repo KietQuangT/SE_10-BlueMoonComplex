@@ -61,6 +61,7 @@ function useNavGroups(role: RoleCode): NavGroup[] {
         {
           heading: 'Phí',
           items: [
+            { to: '/accountant/fee-rates', label: 'Đơn giá phí', icon: 'coins' },
             { to: '/admin/voluntary', label: 'Đóng góp tự nguyện', icon: 'heart' },
             { to: '/admin/billing-periods', label: 'Tạo kỳ thu', icon: 'receipt' },
           ],
