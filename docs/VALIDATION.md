@@ -143,7 +143,3 @@ Chưa tick foundation DoD khi các điều kiện này chưa có bằng chứng.
 - Unit trên `f5eef71` (JDK 21, `./mvnw -B -ntp verify`): 122 test, 0 lỗi (`feat-s07/.agent_out/verify.log`).
 - Integration trên `f5eef71` với MySQL 8.4 (compose project `bluemoon`, V8 đã áp): `./mvnw -B -ntp -Pintegration verify` 97 test, gồm 3 test `FeeRateIntegrationIT`, BUILD SUCCESS (Sơn chạy 08/11/2026 12:42 +07).
 - Chưa kiểm: test QA của agy trên `qa/s07-agy` chưa chạy trên cùng SHA; D25 chưa commit; PR và CI remote chưa có. Chi tiết: `docs/sprint-1/TASKS.md` mục S07.
-
-### S08: tiến độ backend chưa hoàn thành, 08/11/2026
-- Trên commit `c13c104`, JDK 21, `cd backend && ./mvnw -B -ntp verify`: BUILD SUCCESS, 125 test, 0 failure/error/skipped; gồm 3 test cửa sổ ngày đóng góp.
-- Chưa chạy `-Pintegration` theo brief; chưa có migration, API, kỳ thu hay sổ đóng góp, chưa chứng minh khóa cạnh tranh. Không tick S08 hoặc nghiệm thu G2.

@@ -98,10 +98,10 @@ Mỗi yêu cầu có mã ổn định để liên kết với test và task.
 | FR-BIL-001 | Tạo và quản lý loại khoản thu, phân biệt `MANDATORY` và `VOLUNTARY` | ADMIN, ACCOUNTANT | Must |
 | FR-BIL-002 | Quản lý đơn giá theo thời gian hiệu lực; không sửa lịch sử đã áp dụng | ACCOUNTANT | Must |
 | FR-BIL-003 | Tính khoản phí theo công thức đã duyệt, gồm diện tích × đơn giá khi áp dụng | ACCOUNTANT | Must |
-| FR-BIL-004 | ACCOUNTANT tạo kỳ tháng hiện tại cho tất cả hộ ACTIVE và hai loại phí theo D25; ADMIN duyệt phát hành bản trình | ACCOUNTANT, ADMIN | Must |
-| FR-BIL-005 | Chỉ một kỳ còn hiệu lực mỗi tháng và một hóa đơn mỗi hộ trong kỳ; giữ lịch sử kỳ hủy | Hệ thống | Must |
-| FR-BIL-006 | Phát hành nguyên tử hóa đơn từ revision đã duyệt; lưu snapshot diện tích, đơn giá, số lượng, thành tiền và loại phí | Hệ thống | Must |
-| FR-BIL-007 | ADMIN quản lý đợt; ACCOUNTANT ghi/hủy đóng góp theo cửa sổ thu và idempotency, không cộng công nợ; RESIDENT chỉ đọc thông tin đợt đã công bố | ADMIN, ACCOUNTANT | Must |
+| FR-BIL-004 | Tạo kỳ thu cho danh sách hộ, loại phí và hạn nộp được chọn | ADMIN, ACCOUNTANT | Must |
+| FR-BIL-005 | Từ chối tạo trùng kỳ/bảng kê theo khóa nghiệp vụ được duyệt | Hệ thống | Must |
+| FR-BIL-006 | Hóa đơn/khoản phải thu lưu snapshot diện tích, đơn giá, số lượng, thành tiền và loại phí | Hệ thống | Must |
+| FR-BIL-007 | Đóng góp tự nguyện lưu theo đợt, người đóng và số tiền; không cộng vào công nợ bắt buộc | ADMIN, ACCOUNTANT | Must |
 | FR-BIL-008 | Resident xem chi tiết và lịch sử hóa đơn của đúng household, có lọc/phân trang | RESIDENT | Must |
 
 ### 4.4. Payment
@@ -139,7 +139,7 @@ triển khai. Các nhóm endpoint dự kiến:
 | `/api/v1/residency-declarations` | Tạo, duyệt, từ chối |
 | `/api/v1/fee-types` | Danh mục và phân loại |
 | `/api/v1/fee-rates` | Đơn giá và hiệu lực |
-| `/api/v1/billing-periods` | Tạo/trình/duyệt/hủy kỳ thu theo D26 |
+| `/api/v1/billing-periods` | Tạo/mở/đóng kỳ thu |
 | `/api/v1/charges` | Tạo bảng kê, xem chi tiết/công nợ |
 | `/api/v1/payments` | Ghi nhận và xem giao dịch |
 | `/api/v1/reports` | Báo cáo và export đã whitelist |
