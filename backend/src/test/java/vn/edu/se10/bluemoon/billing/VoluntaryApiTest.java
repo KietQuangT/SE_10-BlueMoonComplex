@@ -23,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.http.HttpMethod;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -106,6 +108,28 @@ class VoluntaryApiTest {
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value("INVALID_AMOUNT"));
         mvc.perform(post("/api/v1/voluntary-campaigns/7/contributions").with(authentication(principal("ADMIN", false))).with(csrf())
                 .header("Idempotency-Key", key).contentType("application/json").content(body)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void everyVoluntaryRouteRejectsAnonymousAndWrongRole() throws Exception {
+        record Route(HttpMethod method, String path, String role) { }
+        var routes = List.of(
+                new Route(HttpMethod.GET, "/api/v1/voluntary-campaigns", "OTHER"),
+                new Route(HttpMethod.GET, "/api/v1/voluntary-campaigns/1", "OTHER"),
+                new Route(HttpMethod.GET, "/api/v1/voluntary-campaigns/1/contributions", "RESIDENT"),
+                new Route(HttpMethod.GET, "/api/v1/voluntary-donors?q=test", "ADMIN"),
+                new Route(HttpMethod.POST, "/api/v1/voluntary-campaigns", "ACCOUNTANT"),
+                new Route(HttpMethod.PATCH, "/api/v1/voluntary-campaigns/1", "ACCOUNTANT"),
+                new Route(HttpMethod.POST, "/api/v1/voluntary-campaigns/1/publish", "ACCOUNTANT"),
+                new Route(HttpMethod.POST, "/api/v1/voluntary-campaigns/1/close", "ACCOUNTANT"),
+                new Route(HttpMethod.POST, "/api/v1/voluntary-campaigns/1/contributions", "ADMIN"),
+                new Route(HttpMethod.POST, "/api/v1/voluntary-contributions/1/void", "ADMIN"));
+        for (var route : routes) {
+            mvc.perform(request(route.method(), route.path()).with(csrf()).contentType("application/json").content("{}"))
+                    .andExpect(status().isUnauthorized());
+            mvc.perform(request(route.method(), route.path()).with(authentication(principal(route.role(), false))).with(csrf())
+                    .contentType("application/json").content("{}")).andExpect(status().isForbidden());
+        }
     }
 
 }

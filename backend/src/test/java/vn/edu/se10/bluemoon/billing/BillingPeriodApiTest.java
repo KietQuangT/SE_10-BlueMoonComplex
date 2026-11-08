@@ -23,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.http.HttpMethod;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -90,6 +92,31 @@ class BillingPeriodApiTest {
                 .contentType("application/json").content("{\"version\":3,\"revision\":2}"))
                 .andExpect(status().isOk());
         verify(periods).issue(eq(5L), eq(3L), eq(2L), eq(1L));
+    }
+
+    @Test
+    void everyBillingRouteRejectsAnonymousAndWrongRole() throws Exception {
+        record Route(HttpMethod method, String path, String role) { }
+        var routes = List.of(
+                new Route(HttpMethod.GET, "/api/v1/billing-periods", "RESIDENT"),
+                new Route(HttpMethod.GET, "/api/v1/billing-periods/1", "RESIDENT"),
+                new Route(HttpMethod.GET, "/api/v1/billing-periods/1/preview", "RESIDENT"),
+                new Route(HttpMethod.GET, "/api/v1/billing-periods/1/submissions", "RESIDENT"),
+                new Route(HttpMethod.GET, "/api/v1/billing-periods/1/invoices", "RESIDENT"),
+                new Route(HttpMethod.GET, "/api/v1/invoices/1", "RESIDENT"),
+                new Route(HttpMethod.POST, "/api/v1/billing-periods", "ADMIN"),
+                new Route(HttpMethod.PATCH, "/api/v1/billing-periods/1", "ADMIN"),
+                new Route(HttpMethod.POST, "/api/v1/billing-periods/1/submit", "ADMIN"),
+                new Route(HttpMethod.POST, "/api/v1/billing-periods/1/withdraw", "ADMIN"),
+                new Route(HttpMethod.POST, "/api/v1/billing-periods/1/return", "ACCOUNTANT"),
+                new Route(HttpMethod.POST, "/api/v1/billing-periods/1/issue", "ACCOUNTANT"),
+                new Route(HttpMethod.POST, "/api/v1/billing-periods/1/cancel", "ACCOUNTANT"));
+        for (var route : routes) {
+            mvc.perform(request(route.method(), route.path()).with(csrf()).contentType("application/json").content("{}"))
+                    .andExpect(status().isUnauthorized());
+            mvc.perform(request(route.method(), route.path()).with(authentication(principal(route.role(), false))).with(csrf())
+                    .contentType("application/json").content("{}")).andExpect(status().isForbidden());
+        }
     }
 
 }
