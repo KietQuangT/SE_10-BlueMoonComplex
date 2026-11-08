@@ -9,6 +9,7 @@ public interface HouseholdLookup {
 
     /** Requires an existing REPEATABLE_READ transaction held until issue commits. */
     List<BillingHousehold> lockActiveForBilling();
+    List<BillingHousehold> listActiveForBilling();
     Optional<String> findStatus(long id);
     Optional<BigDecimal> findAreaM2(long householdId);
 }

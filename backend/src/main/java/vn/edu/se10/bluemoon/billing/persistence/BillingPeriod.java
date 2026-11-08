@@ -103,6 +103,10 @@ public class BillingPeriod {
     public long getVersion() { return version; }
     public long getRevision() { return revision; }
     public long getReceiptCount() { return receiptCount; }
+    public Instant getSubmittedAt() { return submittedAt; }
+    public Instant getIssuedAt() { return issuedAt; }
+    public Instant getCancelledAt() { return cancelledAt; }
+    public String getCancelReason() { return cancelReason; }
     public String getReturnReason() { return returnReason; }
     public Long getReplacesPeriodId() { return replacesPeriodId; }
     public Instant getCreatedAt() { return createdAt; }

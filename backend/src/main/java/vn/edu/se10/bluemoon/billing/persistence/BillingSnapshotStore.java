@@ -34,15 +34,18 @@ public class BillingSnapshotStore {
     public record Submission(long id, long count, BigDecimal total) { }
 
     /** Caller locks the ACTIVE household range before calling this method, in REPEATABLE_READ. */
-    public List<Rate> lockRates(LocalDate month) {
-        List<Rate> rows = jdbc.query("""
+    public List<Rate> lockRates(LocalDate month) { return rates(month, true); }
+    public List<Rate> readRates(LocalDate month) { return rates(month, false); }
+
+    private List<Rate> rates(LocalDate month, boolean lock) {
+        String sql = """
                 SELECT t.id, t.code, t.name, t.calculation_method, r.id AS rate_id, r.unit_price
                 FROM fee_rates r FORCE INDEX (uq_fee_rates_type_month)
                 JOIN fee_types t ON t.id = r.fee_type_id
                 WHERE t.code IN ('MANAGEMENT_FEE', 'WASTE_FEE') AND r.effective_from <= ?
                 ORDER BY r.fee_type_id, r.effective_from DESC
-                FOR UPDATE
-                """, (rs, row) -> new Rate(rs.getLong("id"), rs.getString("code"), rs.getString("name"),
+                """ + (lock ? " FOR UPDATE" : "");
+        List<Rate> rows = jdbc.query(sql, (rs, row) -> new Rate(rs.getLong("id"), rs.getString("code"), rs.getString("name"),
                 CalculationMethod.valueOf(rs.getString("calculation_method")), rs.getLong("rate_id"),
                 rs.getBigDecimal("unit_price")), month);
         Map<String, Rate> latest = new LinkedHashMap<>();

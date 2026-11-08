@@ -20,6 +20,12 @@ public class HouseholdLookupService implements HouseholdLookup {
                 .map(h -> new BillingHousehold(h.getId(), h.getHouseholdCode(), h.getApartmentCode(), h.getAreaM2()))
                 .toList();
     }
+    @Transactional(readOnly = true)
+    public List<BillingHousehold> listActiveForBilling() {
+        return repository.listActiveForBilling().stream()
+                .map(h -> new BillingHousehold(h.getId(), h.getHouseholdCode(), h.getApartmentCode(), h.getAreaM2()))
+                .toList();
+    }
     public Optional<String> findStatus(long id) {
         return repository.findById(id).map(h -> h.getStatus());
     }
