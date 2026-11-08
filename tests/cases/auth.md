@@ -1,33 +1,56 @@
-# Ca kiểm thử AUTH
+# Ca kiểm thử auth
 
-Tiền tố `/api/v1` áp dụng cho endpoint API viết rút gọn; thời gian nghiệp vụ dùng Asia/Ho_Chi_Minh.
+### AUTH-01.1 — Đăng nhập RESIDENT hợp lệ
 
-## AUTH-01 — Đăng nhập thành công.
+- **Vai trò:** ANON.
+- **Điểm vào:** `POST /api/v1/auth/login`.
+- **Dữ liệu vào:** RESIDENT ACTIVE đã đổi mật khẩu, thuộc `<HOUSEHOLD_ID>`; JSON `{"username":"<RESIDENT_USERNAME>","password":"<RESIDENT_PASSWORD>"}`.
+- **Các bước:**
+  1. Gọi `GET /api/v1/auth/csrf` và lưu token cùng cookie ẩn danh.
+  2. Gửi JSON tới `POST /api/v1/auth/login` với `X-CSRF-TOKEN: <CSRF_TOKEN>`.
+  3. Gọi `GET /api/v1/auth/me` bằng phiên sau đăng nhập.
+- **Kỳ vọng:** Hai response HTTP 200; `/auth/me` có `username`, `fullName`, `role=RESIDENT`, `householdId=<HOUSEHOLD_ID>`, `mustChangePassword=false`.
+- **Kiểm sau:** So sánh session ID trước và sau đăng nhập: hai ID khác nhau; không lưu cookie vào bằng chứng.
+- **Nguồn:** AUTH-01; `backend/src/main/java/vn/edu/se10/bluemoon/identity/api/AuthController.java:38`.
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
+### AUTH-01.2 — Đăng nhập ADMIN hợp lệ
 
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
+- **Vai trò:** ANON.
+- **Điểm vào:** `POST /api/v1/auth/login`.
+- **Dữ liệu vào:** ADMIN ACTIVE; JSON `{"username":"<ADMIN_USERNAME>","password":"<ADMIN_PASSWORD>"}`.
+- **Các bước:**
+  1. Gọi `GET /api/v1/auth/csrf` và lưu token.
+  2. Gửi JSON tới `POST /api/v1/auth/login` với token.
+  3. Gọi `GET /api/v1/auth/me` bằng phiên mới.
+- **Kỳ vọng:** HTTP 200; `/auth/me` có `role=ADMIN`, `householdId=null`, `username`, `fullName`, `mustChangePassword`.
+- **Kiểm sau:** Gọi lại `/api/v1/auth/me` bằng phiên mới: HTTP 200.
+- **Nguồn:** AUTH-01; `backend/src/main/java/vn/edu/se10/bluemoon/identity/api/AuthController.java:38`.
 
-**Điều kiện và kết quả mong đợi:**
-- **AUTH-01.1:** `POST /auth/login`, màn `/login`. Sau đăng nhập đổi session ID (session fixation).
-- **AUTH-01.2:** `GET /auth/me` trả `username`, `fullName`, `role`, `householdId` (null với ADMIN/ACCOUNTANT), `mustChangePassword` (`identity/api/SessionUserResponse.java:5`).
+### AUTH-02.1 — Từ chối mật khẩu sai
 
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
+- **Vai trò:** ANON.
+- **Điểm vào:** `POST /api/v1/auth/login`.
+- **Dữ liệu vào:** RESIDENT ACTIVE chưa bị khóa; JSON `{"username":"<RESIDENT_USERNAME>","password":"<WRONG_PASSWORD>"}`.
+- **Các bước:**
+  1. Gọi `GET /api/v1/auth/csrf` và lưu token.
+  2. Gửi JSON tới `POST /api/v1/auth/login` với token.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 401; ProblemDetail có `detail=Tên đăng nhập hoặc mật khẩu không đúng.`.
+- **Kiểm sau:** Gọi `GET /api/v1/auth/me` bằng phiên đó: HTTP 401.
+- **Nguồn:** AUTH-02; `backend/src/main/java/vn/edu/se10/bluemoon/identity/api/AuthController.java:38`.
 
-## AUTH-02 — Đăng nhập thất bại.
+### AUTH-02.2 — Từ chối tên đăng nhập không tồn tại
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
-
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
-
-**Điều kiện và kết quả mong đợi:**
-- **AUTH-02.1:** Mọi lỗi (không tồn tại, sai mật khẩu, khóa, vô hiệu) trả cùng một body `401`.
-
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
-
-## AUTH-03 — Khóa theo tài khoản
-
-Tiền điều kiện chung: dùng tài khoản giả, các ca độc lập; lấy CSRF từ `GET /api/v1/auth/csrf` trước khi gửi POST. Không ghi mật khẩu, token hoặc cookie vào bằng chứng.
+- **Vai trò:** ANON.
+- **Điểm vào:** `POST /api/v1/auth/login`.
+- **Dữ liệu vào:** JSON `{"username":"<UNKNOWN_USERNAME>","password":"<WRONG_PASSWORD>"}`; username không có trong DB.
+- **Các bước:**
+  1. Gọi `GET /api/v1/auth/csrf` và lưu token.
+  2. Gửi JSON tới `POST /api/v1/auth/login` với token.
+  3. So sánh body với ca mật khẩu sai.
+- **Kỳ vọng:** HTTP 401; ProblemDetail có `detail=Tên đăng nhập hoặc mật khẩu không đúng.` như ca mật khẩu sai.
+- **Kiểm sau:** Gọi `GET /api/v1/auth/me` bằng phiên đó: HTTP 401.
+- **Nguồn:** AUTH-02; `backend/src/main/java/vn/edu/se10/bluemoon/identity/api/AuthController.java:38`.
 
 ### AUTH-03.1 — Lần sai thứ năm khóa một phút
 
@@ -42,6 +65,7 @@ Tiền điều kiện chung: dùng tài khoản giả, các ca độc lập; l�
 - **Kiểm sau:** Đọc `locked_until` và audit `ACCOUNT_LOCKED`; thời hạn lớn hơn thời điểm gửi khoảng một phút.
 - **Nguồn:** AUTH-03; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/LoginAttemptService.java:30`; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/LoginLockPolicy.java:16`.
 
+
 ### AUTH-03.2 — Mật khẩu đúng bị từ chối trong thời gian khóa
 
 - **Vai trò:** RESIDENT (chưa đăng nhập).
@@ -54,6 +78,7 @@ Tiền điều kiện chung: dùng tài khoản giả, các ca độc lập; l�
 - **Kỳ vọng:** HTTP 401 với body lỗi đăng nhập như khi sai mật khẩu.
 - **Kiểm sau:** Đọc lại số lần sai và bậc khóa; cả hai không tăng.
 - **Nguồn:** AUTH-03; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/LoginAttemptService.java:30`; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/LoginLockPolicy.java:16`.
+
 
 ### AUTH-03.3 — Sai sau khi hết khóa tăng lên bậc hai
 
@@ -68,6 +93,7 @@ Tiền điều kiện chung: dùng tài khoản giả, các ca độc lập; l�
 - **Kiểm sau:** Đọc `locked_until`, `lock_level=2` và audit `ACCOUNT_LOCKED`.
 - **Nguồn:** AUTH-03; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/LoginAttemptService.java:30`; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/LoginLockPolicy.java:16`.
 
+
 ### AUTH-03.4 — Đăng nhập đúng sau hết khóa đặt lại bộ đếm
 
 - **Vai trò:** RESIDENT (chưa đăng nhập).
@@ -80,6 +106,7 @@ Tiền điều kiện chung: dùng tài khoản giả, các ca độc lập; l�
 - **Kỳ vọng:** HTTP 200; response có `username`, `role` và `mustChangePassword`.
 - **Kiểm sau:** Đọc bộ đếm và bậc khóa của tài khoản: đều trở về 0.
 - **Nguồn:** AUTH-03; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/LoginAttemptService.java:30`; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/LoginLockPolicy.java:16`.
+
 
 ### AUTH-03.5 — ADMIN không bị khóa tự động
 
@@ -94,65 +121,138 @@ Tiền điều kiện chung: dùng tài khoản giả, các ca độc lập; l�
 - **Kiểm sau:** Đọc tài khoản ADMIN: không có thời hạn khóa được tạo do các lần sai.
 - **Nguồn:** AUTH-03; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/LoginAttemptService.java:30`; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/LoginLockPolicy.java:16`.
 
-## AUTH-04 — Mở khóa thủ công.
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
+### AUTH-04.1 — ADMIN mở khóa tài khoản bị khóa
 
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `POST /api/v1/accounts/{id}/unlock`.
+- **Dữ liệu vào:** `<TARGET_ID>` là RESIDENT đang khóa sau 5 lần sai.
+- **Các bước:**
+  1. Lấy CSRF trong phiên ADMIN.
+  2. Gửi `POST /api/v1/accounts/<TARGET_ID>/unlock` với token.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 204.
+- **Kiểm sau:** SQL: `locked_until` null, `failed_login_count=0`, `lock_level=0`; có audit `ACCOUNT_UNLOCKED`.
+- **Nguồn:** AUTH-04; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/AccountManagementService.java:31`.
 
-**Điều kiện và kết quả mong đợi:**
-- **AUTH-04.1:** `POST /accounts/{id}/unlock` đặt lại bộ đếm và bậc khóa; 409 khi không còn gì để đặt lại hoặc tài khoản là ADMIN.
+### AUTH-04.2 — Không mở khóa ADMIN
 
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `POST /api/v1/accounts/{id}/unlock`.
+- **Dữ liệu vào:** `<TARGET_ADMIN_ID>` là tài khoản ADMIN.
+- **Các bước:**
+  1. Lấy CSRF trong phiên ADMIN.
+  2. Gửi `POST /api/v1/accounts/<TARGET_ADMIN_ID>/unlock` với token.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 409; `code=ACCOUNT_NOT_LOCKED`.
+- **Kiểm sau:** SQL: trạng thái khóa của ADMIN không thay đổi.
+- **Nguồn:** AUTH-04; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/AccountManagementService.java:31`.
 
-## AUTH-05 — Đăng xuất.
+### AUTH-05.1 — Đăng xuất phiên đang hoạt động
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
+- **Vai trò:** RESIDENT.
+- **Điểm vào:** `POST /api/v1/auth/logout`.
+- **Dữ liệu vào:** Phiên RESIDENT đã đăng nhập và token CSRF hiện tại.
+- **Các bước:**
+  1. Gọi `GET /api/v1/auth/csrf` bằng phiên RESIDENT.
+  2. Gửi `POST /api/v1/auth/logout` với token.
+  3. Gọi `GET /api/v1/auth/me` bằng phiên cũ.
+- **Kỳ vọng:** Logout HTTP 204; `/auth/me` HTTP 401.
+- **Kiểm sau:** SQL bảng `SPRING_SESSION`: phiên đã đăng xuất không còn hợp lệ.
+- **Nguồn:** AUTH-05; `backend/src/main/java/vn/edu/se10/bluemoon/identity/api/AuthController.java:38`.
 
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
+### AUTH-05.2 — Đăng xuất khi chưa đăng nhập
 
-**Điều kiện và kết quả mong đợi:**
-- **AUTH-05.1:** `POST /auth/logout`; khi chưa đăng nhập trả `401`.
+- **Vai trò:** ANON.
+- **Điểm vào:** `POST /api/v1/auth/logout`.
+- **Dữ liệu vào:** Phiên ẩn danh có token CSRF hợp lệ.
+- **Các bước:**
+  1. Gọi `GET /api/v1/auth/csrf` để lấy token.
+  2. Gửi `POST /api/v1/auth/logout` với token.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 401.
+- **Kiểm sau:** Gọi `GET /api/v1/auth/me`: HTTP 401.
+- **Nguồn:** AUTH-05; `backend/src/main/java/vn/edu/se10/bluemoon/config/SecurityConfig.java:44`.
 
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
+### AUTH-06.1 — Cookie phiên có thuộc tính bảo vệ
 
-## AUTH-06 — Hết hạn phiên.
+- **Vai trò:** ANON.
+- **Điểm vào:** `POST /api/v1/auth/login`.
+- **Dữ liệu vào:** ADMIN ACTIVE; JSON `{"username":"<ADMIN_USERNAME>","password":"<ADMIN_PASSWORD>"}`.
+- **Các bước:**
+  1. Lấy token và cookie bằng `GET /api/v1/auth/csrf`.
+  2. Gửi POST login với JSON và token.
+  3. Kiểm tra thuộc tính cookie `SESSION` trong công cụ trình duyệt.
+- **Kỳ vọng:** HTTP 200; cookie `SESSION` có `HttpOnly` và `SameSite=Lax`.
+- **Kiểm sau:** SQL bảng `SPRING_SESSION` có phiên đăng nhập; không ghi giá trị cookie vào bằng chứng.
+- **Nguồn:** AUTH-06; `backend/src/main/resources/application.yml:17`.
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
+### AUTH-06.2 — Phiên hết hạn sau 30 phút không hoạt động
 
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
+- **Vai trò:** RESIDENT.
+- **Điểm vào:** `GET /api/v1/auth/me`.
+- **Dữ liệu vào:** Phiên RESIDENT hoạt động; không gửi request từ phiên này trong 31 phút.
+- **Các bước:**
+  1. Gọi `GET /api/v1/auth/me` và xác nhận HTTP 200.
+  2. Đợi 31 phút không dùng phiên.
+  3. Gọi lại `GET /api/v1/auth/me` bằng phiên cũ.
+- **Kỳ vọng:** Request sau 31 phút trả HTTP 401.
+- **Kiểm sau:** Đăng nhập lại bằng `<RESIDENT_USERNAME>` và `<RESIDENT_PASSWORD>`: HTTP 200.
+- **Nguồn:** AUTH-06; `backend/src/main/resources/application.yml:21`.
 
-**Điều kiện và kết quả mong đợi:**
-- **AUTH-06.1:** Phiên lưu trong MySQL, cookie `SESSION` `HttpOnly`, `SameSite=Lax`, hết hạn sau 30 phút.
+### AUTH-07.1 — Thiếu CSRF bị từ chối
 
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
+- **Vai trò:** ANON.
+- **Điểm vào:** `POST /api/v1/auth/login`.
+- **Dữ liệu vào:** JSON `{"username":"<ADMIN_USERNAME>","password":"<ADMIN_PASSWORD>"}`; không gửi header CSRF.
+- **Các bước:**
+  1. Tạo phiên ẩn danh mới.
+  2. Gửi POST `/api/v1/auth/login` với JSON và không có header CSRF.
+  3. Đọc response.
+- **Kỳ vọng:** HTTP 403; code cụ thể chưa xác định.
+- **Kiểm sau:** Gọi `/api/v1/auth/me` trong phiên này: HTTP 401.
+- **Nguồn:** AUTH-07; `backend/src/main/java/vn/edu/se10/bluemoon/config/SecurityConfig.java:44`.
 
-## AUTH-07 — CSRF.
+### AUTH-07.2 — Lấy token CSRF khi chưa đăng nhập
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
+- **Vai trò:** ANON.
+- **Điểm vào:** `GET /api/v1/auth/csrf`.
+- **Dữ liệu vào:** Phiên trình duyệt ẩn danh mới.
+- **Các bước:**
+  1. Gọi `GET /api/v1/auth/csrf`.
+  2. Đọc tên header và token trong response.
+  3. Giữ token trong bộ nhớ cho request tiếp theo.
+- **Kỳ vọng:** HTTP 200; JSON có `headerName` và `token`.
+- **Kiểm sau:** Dùng token trong POST đăng nhập hợp lệ; không lưu token vào bằng chứng.
+- **Nguồn:** AUTH-07; `backend/src/main/java/vn/edu/se10/bluemoon/identity/api/AuthController.java:38`.
 
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
+### AUTH-08.1 — Chặn endpoint khi phải đổi mật khẩu
 
-**Điều kiện và kết quả mong đợi:**
-- **AUTH-07.1:** Ghi không có token hoặc token sai trả `403`.
-- **AUTH-07.2:** `GET /auth/csrf` là public.
+- **Vai trò:** RESIDENT.
+- **Điểm vào:** `GET /api/v1/households/me/residents`.
+- **Dữ liệu vào:** Tài khoản RESIDENT mới cấp có `mustChangePassword=true` và đã đăng nhập.
+- **Các bước:**
+  1. Gọi `GET /api/v1/auth/me` bằng phiên mới cấp.
+  2. Gọi `GET /api/v1/households/me/residents`.
+  3. Đọc response.
+- **Kỳ vọng:** `/auth/me` HTTP 200 và `mustChangePassword=true`; endpoint hộ HTTP 403, `code=PASSWORD_CHANGE_REQUIRED`.
+- **Kiểm sau:** Gọi lại `/api/v1/auth/me`: tài khoản vẫn yêu cầu đổi mật khẩu.
+- **Nguồn:** AUTH-08; `backend/src/main/java/vn/edu/se10/bluemoon/config/MustChangePasswordFilter.java:19`.
 
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
+### AUTH-08.2 — Chuyển giao diện về đổi mật khẩu
 
-## AUTH-08 — Bắt buộc đổi mật khẩu lần đầu.
+- **Vai trò:** RESIDENT.
+- **Điểm vào:** `/resident/household`.
+- **Dữ liệu vào:** Tài khoản mới cấp đã đăng nhập và `mustChangePassword=true`.
+- **Các bước:**
+  1. Mở `/resident/household` trong phiên tài khoản mới.
+  2. Quan sát URL sau chuyển hướng.
+  3. Mở trực tiếp `/profile?tab=password`.
+- **Kỳ vọng:** Giao diện chuyển tới `/profile?tab=password`; trang hộ bị chặn.
+- **Kiểm sau:** Kiểm `GET /api/v1/auth/me` vẫn có `mustChangePassword=true`.
+- **Nguồn:** AUTH-08; `frontend/src/App.tsx:58`.
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
-
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
-
-**Điều kiện và kết quả mong đợi:**
-- **AUTH-08.1:** Tài khoản do ADMIN cấp có `must_change_password = true`; mọi route ngoài danh sách trả `403 PASSWORD_CHANGE_REQUIRED`; frontend chuyển người dùng về `/profile?tab=password` và chặn mọi trang khác (`App.tsx:58-62, 82`); đổi xong phải đăng nhập lại.
-
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
-
-## AUTH-09 — Đổi mật khẩu
-
-Tiền điều kiện: dùng tài khoản RESIDENT thử nghiệm đang hoạt động, không bị khóa; có phiên đăng nhập và CSRF hợp lệ. Mật khẩu thay thế hợp lệ có ít nhất 8 ký tự, tối đa 72 byte UTF-8, đủ chữ hoa, chữ thường, số, ký tự đặc biệt và khác mật khẩu hiện tại. Riêng ca .6 mở hai phiên độc lập của cùng tài khoản. Không lưu giá trị mật khẩu hoặc token trong bằng chứng.
+Tiền điều kiện AUTH-09: RESIDENT thử nghiệm ACTIVE, chưa khóa; `<NEW_VALID_PASSWORD>` có tối thiểu 8 ký tự, tối đa 72 byte UTF-8, gồm chữ hoa, chữ thường, số, ký tự đặc biệt và khác mật khẩu hiện tại.
 
 ### AUTH-09.1 — Mật khẩu hiện tại sai
 
@@ -167,6 +267,7 @@ Tiền điều kiện: dùng tài khoản RESIDENT thử nghiệm đang hoạt �
 - **Kiểm sau:** Kiểm `failed_login_count` tăng 1 và hash mật khẩu không đổi.
 - **Nguồn:** AUTH-09; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/PasswordChangeService.java:32`; `docs/DECISIONS.md` D23.
 
+
 ### AUTH-09.2 — Mật khẩu mới ngắn hơn 8 ký tự
 
 - **Vai trò:** RESIDENT.
@@ -179,6 +280,7 @@ Tiền điều kiện: dùng tài khoản RESIDENT thử nghiệm đang hoạt �
 - **Kỳ vọng:** HTTP 400; `code=PASSWORD_TOO_SHORT`.
 - **Kiểm sau:** Đăng nhập lại bằng mật khẩu cũ; mật khẩu cũ vẫn hợp lệ.
 - **Nguồn:** AUTH-09; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/PasswordChangeService.java:32`; `docs/DECISIONS.md` D23.
+
 
 ### AUTH-09.3 — Mật khẩu mới dài hơn 72 byte UTF-8
 
@@ -193,6 +295,7 @@ Tiền điều kiện: dùng tài khoản RESIDENT thử nghiệm đang hoạt �
 - **Kiểm sau:** Đăng nhập lại bằng mật khẩu cũ; mật khẩu cũ vẫn hợp lệ.
 - **Nguồn:** AUTH-09; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/PasswordChangeService.java:32`; `docs/DECISIONS.md` D23.
 
+
 ### AUTH-09.4 — Mật khẩu mới thiếu ký tự đặc biệt
 
 - **Vai trò:** RESIDENT.
@@ -205,6 +308,7 @@ Tiền điều kiện: dùng tài khoản RESIDENT thử nghiệm đang hoạt �
 - **Kỳ vọng:** HTTP 400; `code=PASSWORD_WEAK`.
 - **Kiểm sau:** Đăng nhập lại bằng mật khẩu cũ; mật khẩu cũ vẫn hợp lệ.
 - **Nguồn:** AUTH-09; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/PasswordChangeService.java:32`; `docs/DECISIONS.md` D23.
+
 
 ### AUTH-09.5 — Mật khẩu mới trùng mật khẩu hiện tại
 
@@ -219,42 +323,73 @@ Tiền điều kiện: dùng tài khoản RESIDENT thử nghiệm đang hoạt �
 - **Kiểm sau:** Đăng nhập lại bằng mật khẩu cũ; mật khẩu cũ vẫn hợp lệ.
 - **Nguồn:** AUTH-09; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/PasswordChangeService.java:32`; `docs/DECISIONS.md` D23.
 
+
 ### AUTH-09.6 — Đổi mật khẩu hợp lệ hủy mọi phiên
 
 - **Vai trò:** RESIDENT.
 - **Điểm vào:** `POST /api/v1/auth/change-password`.
-- **Dữ liệu vào:** `{"currentPassword":"<CURRENT_PASSWORD>","newPassword":"<NEW_VALID_PASSWORD>"}`; header `X-CSRF-TOKEN: <CSRF_TOKEN>`.
+- **Dữ liệu vào:** Hai phiên độc lập của cùng RESIDENT; `{"currentPassword":"<CURRENT_PASSWORD>","newPassword":"<NEW_VALID_PASSWORD>"}`; header `X-CSRF-TOKEN: <CSRF_TOKEN>`.
 - **Các bước:**
-  1. Gọi `GET /api/v1/auth/csrf` trong phiên RESIDENT và lấy token từ response vào bộ nhớ.
-  2. Gửi body trên tới `POST /api/v1/auth/change-password` cùng token.
-  3. Đối chiếu HTTP, body và thực hiện kiểm sau.
+  1. Đăng nhập cùng RESIDENT trong hai trình duyệt độc lập.
+  2. Gọi `GET /api/v1/auth/csrf` trong phiên thứ nhất và lấy token.
+  3. Gửi body tới `POST /api/v1/auth/change-password` trong phiên thứ nhất cùng token.
 - **Kỳ vọng:** HTTP 204, không có body.
 - **Kiểm sau:** Gọi `GET /api/v1/auth/me` từ cả hai phiên cũ: mỗi phiên trả 401; đăng nhập bằng mật khẩu mới thành công. Kiểm audit `PASSWORD_CHANGED` và `SESSIONS_REVOKED`.
 - **Nguồn:** AUTH-09; `backend/src/main/java/vn/edu/se10/bluemoon/identity/application/PasswordChangeService.java:32`; `docs/DECISIONS.md` D23.
 
-## AUTH-10 — Bootstrap ADMIN.
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
+### AUTH-10.1 — Bootstrap tạo ADMIN đầu tiên
 
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
+- **Vai trò:** ANON.
+- **Điểm vào:** `java -jar target/bluemoon-backend-0.1.0-SNAPSHOT.jar --spring.profiles.active=bootstrap` (console; không có endpoint hoặc route).
+- **Dữ liệu vào:** DB thử nghiệm chưa có ADMIN; nhập `<ADMIN_USERNAME>`, tên `Test Admin`, `<TEST_EMAIL>`, `<ADMIN_PASSWORD>` và xác nhận mật khẩu tại console tương tác.
+- **Các bước:**
+  1. Chạy lệnh bootstrap trên DB thử nghiệm.
+  2. Nhập thông tin ADMIN theo prompt mà không ghi mật khẩu.
+  3. Đọc kết quả console đã che dữ liệu.
+- **Kỳ vọng:** Tạo một ADMIN; mã thoát và thông báo chính xác chưa xác định.
+- **Kiểm sau:** SQL: có một ADMIN mới; có audit bootstrap; không lưu mật khẩu hoặc email vào bằng chứng.
+- **Nguồn:** AUTH-10; `backend/src/main/java/vn/edu/se10/bluemoon/identity/bootstrap/BootstrapAdminRunner.java:10`.
 
-**Điều kiện và kết quả mong đợi:**
-- **AUTH-10.1:** Chạy bằng profile `bootstrap` và console tương tác; không có tài khoản mặc định; nếu đã có ADMIN thì bỏ qua.
+### AUTH-10.2 — Bootstrap bỏ qua khi đã có ADMIN
 
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
+- **Vai trò:** ANON.
+- **Điểm vào:** `java -jar target/bluemoon-backend-0.1.0-SNAPSHOT.jar --spring.profiles.active=bootstrap` (console; không có endpoint hoặc route).
+- **Dữ liệu vào:** DB thử nghiệm đã có ADMIN; nhập `<ADMIN_USERNAME>`, tên `Test Admin`, `<TEST_EMAIL>`, `<ADMIN_PASSWORD>` và xác nhận mật khẩu khi được hỏi.
+- **Các bước:**
+  1. Đếm số ADMIN hiện có bằng SQL.
+  2. Chạy lệnh bootstrap trong console tương tác.
+  3. Nhập các giá trị thử nghiệm tại prompt và đọc kết quả console.
+- **Kỳ vọng:** Không tạo ADMIN mới; mã thoát và thông báo chính xác chưa xác định.
+- **Kiểm sau:** Đếm lại ADMIN bằng SQL: số lượng không tăng.
+- **Nguồn:** AUTH-10; `backend/src/main/java/vn/edu/se10/bluemoon/identity/bootstrap/BootstrapAdminRunner.java:10`.
 
-## AUTH-11 — Hồ sơ cá nhân.
+### AUTH-11.1 — Xem hồ sơ cá nhân
 
-**Tiền điều kiện:** dữ liệu giả lập phù hợp; nếu cần xác thực, dùng vai trò được nêu trong ca và phiên đã đổi mật khẩu; request ghi có CSRF hợp lệ trừ khi đang kiểm CSRF.
+- **Vai trò:** RESIDENT.
+- **Điểm vào:** `/profile`.
+- **Dữ liệu vào:** Phiên RESIDENT đã đổi mật khẩu.
+- **Các bước:**
+  1. Đăng nhập RESIDENT.
+  2. Mở `/profile`.
+  3. Đối chiếu thông tin hiển thị với `GET /api/v1/auth/me`.
+- **Kỳ vọng:** Trang hiển thị thông tin tài khoản; không có thao tác tự sửa hồ sơ; nhãn chính xác chưa xác định.
+- **Kiểm sau:** GET `/api/v1/auth/me`: username, fullName và role khớp hồ sơ.
+- **Nguồn:** AUTH-11; `frontend/src/App.tsx:104`.
 
-**Thao tác:** thực hiện hành vi tại endpoint hoặc màn hình của ca; với mỗi nhánh tạo dữ liệu giả thỏa điều kiện được nêu, gửi request hoặc thao tác trên giao diện, rồi đối chiếu kết quả và trạng thái được mô tả. Mỗi nhánh thực hiện riêng.
+### AUTH-11.2 — Đổi mật khẩu từ hồ sơ
 
-**Điều kiện và kết quả mong đợi:**
-- **AUTH-11.1:** `/profile` chỉ xem; ADMIN sửa `full_name` (D23 Q6).
-- **AUTH-11.2:** Từ hồ sơ gửi đổi mật khẩu hợp lệ: request đổi mật khẩu trả 204 và phiên bị hủy.
-
-**Ghi nhận:** trạng thái Pass/Fail/Blocked/Not run, thực tế và bằng chứng đã che dữ liệu nhạy cảm.
+- **Vai trò:** RESIDENT.
+- **Điểm vào:** `/profile?tab=password`.
+- **Dữ liệu vào:** Phiên RESIDENT; `<CURRENT_PASSWORD>` đúng và `<NEW_VALID_PASSWORD>` thỏa quy tắc.
+- **Các bước:**
+  1. Mở `/profile?tab=password`.
+  2. Nhập mật khẩu hiện tại và mật khẩu mới bằng placeholder tương ứng.
+  3. Gửi biểu mẫu đổi mật khẩu.
+- **Kỳ vọng:** Request `POST /api/v1/auth/change-password` HTTP 204; phiên bị hủy.
+- **Kiểm sau:** Gọi `GET /api/v1/auth/me` với phiên cũ: HTTP 401; đăng nhập bằng mật khẩu mới.
+- **Nguồn:** AUTH-11; `backend/src/main/java/vn/edu/se10/bluemoon/identity/api/PasswordController.java:23`.
 
 ## Điểm chưa xác định
 
-Các nhánh không nêu mã HTTP hoặc nội dung chính xác trong outline: ghi thực tế và đối chiếu mã nguồn trước khi kết luận; không tự suy đoán mã.
+AUTH-07.1: code lỗi CSRF chưa xác định; AUTH-10.1–10.2: mã thoát và thông báo bootstrap chưa xác định; AUTH-11.1: nhãn giao diện chính xác chưa xác định.
