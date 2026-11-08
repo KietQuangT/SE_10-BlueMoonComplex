@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -43,6 +44,7 @@ public class VoluntaryContributionService {
         this.audit = audit;
         this.clock = clock;
         this.transactions = new TransactionTemplate(manager);
+        this.transactions.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
     }
 
     public record Result(VoluntaryContribution contribution, boolean replay) { }
@@ -64,6 +66,9 @@ public class VoluntaryContributionService {
         if (prior.isPresent()) return prior.get();
         VoluntaryCampaign campaign = campaigns.lockById(input.campaignId())
                 .orElseThrow(() -> new NotFoundException("CAMPAIGN_NOT_FOUND"));
+        // A prior request can commit while this transaction waits for the campaign row.
+        prior = replay(input, actor);
+        if (prior.isPresent()) return prior.get();
         validateWindow(campaign, input);
         var donor = donors.lockById(input.residentId()).orElseThrow(() -> new NotFoundException("RESIDENT_NOT_FOUND"));
         var contribution = contributions.saveAndFlush(new VoluntaryContribution(input.campaignId(), donor.id(), donor.householdId(),

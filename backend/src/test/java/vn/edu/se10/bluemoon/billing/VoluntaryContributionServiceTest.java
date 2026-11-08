@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -16,6 +17,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import vn.edu.se10.bluemoon.billing.persistence.VoluntaryCampaign;
 import vn.edu.se10.bluemoon.billing.application.ContributionInput;
 import vn.edu.se10.bluemoon.billing.application.VoluntaryContributionService;
 import vn.edu.se10.bluemoon.billing.persistence.VoluntaryCampaignRepository;
@@ -57,6 +60,21 @@ class VoluntaryContributionServiceTest {
         assertEquals("IDEMPOTENCY_CONFLICT", assertThrows(ConflictException.class, () -> service.record(changed, 8)).code());
         verifyNoInteractions(campaigns, donors, audit, manager);
     }
+    @Test
+    void concurrentReplayIsCheckedAgainAfterCampaignLockBeforeDateValidation() {
+        var input = ContributionInput.parse(3, 4, "100", LocalDate.of(2026, 11, 1), null, key);
+        var existing = makeContribution(input, new ResidentDonorLookup.Donor(4, 5, "Test", "H1", "A1"));
+        var closed = mock(VoluntaryCampaign.class);
+        when(contributions.findByRecordedByAndIdempotencyKey(8, key))
+                .thenReturn(Optional.empty(), Optional.empty(), Optional.of(existing));
+        when(campaigns.lockById(3)).thenReturn(Optional.of(closed));
+        when(manager.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
+        var result = service.record(input, 8);
+        assertTrue(result.replay());
+        assertSame(existing, result.contribution());
+        verifyNoInteractions(donors, audit);
+    }
+
     private VoluntaryContribution makeContribution(ContributionInput input, ResidentDonorLookup.Donor donor) {
         return new VoluntaryContribution(input.campaignId(), donor.id(), donor.householdId(), donor.fullName(),
                 donor.householdCode(), donor.apartmentCode(), input.amount(), input.paidOn(), input.lateReason(),
