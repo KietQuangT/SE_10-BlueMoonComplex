@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.util.AopTestUtils;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import vn.edu.se10.bluemoon.billing.application.BillingPeriodService;
 import vn.edu.se10.bluemoon.common.audit.AuditService;
@@ -88,7 +89,8 @@ class BillingAuditRollbackIT {
     }
 
     private void failAudit(String action) {
-        doThrow(new IllegalStateException("test audit failure")).when(audit)
+        AuditService target = AopTestUtils.getUltimateTargetObject(audit);
+        doThrow(new IllegalStateException("test audit failure")).when(target)
                 .record(anyLong(), eq(action), anyString(), anyString(), anyMap());
     }
 }
