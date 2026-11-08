@@ -6,6 +6,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 
@@ -19,8 +21,10 @@ import java.util.Optional;
 import org.springframework.test.util.ReflectionTestUtils;
 import vn.edu.se10.bluemoon.billing.persistence.BillingPeriod;
 import vn.edu.se10.bluemoon.billing.persistence.BillingSnapshotStore;
+import vn.edu.se10.bluemoon.billing.persistence.BillingReadStore;
 import vn.edu.se10.bluemoon.residency.application.HouseholdLookup;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import vn.edu.se10.bluemoon.billing.application.BillingPeriodService;
 import vn.edu.se10.bluemoon.billing.persistence.CalculationMethod;
 import vn.edu.se10.bluemoon.billing.persistence.BillingPeriodRepository;
@@ -34,7 +38,7 @@ class BillingPeriodServiceTest {
     private final Clock clock = Clock.fixed(Instant.parse("2026-11-08T00:00:00Z"), ZoneOffset.UTC);
     private final HouseholdLookup households = mock(HouseholdLookup.class);
     private final BillingSnapshotStore snapshots = mock(BillingSnapshotStore.class);
-    private final BillingPeriodService service = new BillingPeriodService(periods, audit, clock, households, snapshots);
+    private final BillingPeriodService service = new BillingPeriodService(periods, audit, clock, households, snapshots, mock(BillingReadStore.class));
 
     @Test
     void createRejectsAnExistingActivePeriod() {
@@ -120,6 +124,27 @@ class BillingPeriodServiceTest {
         service.returnToDraft(5, 0, " update due date ", 1);
         assertEquals("DRAFT", period.getStatus());
         assertEquals("update due date", period.getReturnReason());
+    }
+
+    @Test
+    void submissionCalculatesTwoRoundedLinesForEveryActiveHousehold() {
+        var period = new BillingPeriod("2026-11", LocalDate.of(2026, 11, 30), null, 1, clock.instant());
+        ReflectionTestUtils.setField(period, "id", 5L);
+        when(periods.lockById(5)).thenReturn(Optional.of(period));
+        when(households.lockActiveForBilling()).thenReturn(List.of(new HouseholdLookup.BillingHousehold(2, "H2", "A2", new BigDecimal("50"))));
+        when(snapshots.lockRates(any())).thenReturn(List.of(
+                new BillingSnapshotStore.Rate(1, "MANAGEMENT_FEE", "Management", CalculationMethod.AREA, 11, new BigDecimal("10000")),
+                new BillingSnapshotStore.Rate(2, "WASTE_FEE", "Waste", CalculationMethod.PER_HOUSEHOLD, 12, new BigDecimal("30000"))));
+        when(snapshots.save(eq(5L), eq(1L), eq(1L), any(), anyList(), eq(1L), eq(new BigDecimal("530000"))))
+                .thenReturn(new BillingSnapshotStore.Submission(9, 1, new BigDecimal("530000")));
+        service.submit(5, 0, 1);
+        assertEquals("PENDING_APPROVAL", period.getStatus());
+        assertEquals(1, period.getRevision());
+        @SuppressWarnings("unchecked") ArgumentCaptor<List<BillingSnapshotStore.Line>> lines = ArgumentCaptor.forClass(List.class);
+        verify(snapshots).save(eq(5L), eq(1L), eq(1L), any(), lines.capture(), eq(1L), eq(new BigDecimal("530000")));
+        assertEquals(2, lines.getValue().size());
+        assertEquals(new BigDecimal("500000"), lines.getValue().get(0).amount());
+        assertEquals(new BigDecimal("30000"), lines.getValue().get(1).amount());
     }
 
 }

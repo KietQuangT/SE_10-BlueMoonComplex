@@ -13,5 +13,7 @@ public interface HouseholdRepository extends JpaRepository<Household,Long> {
  }
  @Query(value="select id, household_code as householdCode, apartment_code as apartmentCode, area_m2 as areaM2 from households force index (idx_households_status_id) where status = 'ACTIVE' order by status, id for update", nativeQuery=true)
  java.util.List<BillingProjection> lockActiveForBilling();
+ @Query(value="select id, household_code as householdCode, apartment_code as apartmentCode, area_m2 as areaM2 from households where status = 'ACTIVE' order by id", nativeQuery=true)
+ java.util.List<BillingProjection> listActiveForBilling();
  @Query(value="select id from households order by id limit 1 for update",nativeQuery=true) Long lockIdentityGuard();
 }
