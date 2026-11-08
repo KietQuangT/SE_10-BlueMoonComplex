@@ -124,8 +124,8 @@ public class VoluntaryContributionService {
     }
 
     private static String requiredReason(String reason) {
-        if (reason == null || reason.isBlank() || reason.trim().length() > 255) throw new BadRequestException("REASON_REQUIRED");
-        return reason.trim();
+        if (reason == null || reason.isBlank() || reason.strip().codePointCount(0, reason.strip().length()) > 255) throw new BadRequestException("REASON_REQUIRED");
+        return reason.strip();
     }
 
     private static boolean duplicateKey(Throwable failure) {

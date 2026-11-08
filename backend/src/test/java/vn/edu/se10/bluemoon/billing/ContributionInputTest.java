@@ -30,4 +30,13 @@ class ContributionInputTest {
         assertEquals("INVALID_IDEMPOTENCY_KEY", assertThrows(BadRequestException.class,
                 () -> ContributionInput.parse(3, 4, "1", LocalDate.of(2026, 11, 1), null, "1-1-1-1-1")).code());
     }
+    @Test
+    void reasonLimitCountsUnicodeCharactersRatherThanUtf16Units() {
+        String reason = "😀".repeat(255);
+        var input = ContributionInput.parse(3, 4, "1", LocalDate.of(2026, 11, 1), reason, KEY);
+        assertEquals(reason, input.lateReason());
+        assertEquals("REASON_REQUIRED", assertThrows(BadRequestException.class,
+                () -> ContributionInput.parse(3, 4, "1", LocalDate.of(2026, 11, 1), reason + "😀", KEY)).code());
+    }
+
 }

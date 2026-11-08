@@ -24,10 +24,10 @@ public class ResidentDonorLookupService implements ResidentDonorLookup {
 
     @Transactional(readOnly = true)
     public Page<Donor> search(String query, int page, int size) {
-        if (query == null || query.trim().length() < 2 || page < 0 || size < 1 || size > 100) {
+        if (query == null || query.strip().length() < 2 || page < 0 || size < 1 || size > 100) {
             throw new BadRequestException("INVALID_FILTER");
         }
-        String escaped = query.trim().replace("!", "!!").replace("%", "!%").replace("_", "!_");
+        String escaped = query.strip().replace("!", "!!").replace("%", "!%").replace("_", "!_");
         return residents.searchDonors("%" + escaped + "%", PageRequest.of(page, size)).map(ResidentDonorLookupService::toDonor);
     }
 

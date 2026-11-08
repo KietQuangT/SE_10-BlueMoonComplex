@@ -107,7 +107,9 @@ public class BillingPeriodController {
     private static LocalDate date(String value) {
         try {
             if (value == null) throw new DateTimeParseException("missing", "", 0);
-            return LocalDate.parse(value);
+            LocalDate date = LocalDate.parse(value);
+            if (date.getYear() < 1000 || date.getYear() > 9999) throw new DateTimeParseException("out of range", value, 0);
+            return date;
         } catch (DateTimeParseException ex) {
             throw new BadRequestException("INVALID_DATE");
         }
