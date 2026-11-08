@@ -6,7 +6,6 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,15 +13,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
-import vn.edu.se10.bluemoon.billing.application.BillingInputs;
-import vn.edu.se10.bluemoon.billing.application.FeeCalculator;
 import vn.edu.se10.bluemoon.common.error.ConflictException;
-import vn.edu.se10.bluemoon.residency.application.HouseholdLookup.BillingHousehold;
 
 @Repository
 public class BillingSnapshotStore {
     private final JdbcTemplate jdbc;
-    private final FeeCalculator calculator = new FeeCalculator();
 
     public BillingSnapshotStore(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
@@ -30,13 +25,12 @@ public class BillingSnapshotStore {
 
     public record Rate(long typeId, String code, String name, CalculationMethod method,
                        long rateId, BigDecimal unitPrice) { }
-    public record Source(List<BillingHousehold> households, List<Rate> rates) {
-        public BillingInputs inputs() {
-            return new BillingInputs(households.stream()
-                    .map(h -> new BillingInputs.Household(h.id(), h.areaM2())).toList(),
-                    rates.stream().map(r -> new BillingInputs.Rate(r.code(), r.rateId(), r.unitPrice(), r.method())).toList());
-        }
-    }
+    public record Line(long householdId, String householdCode, String apartmentCode, BigDecimal areaM2,
+                       long typeId, String code, String name, CalculationMethod method, BigDecimal quantity,
+                       BigDecimal unitPrice, long rateId, BigDecimal amount) { }
+    public record HouseholdInput(long id, BigDecimal areaM2) { }
+    public record RateInput(String code, long rateId, BigDecimal unitPrice, CalculationMethod method) { }
+    public record SnapshotInputs(List<HouseholdInput> households, List<RateInput> rates) { }
     public record Submission(long id, long count, BigDecimal total) { }
 
     /** Caller locks the ACTIVE household range before calling this method, in REPEATABLE_READ. */
@@ -57,15 +51,9 @@ public class BillingSnapshotStore {
         return List.copyOf(latest.values());
     }
 
-    public Submission save(long periodId, long revision, long actor, Instant now, Source source) {
-        BigDecimal total = BigDecimal.ZERO;
-        for (BillingHousehold household : source.households()) {
-            for (Rate rate : source.rates()) {
-                total = total.add(calculator.calculate(rate.method(), household.areaM2(), rate.unitPrice()));
-            }
-        }
+    public Submission save(long periodId, long revision, long actor, Instant now, List<Line> lines,
+                           long householdCount, BigDecimal total) {
         KeyHolder keys = new GeneratedKeyHolder();
-        BigDecimal snapshotTotal = total;
         jdbc.update(connection -> {
             PreparedStatement statement = connection.prepareStatement("""
                     INSERT INTO billing_submissions (period_id, revision, submitted_by, submitted_at, household_count, total)
@@ -75,28 +63,20 @@ public class BillingSnapshotStore {
             statement.setLong(2, revision);
             statement.setLong(3, actor);
             statement.setTimestamp(4, Timestamp.from(now));
-            statement.setLong(5, source.households().size());
-            statement.setBigDecimal(6, snapshotTotal);
+            statement.setLong(5, householdCount);
+            statement.setBigDecimal(6, total);
             return statement;
         }, keys);
         long submissionId = keys.getKey().longValue();
-        List<Object[]> batch = new ArrayList<>();
-        for (BillingHousehold household : source.households()) {
-            for (Rate rate : source.rates()) {
-                BigDecimal area = rate.method() == CalculationMethod.AREA ? household.areaM2() : null;
-                BigDecimal quantity = area == null ? BigDecimal.ONE : area;
-                BigDecimal amount = calculator.calculate(rate.method(), area, rate.unitPrice());
-                batch.add(new Object[]{submissionId, household.id(), household.householdCode(), household.apartmentCode(),
-                        area, rate.typeId(), rate.code(), rate.name(), rate.method().name(), quantity,
-                        rate.unitPrice(), rate.rateId(), amount});
-            }
-        }
+        List<Object[]> batch = lines.stream().map(line -> new Object[]{submissionId, line.householdId(),
+                line.householdCode(), line.apartmentCode(), line.areaM2(), line.typeId(), line.code(), line.name(),
+                line.method().name(), line.quantity(), line.unitPrice(), line.rateId(), line.amount()}).toList();
         jdbc.batchUpdate("""
                 INSERT INTO billing_submission_items (submission_id, household_id, household_code, apartment_code,
                 area_m2, fee_type_id, fee_type_code, fee_type_name, calculation_method, quantity, unit_price, fee_rate_id, amount)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, batch);
-        return new Submission(submissionId, source.households().size(), total);
+        return new Submission(submissionId, householdCount, total);
     }
 
     public long submissionId(long periodId, long revision) {
@@ -105,17 +85,17 @@ public class BillingSnapshotStore {
         return ids.getFirst();
     }
 
-    public BillingInputs inputs(long submissionId) {
-        List<BillingInputs.Household> households = jdbc.query("""
+    public SnapshotInputs inputs(long submissionId) {
+        List<HouseholdInput> households = jdbc.query("""
                 SELECT household_id, area_m2 FROM billing_submission_items
                 WHERE submission_id=? AND fee_type_code='MANAGEMENT_FEE' ORDER BY household_id
-                """, (rs, row) -> new BillingInputs.Household(rs.getLong("household_id"), rs.getBigDecimal("area_m2")), submissionId);
-        List<BillingInputs.Rate> rates = jdbc.query("""
+                """, (rs, row) -> new HouseholdInput(rs.getLong("household_id"), rs.getBigDecimal("area_m2")), submissionId);
+        List<RateInput> rates = jdbc.query("""
                 SELECT DISTINCT fee_type_code, fee_rate_id, unit_price, calculation_method
                 FROM billing_submission_items WHERE submission_id=? ORDER BY fee_type_code
-                """, (rs, row) -> new BillingInputs.Rate(rs.getString("fee_type_code"), rs.getLong("fee_rate_id"),
+                """, (rs, row) -> new RateInput(rs.getString("fee_type_code"), rs.getLong("fee_rate_id"),
                 rs.getBigDecimal("unit_price"), CalculationMethod.valueOf(rs.getString("calculation_method"))), submissionId);
-        return new BillingInputs(households, rates);
+        return new SnapshotInputs(households, rates);
     }
 
     public void issue(long periodId, long submissionId, LocalDate dueDate, Instant now) {

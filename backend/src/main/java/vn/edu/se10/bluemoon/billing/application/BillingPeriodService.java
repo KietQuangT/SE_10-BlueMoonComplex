@@ -1,6 +1,9 @@
 package vn.edu.se10.bluemoon.billing.application;
 
 import java.sql.SQLException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -12,6 +15,7 @@ import org.springframework.transaction.annotation.Isolation;
 import vn.edu.se10.bluemoon.billing.persistence.BillingPeriod;
 import vn.edu.se10.bluemoon.billing.persistence.BillingPeriodRepository;
 import vn.edu.se10.bluemoon.billing.persistence.BillingSnapshotStore;
+import vn.edu.se10.bluemoon.billing.persistence.CalculationMethod;
 import vn.edu.se10.bluemoon.residency.application.HouseholdLookup;
 import vn.edu.se10.bluemoon.common.audit.AuditService;
 import vn.edu.se10.bluemoon.common.error.ConflictException;
@@ -73,7 +77,9 @@ public class BillingPeriodService {
         var source = lockSource(period);
         var now = clock.instant();
         long nextRevision = period.getRevision() + 1;
-        var submission = snapshots.save(id, nextRevision, actor, now, source);
+        var lines = snapshotLines(source);
+        BigDecimal total = lines.stream().map(BillingSnapshotStore.Line::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        var submission = snapshots.save(id, nextRevision, actor, now, lines, source.households().size(), total);
         period.markSubmitted(actor, now);
         periods.flush();
         audit.record(actor, "BILLING_PERIOD_SUBMITTED", "BillingPeriod", Long.toString(id),
@@ -89,7 +95,7 @@ public class BillingPeriodService {
         rules.requireDueDateNotPast(period.getDueDate());
         var source = lockSource(period);
         long submissionId = snapshots.submissionId(id, revision);
-        if (!snapshots.inputs(submissionId).matches(source.inputs())) {
+        if (!snapshotInputs(snapshots.inputs(submissionId)).matches(source.inputs())) {
             throw new ConflictException("BILLING_INPUT_CHANGED");
         }
         var now = clock.instant();
@@ -143,11 +149,38 @@ public class BillingPeriodService {
         return reason.trim();
     }
 
-    private BillingSnapshotStore.Source lockSource(BillingPeriod period) {
+    private record Source(List<HouseholdLookup.BillingHousehold> households, List<BillingSnapshotStore.Rate> rates) {
+        BillingInputs inputs() {
+            return new BillingInputs(households.stream().map(h -> new BillingInputs.Household(h.id(), h.areaM2())).toList(),
+                    rates.stream().map(r -> new BillingInputs.Rate(r.code(), r.rateId(), r.unitPrice(), r.method())).toList());
+        }
+    }
+
+    private static BillingInputs snapshotInputs(BillingSnapshotStore.SnapshotInputs inputs) {
+        return new BillingInputs(inputs.households().stream().map(h -> new BillingInputs.Household(h.id(), h.areaM2())).toList(),
+                inputs.rates().stream().map(r -> new BillingInputs.Rate(r.code(), r.rateId(), r.unitPrice(), r.method())).toList());
+    }
+
+    private List<BillingSnapshotStore.Line> snapshotLines(Source source) {
+        var lines = new ArrayList<BillingSnapshotStore.Line>();
+        var calculator = new FeeCalculator();
+        for (var household : source.households()) {
+            for (var rate : source.rates()) {
+                BigDecimal area = rate.method() == CalculationMethod.AREA ? household.areaM2() : null;
+                BigDecimal quantity = area == null ? BigDecimal.ONE : area;
+                lines.add(new BillingSnapshotStore.Line(household.id(), household.householdCode(), household.apartmentCode(),
+                        area, rate.typeId(), rate.code(), rate.name(), rate.method(), quantity, rate.unitPrice(),
+                        rate.rateId(), calculator.calculate(rate.method(), area, rate.unitPrice())));
+            }
+        }
+        return lines;
+    }
+
+    private Source lockSource(BillingPeriod period) {
         var active = households.lockActiveForBilling();
         if (active.isEmpty()) throw new ConflictException("NO_ACTIVE_HOUSEHOLDS");
         var rates = snapshots.lockRates(YearMonth.parse(period.getPeriod()).atDay(1));
-        return new BillingSnapshotStore.Source(active, rates);
+        return new Source(active, rates);
     }
 
     private BillingPeriod editablePeriod(long id, long version, String expectedStatus) {
