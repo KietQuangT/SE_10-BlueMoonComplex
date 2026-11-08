@@ -8,10 +8,14 @@ import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 import vn.edu.se10.bluemoon.billing.persistence.BillingPeriod;
 import vn.edu.se10.bluemoon.billing.persistence.BillingPeriodRepository;
+import vn.edu.se10.bluemoon.billing.persistence.BillingSnapshotStore;
+import vn.edu.se10.bluemoon.residency.application.HouseholdLookup;
 import vn.edu.se10.bluemoon.common.audit.AuditService;
 import vn.edu.se10.bluemoon.common.error.ConflictException;
+import vn.edu.se10.bluemoon.common.error.BadRequestException;
 import vn.edu.se10.bluemoon.common.error.NotFoundException;
 
 @Service
@@ -20,12 +24,16 @@ public class BillingPeriodService {
     private final AuditService audit;
     private final Clock clock;
     private final BillingPeriodRules rules;
+    private final HouseholdLookup households;
+    private final BillingSnapshotStore snapshots;
 
-    public BillingPeriodService(BillingPeriodRepository periods, AuditService audit, Clock clock) {
+    public BillingPeriodService(BillingPeriodRepository periods, AuditService audit, Clock clock, HouseholdLookup households, BillingSnapshotStore snapshots) {
         this.periods = periods;
         this.audit = audit;
         this.clock = clock;
         this.rules = new BillingPeriodRules(clock);
+        this.households = households;
+        this.snapshots = snapshots;
     }
 
     @Transactional
@@ -57,6 +65,68 @@ public class BillingPeriodService {
         audit.record(actor, "BILLING_PERIOD_UPDATED", "BillingPeriod", Long.toString(id),
                 Map.of("period", period.getPeriod(), "dueDate", dueDate.toString()));
         return period;
+    }
+
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public BillingPeriod submit(long id, long version, long actor) {
+        BillingPeriod period = editablePeriod(id, version, "DRAFT");
+        var source = lockSource(period);
+        var now = clock.instant();
+        long nextRevision = period.getRevision() + 1;
+        var submission = snapshots.save(id, nextRevision, actor, now, source);
+        period.markSubmitted(actor, now);
+        periods.flush();
+        audit.record(actor, "BILLING_PERIOD_SUBMITTED", "BillingPeriod", Long.toString(id),
+                Map.of("period", period.getPeriod(), "revision", Long.toString(nextRevision),
+                        "count", Long.toString(submission.count()), "total", submission.total().toPlainString()));
+        return period;
+    }
+
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
+    public BillingPeriod issue(long id, long version, long revision, long actor) {
+        BillingPeriod period = editablePeriod(id, version, "PENDING_APPROVAL");
+        if (period.getRevision() != revision) throw new ConflictException("STALE_VERSION");
+        rules.requireDueDateNotPast(period.getDueDate());
+        var source = lockSource(period);
+        long submissionId = snapshots.submissionId(id, revision);
+        if (!snapshots.inputs(submissionId).matches(source.inputs())) {
+            throw new ConflictException("BILLING_INPUT_CHANGED");
+        }
+        var now = clock.instant();
+        snapshots.issue(id, submissionId, period.getDueDate(), now);
+        period.markIssued(actor, now);
+        periods.flush();
+        audit.record(actor, "BILLING_PERIOD_ISSUED", "BillingPeriod", Long.toString(id),
+                Map.of("period", period.getPeriod(), "revision", Long.toString(revision), "status", "ISSUED"));
+        return period;
+    }
+
+    @Transactional
+    public BillingPeriod cancel(long id, long version, String reason, long actor) {
+        String normalizedReason = requiredReason(reason);
+        BillingPeriod period = editablePeriod(id, version, "ISSUED");
+        if (period.getReceiptCount() != 0) throw new ConflictException("PERIOD_HAS_RECEIPTS");
+        var now = clock.instant();
+        snapshots.cancelInvoices(id, now);
+        period.markCancelled(actor, now, normalizedReason);
+        periods.flush();
+        audit.record(actor, "BILLING_PERIOD_CANCELLED", "BillingPeriod", Long.toString(id),
+                Map.of("period", period.getPeriod(), "status", "CANCELLED"));
+        return period;
+    }
+
+    private String requiredReason(String reason) {
+        if (reason == null || reason.isBlank() || reason.trim().length() > 255) {
+            throw new BadRequestException("REASON_REQUIRED");
+        }
+        return reason.trim();
+    }
+
+    private BillingSnapshotStore.Source lockSource(BillingPeriod period) {
+        var active = households.lockActiveForBilling();
+        if (active.isEmpty()) throw new ConflictException("NO_ACTIVE_HOUSEHOLDS");
+        var rates = snapshots.lockRates(YearMonth.parse(period.getPeriod()).atDay(1));
+        return new BillingSnapshotStore.Source(active, rates);
     }
 
     private BillingPeriod editablePeriod(long id, long version, String expectedStatus) {

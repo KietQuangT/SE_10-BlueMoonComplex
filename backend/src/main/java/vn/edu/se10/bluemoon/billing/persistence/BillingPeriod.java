@@ -35,6 +35,22 @@ public class BillingPeriod {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "submitted_by")
+    private Long submittedBy;
+    @Column(name = "submitted_at")
+    private Instant submittedAt;
+    @Column(name = "issued_by")
+    private Long issuedBy;
+    @Column(name = "issued_at")
+    private Instant issuedAt;
+
+    @Column(name = "cancelled_by")
+    private Long cancelledBy;
+    @Column(name = "cancelled_at")
+    private Instant cancelledAt;
+    @Column(name = "cancel_reason", length = 255)
+    private String cancelReason;
+
     protected BillingPeriod() { }
 
     public BillingPeriod(String period, LocalDate dueDate, Long replacesPeriodId, long actor, Instant createdAt) {
@@ -44,6 +60,26 @@ public class BillingPeriod {
         this.replacesPeriodId = replacesPeriodId;
         this.createdBy = actor;
         this.createdAt = createdAt;
+    }
+
+    public void markSubmitted(long actor, Instant now) {
+        status = "PENDING_APPROVAL";
+        revision++;
+        submittedBy = actor;
+        submittedAt = now;
+    }
+
+    public void markIssued(long actor, Instant now) {
+        status = "ISSUED";
+        issuedBy = actor;
+        issuedAt = now;
+    }
+
+    public void markCancelled(long actor, Instant now, String reason) {
+        status = "CANCELLED";
+        cancelledBy = actor;
+        cancelledAt = now;
+        cancelReason = reason;
     }
 
     public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }

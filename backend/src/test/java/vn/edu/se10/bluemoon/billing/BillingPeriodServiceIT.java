@@ -3,6 +3,7 @@ package vn.edu.se10.bluemoon.billing;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -47,4 +48,48 @@ class BillingPeriodServiceIT {
         assertEquals("BILLING_PERIOD_EXISTS", assertThrows(ConflictException.class,
                 () -> service.create("9000-03", LocalDate.of(9000, 3, 31), actor)).code());
     }
+    @Test
+    void issueUsesApprovedSnapshotEvenWhenSourcesChangeAfterIssue() {
+        long actor = actor();
+        long household = household();
+        seedRates(actor);
+        var period = service.create("9000-03", LocalDate.of(9000, 3, 31), actor);
+        service.submit(period.getId(), period.getVersion(), actor);
+        service.issue(period.getId(), period.getVersion(), period.getRevision(), actor);
+        jdbc.update("UPDATE households SET area_m2=60 WHERE id=?", household);
+        assertEquals(new BigDecimal("530000"), jdbc.queryForObject(
+                "SELECT total FROM invoices WHERE period_id=? AND household_id=?", BigDecimal.class, period.getId(), household));
+        assertEquals(2, jdbc.queryForObject(
+                "SELECT COUNT(*) FROM invoice_lines WHERE invoice_id=(SELECT id FROM invoices WHERE period_id=? AND household_id=?)", Integer.class, period.getId(), household));
+    }
+
+    @Test
+    void sourceAreaChangeAfterSubmissionBlocksIssue() {
+        long actor = actor();
+        long household = household();
+        seedRates(actor);
+        var period = service.create("9000-03", LocalDate.of(9000, 3, 31), actor);
+        service.submit(period.getId(), period.getVersion(), actor);
+        jdbc.update("UPDATE households SET area_m2=60 WHERE id=?", household);
+        assertEquals("BILLING_INPUT_CHANGED", assertThrows(ConflictException.class,
+                () -> service.issue(period.getId(), period.getVersion(), period.getRevision(), actor)).code());
+    }
+
+    private long actor() {
+        String marker = UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO users (role_id, username, password_hash, full_name, status, created_at, updated_at) VALUES ((SELECT id FROM roles WHERE code='ACCOUNTANT'), ?, 'test', 'test', 'ACTIVE', NOW(6), NOW(6))", marker);
+        return jdbc.queryForObject("SELECT id FROM users WHERE username=?", Long.class, marker);
+    }
+
+    private long household() {
+        String marker = "s08-" + UUID.randomUUID();
+        jdbc.update("INSERT INTO households (household_code, apartment_code, area_m2, status, created_at, updated_at) VALUES (?, ?, 50, 'ACTIVE', NOW(6), NOW(6))", marker, marker);
+        return jdbc.queryForObject("SELECT id FROM households WHERE household_code=?", Long.class, marker);
+    }
+
+    private void seedRates(long actor) {
+        jdbc.update("INSERT INTO fee_rates (fee_type_id, unit_price, effective_from, created_by, created_at) SELECT id, 10000, '9000-03-01', ?, NOW(6) FROM fee_types WHERE code='MANAGEMENT_FEE'", actor);
+        jdbc.update("INSERT INTO fee_rates (fee_type_id, unit_price, effective_from, created_by, created_at) SELECT id, 30000, '9000-03-01', ?, NOW(6) FROM fee_types WHERE code='WASTE_FEE'", actor);
+    }
+
 }
