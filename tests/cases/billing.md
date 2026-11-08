@@ -58,6 +58,21 @@ Các ID số trong dữ liệu (`1`, `10`, `20`, `501`, `601`, `999999`) là ID 
 - **Trạng thái:** Not run.
 - **Nguồn:** `_agents_workspace/S08/01_contract.md:38,140,142`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/api/BillingPeriodController.java:107`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/application/BillingPeriodRules.java:26,49`.
 
+### BIL-01.5 — Race condition: Hai request tạo kỳ thu cùng tháng đồng thời chỉ một kỳ còn hiệu lực và một audit log
+
+- **Vai trò:** ACCOUNTANT.
+- **Điểm vào:** `POST /api/v1/billing-periods`.
+- **Dữ liệu vào:** Tháng `<THANG_NAY>` chưa có kỳ thu nào còn hiệu lực; hai request đồng thời từ ACCOUNTANT gửi cùng body `{"period":"<THANG_NAY>","dueDate":"<CUOI_THANG_NAY>"}` kèm header `X-CSRF-TOKEN: <CSRF_TOKEN>`. Cần test harness có transaction barrier (`CountDownLatch` / thread pool 2 worker) để kích hoạt đồng thời hai giao dịch.
+- **Các bước:**
+  1. Xác nhận DB chưa có kỳ thu nào cho tháng `<THANG_NAY>`.
+  2. Kích hoạt 2 luồng đồng thời gửi `POST /api/v1/billing-periods` với cùng payload qua điểm chặn barrier.
+  3. Đợi cả hai luồng kết thúc, thu thập mã trạng thái HTTP và body `ProblemDetail`.
+  4. Kiểm tra số lượng bản ghi kỳ thu trong bảng `billing_periods` và số lượng audit log trong bảng `audit_log`.
+- **Kỳ vọng:** Đúng một request thành công trả HTTP 201 (`status=DRAFT`, `version=0`, `latestRevision=0`, `receiptCount=0`); request còn lại bị xung đột bởi ràng buộc duy nhất trên cột sinh `active_month` và trả HTTP 409, `code=BILLING_PERIOD_EXISTS`. Không tạo ra hai kỳ thu song song cho cùng một tháng.
+- **Kiểm sau:** Truy vấn DB `SELECT COUNT(*) FROM billing_periods WHERE period='<THANG_NAY>' AND status <> 'CANCELLED'` trả về đúng `1`; kiểm tra `audit_log` chỉ có đúng 1 bản ghi `BILLING_PERIOD_CREATED` cho `<THANG_NAY>`.
+- **Trạng thái:** Not run.
+- **Nguồn:** `docs/DECISIONS.md` D26 (P1); `_agents_workspace/S08/01_contract.md:13,90,105,142,150,164,207`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/application/BillingPeriodService.java:57`; `backend/src/test/java/vn/edu/se10/bluemoon/billing/BillingPeriodConcurrencyIT.java:68`.
+
 ### BIL-02.1 — Xem danh sách và chi tiết kỳ thu theo vai trò ADMIN và ACCOUNTANT
 
 - **Vai trò:** ADMIN, ACCOUNTANT.
@@ -214,6 +229,45 @@ Các ID số trong dữ liệu (`1`, `10`, `20`, `501`, `601`, `999999`) là ID 
 - **Trạng thái:** Not run.
 - **Nguồn:** `docs/DECISIONS.md` D26; `_agents_workspace/S08/01_contract.md:39,50,55,112,115,119,164,205`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/application/BillingPeriodService.java:106,231,254,264`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/persistence/BillingReadStore.java:83`.
 
+### BIL-06.3 — Race condition: Hai request phát hành cùng version/revision đồng thời chỉ một thành công và một bộ hóa đơn
+
+- **Vai trò:** ADMIN.
+- **Điểm vào:** `POST /api/v1/billing-periods/{id}/issue`.
+- **Dữ liệu vào:** Kỳ `501` đang ở `PENDING_APPROVAL` (`version=1`, `revision=1`, `dueDate=<CUOI_THANG_NAY>`); hệ thống có $N$ hộ `ACTIVE`; hai request đồng thời từ ADMIN gửi cùng body `{"version":1,"revision":1}` kèm header `X-CSRF-TOKEN: <CSRF_TOKEN>`. Cần test harness có transaction barrier (`CountDownLatch` / thread pool 2 worker) để kích hoạt hai request đồng thời.
+- **Các bước:**
+  1. Xác nhận kỳ `501` ở `PENDING_APPROVAL` với `version=1`, `revision=1`, dữ liệu hộ và đơn giá khớp snapshot bản trình.
+  2. Kích hoạt 2 luồng đồng thời gửi `POST /api/v1/billing-periods/501/issue` với `{"version":1,"revision":1}` qua điểm chặn barrier.
+  3. Thu nhận HTTP status và ProblemDetail từ cả hai luồng.
+  4. Kiểm tra hóa đơn trong bảng `invoices`, các dòng phí trong `invoice_lines`, và bảng `audit_log`.
+- **Kỳ vọng:** Đúng một request thành công trả HTTP 200 (`status=ISSUED`, `issuedAt` khác null); request còn lại thất bại do cập nhật phiên bản lạc quan/khóa dòng kỳ thu và trả HTTP 409, `code=STALE_VERSION`. Chỉ sinh ra đúng một bộ hóa đơn duy nhất (mỗi hộ `ACTIVE` có đúng 1 hóa đơn, mỗi hóa đơn có đúng 2 dòng phí `MANAGEMENT_FEE` và `WASTE_FEE`).
+- **Kiểm sau:** Truy vấn DB `SELECT COUNT(*) FROM invoices WHERE period_id=501` đúng bằng $N$; `SELECT COUNT(*) FROM invoice_lines WHERE invoice_id IN (SELECT id FROM invoices WHERE period_id=501)` đúng bằng $2 \times N$; kiểm tra `audit_log` chỉ có đúng 1 dòng `BILLING_PERIOD_ISSUED` cho kỳ `501`.
+- **Trạng thái:** Not run.
+- **Nguồn:** `docs/DECISIONS.md` D26; `_agents_workspace/S08/01_contract.md:13,50,55,112,142,153,164,207`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/application/BillingPeriodService.java:106`; `backend/src/test/java/vn/edu/se10/bluemoon/billing/BillingPeriodConcurrencyIT.java:82`.
+
+### BIL-06.4 — Kiểm soát xung đột: Thay đổi tập hộ (tạo ACTIVE, kích hoạt INACTIVE, đổi diện tích) trong lúc phát hành kỳ thu
+
+- **Vai trò:** ADMIN (phát hành) và ADMIN / tiến trình hệ thống (thay đổi dữ liệu hộ cư dân).
+- **Điểm vào:** `POST /api/v1/billing-periods/{id}/issue` kết hợp thao tác thay đổi dữ liệu hộ qua `POST /api/v1/households` hoặc `PATCH /api/v1/households/{id}`.
+- **Dữ liệu vào:** Kỳ `501` ở `PENDING_APPROVAL` (`version=1`, `revision=1`) được lập với snapshot ban đầu gồm hộ `1` (`ACTIVE`, diện tích `50.00` m²), có hộ `2` đang `INACTIVE` (diện tích `60.00` m²). Dùng transaction barrier (test harness DB hai transaction với `CountDownLatch` trên isolation `REPEATABLE_READ`) để mô phỏng tương tranh giữa transaction phát hành (`BillingPeriodService.issue`) và transaction thay đổi hộ:
+  - Biến thể A: Thêm hộ mới có `status='ACTIVE'`.
+  - Biến thể B: Kích hoạt hộ `2` từ `INACTIVE` sang `ACTIVE`.
+  - Biến thể C: Cập nhật diện tích hộ `1` từ `50.00` m² sang `55.00` m² (hoặc chuyển `status='INACTIVE'`).
+- **Các bước:**
+  1. Thiết lập kỳ `501` chờ duyệt với snapshot cố định.
+  2. Dùng test harness thực hiện kiểm tra qua hai thứ tự cạnh tranh:
+     - **Thứ tự 1 (Thao tác sửa đổi hộ commit trước khi phát hành đọc khóa):** Thực hiện thay đổi hộ (Biến thể A, B hoặc C) và commit thành công. Sau đó gửi `POST /api/v1/billing-periods/501/issue` với `{"version":1,"revision":1}`.
+     - **Thứ tự 2 (Transaction phát hành đang giữ khóa khoảng hộ `lockActiveForBilling()` thì thao tác sửa đổi hộ diễn ra):** Transaction phát hành bắt đầu, gọi `lockActiveForBilling()` khóa khoảng `status='ACTIVE'`, giữ kết nối chưa commit qua latch. Luồng thứ hai cố gắng thực hiện Biến thể A, B hoặc C. Sau một khoảng chờ, giải phóng latch để transaction phát hành commit trước, rồi quan sát luồng thứ hai.
+  3. Đối chiếu HTTP status, dữ liệu hóa đơn sinh ra và trạng thái bản ghi hộ.
+- **Kỳ vọng:**
+  - Ở Thứ tự 1: Request phát hành đọc dữ liệu nguồn hiện tại, so sánh với snapshot bản trình thấy khác biệt (khác số lượng hộ hoặc khác diện tích), từ chối phát hành và trả HTTP 409, `code=BILLING_INPUT_CHANGED`. Kỳ `501` giữ nguyên `PENDING_APPROVAL`, không có hóa đơn nào được sinh ra, không phát sinh audit phát hành.
+  - Ở Thứ tự 2: Khóa dòng/khoảng (range lock / `SELECT ... FOR UPDATE` trên index `status, id`) buộc thao tác sửa đổi hộ (INSERT ACTIVE, UPDATE status sang ACTIVE, UPDATE diện tích) phải chờ (block) cho đến khi transaction phát hành hoàn tất commit. Toàn bộ hóa đơn phát hành sinh ra đúng và đủ theo đúng snapshot đã duyệt (hộ `1` diện tích `50.00` m², không có hộ mới hay hộ `2`); thao tác sửa đổi hộ chỉ commit sau đó và áp dụng cho kỳ tháng tiếp theo, không làm sai lệch bộ hóa đơn đã phát hành.
+  - Cả hai thứ tự: Kết quả không bao giờ bỏ sót hộ `ACTIVE`, không lọt hộ `INACTIVE`, không thêm hộ thừa ngoài snapshot đã duyệt, và không phát hành theo snapshot cũ sau khi dữ liệu DB đã đổi.
+- **Kiểm sau:**
+  - Ở Thứ tự 1: `SELECT COUNT(*) FROM invoices WHERE period_id=501` bằng `0`; kỳ `501` vẫn ở `PENDING_APPROVAL`.
+  - Ở Thứ tự 2: Hóa đơn kỳ `501` chỉ gồm hộ `1` với diện tích `50.00` m²; bảng `households` cập nhật dữ liệu mới sau khi phát hành xong.
+- **Trạng thái:** Not run.
+- **Nguồn:** `docs/DECISIONS.md` D26; `_agents_workspace/S08/01_contract.md:13,50,53,142,162,207`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/application/BillingPeriodService.java:106`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/application/BillingInputs.java:21`; `backend/src/test/java/vn/edu/se10/bluemoon/billing/ActiveHouseholdLockIT.java:46`; `backend/src/test/java/vn/edu/se10/bluemoon/billing/BillingMutationSourceAndRaceTest.java:62`.
+
 ### BIL-07.1 — ADMIN hủy kỳ đã phát hành trong tháng khi chưa có phiếu thu và ACCOUNTANT lập kỳ thay thế
 
 - **Vai trò:** ADMIN, ACCOUNTANT.
@@ -241,6 +295,33 @@ Các ID số trong dữ liệu (`1`, `10`, `20`, `501`, `601`, `999999`) là ID 
 - **Kiểm sau:** Gọi `GET /api/v1/billing-periods/502` và `GET /api/v1/billing-periods/502/invoices` xác nhận kỳ và các hóa đơn vẫn ở trạng thái `ISSUED`.
 - **Trạng thái:** Not run.
 - **Nguồn:** `docs/DECISIONS.md` D26; `_agents_workspace/S08/01_contract.md:51,65,142`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/application/BillingPeriodService.java:146`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/application/BillingReceiptGuard.java:20`.
+
+### BIL-07.3 — Race condition: Hủy kỳ phát hành đua với ghi nhận phiếu thu qua `BillingReceiptGuard.recordReceipt` trong hai DB transaction thật
+
+- **Vai trò:** ADMIN (hủy kỳ) và Module thanh toán S09 (ghi phiếu thu qua `BillingReceiptGuard`).
+- **Điểm vào:** `POST /api/v1/billing-periods/{id}/cancel` và method giao kèo `BillingReceiptGuard.recordReceipt(Long billingPeriodId)`.
+- **Dữ liệu vào:** Kỳ `501` thuộc `<THANG_NAY>`, `status=ISSUED`, `version=1`, `receipt_count=0`. Hai DB transaction thật được điều khiển bằng test harness xác định (như `BillingReceiptRaceIT` dùng `PlatformTransactionManager` và `CountDownLatch` trên hai thread riêng biệt). Không dùng cập nhật trực tiếp `receipt_count` bằng câu lệnh UPDATE SQL để giả lập race.
+- **Các bước:**
+  1. Khởi tạo kỳ `501` ở trạng thái `ISSUED` với `receipt_count=0`.
+  2. **Thứ tự 1 (Phiếu thu thắng đua):**
+     - Transaction A (ghi thu) gọi `BillingReceiptGuard.recordReceipt(501)`, khóa dòng kỳ thu bằng `lockById`, tăng `receipt_count=1`, giữ latch chưa commit.
+     - Transaction B (hủy kỳ) gọi `BillingPeriodService.cancel(501, 1, "Huy ky", adminId)` (hoặc gửi HTTP `POST /cancel`); transaction B bị block do tranh chấp khóa dòng `billing_periods`.
+     - Giải phóng latch để Transaction A commit thành công.
+     - Quan sát kết quả của Transaction B sau khi hết block.
+  3. Khởi tạo kỳ mới `502` ở trạng thái `ISSUED` với `version=0`, `receipt_count=0`.
+  4. **Thứ tự 2 (Hủy kỳ thắng đua):**
+     - Transaction C (hủy kỳ) gọi `BillingPeriodService.cancel(502, 0, "Huy ky", adminId)`, khóa dòng kỳ thu, chuyển `status='CANCELLED'`, giữ latch chưa commit.
+     - Transaction D (ghi thu) gọi `BillingReceiptGuard.recordReceipt(502)`; transaction D bị block do tranh chấp khóa dòng.
+     - Giải phóng latch để Transaction C commit thành công.
+     - Quan sát kết quả của Transaction D sau khi hết block.
+- **Kỳ vọng:**
+  - Ở Thứ tự 1 (Receipt thắng): Transaction hủy kỳ B nhận lỗi từ chối HTTP 409, `code=PERIOD_HAS_RECEIPTS`. Kỳ thu `501` và toàn bộ hóa đơn giữ nguyên `status=ISSUED`; `receipt_count` được ghi nhận bằng `1`.
+  - Ở Thứ tự 2 (Cancel thắng): Transaction ghi thu D bị từ chối với lỗi nghiệp vụ `code=INVALID_STATE`. Transaction D rollback hoàn toàn, `receipt_count` của kỳ `502` không tăng (vẫn giữ bằng `0`); kỳ `502` và toàn bộ hóa đơn chuyển sang `CANCELLED`.
+- **Kiểm sau:**
+  - Thứ tự 1: `SELECT status, receipt_count FROM billing_periods WHERE id=501` trả về `ISSUED`, `1`; không có audit log `BILLING_PERIOD_CANCELLED`.
+  - Thứ tự 2: `SELECT status, receipt_count FROM billing_periods WHERE id=502` trả về `CANCELLED`, `0`; có audit log `BILLING_PERIOD_CANCELLED` cho kỳ `502`.
+- **Trạng thái:** Not run.
+- **Nguồn:** `docs/DECISIONS.md` D26; `_agents_workspace/S08/01_contract.md:13,51,65,142,207`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/application/BillingReceiptGuard.java:19`; `backend/src/main/java/vn/edu/se10/bluemoon/billing/application/BillingPeriodService.java:146`; `backend/src/test/java/vn/edu/se10/bluemoon/billing/BillingReceiptRaceIT.java:64,100`.
 
 ### BIL-08.1 — Kỳ thu của tháng cũ bị khóa thao tác ghi (`BILLING_PERIOD_EXPIRED`) và hiển thị đúng cờ `expired`
 
@@ -301,6 +382,38 @@ Các ID số trong dữ liệu (`1`, `10`, `20`, `501`, `601`, `999999`) là ID 
 - **Kiểm sau:** Kiểm tra `localStorage` và `sessionStorage` không chứa dữ liệu nháp kỳ thu.
 - **Trạng thái:** Not run.
 - **Nguồn:** `_agents_workspace/S08/01_contract.md:168,170,176,209`; `frontend/src/App.tsx:91,138`; `frontend/src/api/errors.ts:5,6`; `frontend/src/screens/s08/ApiBillingPage.tsx:28`.
+
+### BIL-10.3 — Giao diện kỳ thu bắt buộc: mobile viewport 360px, theme sáng/tối, điều hướng keyboard-only với focus nhìn thấy, date input badInput và định dạng số lớn
+
+- **Vai trò:** ACCOUNTANT, ADMIN.
+- **Điểm vào:** `/accountant/billing-periods`, `/admin/billing-periods`.
+- **Dữ liệu vào:** Chế độ `api`; trình duyệt desktop và trình duyệt mobile (mô phỏng viewport 360px × 640px); có kỳ thu với tổng tiền lớn (`999999999999999999` VND - 18 chữ số); ngày hạn nộp không hợp lệ để kích hoạt cờ `validity.badInput` của trình duyệt.
+  *(Lưu ý: Luồng xử lý lỗi 401/409, giữ nháp và chặn fallback demo đã được kiểm thử tại [BIL-10.2](#bil-102--giao-diện-kỳ-thu-xử-lý-lỗi-409-billing_input_changed-stale_version-giữ-nháp-khi-401-chặn-sai-vai-trò-và-không-fallback-demo); ca này tập trung kiểm thử trải nghiệm người dùng, tính tiếp cận và tính toàn vẹn dữ liệu giao diện theo hợp đồng mục 11).*
+- **Các bước:**
+  1. **Kiểm tra Viewport 360px:** Mở DevTools, chỉnh kích thước màn hình `360px × 640px`. Mở màn `/accountant/billing-periods` và `/admin/billing-periods`:
+     - Kiểm tra khối lập/sửa kỳ thu, danh sách kỳ thu, bảng xem trước danh sách hộ và danh sách hóa đơn: nội dung vừa vặn màn hình, không bị tràn ngang (không xuất hiện thanh cuộn ngang toàn trang).
+     - Các nút hành động (`Tạo kỳ thu`, `Trình duyệt`, `Phát hành`, `Hủy kỳ`) hiển thị đầy đủ, không bị chồng chéo và vùng bấm tối thiểu 44px.
+  2. **Kiểm tra Theme sáng/tối:**
+     - Chuyển đổi giữa theme sáng (Light) và theme tối (Dark) qua nút `ThemeToggle` hoặc tùy chọn hệ thống (`prefers-color-scheme`).
+     - Kiểm tra độ tương phản màu chữ so với màu nền (`surface-box`, `notice-box`), viền hộp thông báo và màu các badge trạng thái (`Nháp`, `Chờ duyệt`, `Đã phát hành`, `Đã hủy`).
+     - Đảm bảo toàn bộ nhãn và số liệu đọc rõ ràng, không bị lóa hoặc mất độ tương phản theo chuẩn WCAG AA.
+  3. **Kiểm tra Điều hướng bàn phím (Keyboard-only):**
+     - Chỉ sử dụng bàn phím (`Tab`, `Shift+Tab`, `Enter`, `Space`, `Esc`), không dùng chuột.
+     - Di chuyển qua form lập kỳ thu, danh sách kỳ thu, các nút hành động và hộp thoại xác nhận `ConfirmDialog`.
+     - Kiểm tra vòng viền tiêu điểm (`:focus-visible` outline) hiển thị rõ ràng trên mọi điều khiển tương tác.
+     - Khi mở `ConfirmDialog` (bấm `Phát hành`, `Trả lại` hoặc `Hủy kỳ`), tiêu điểm tự động chuyển vào hộp thoại; phím `Esc` hoặc bấm phím `Tab` tới nút `Hủy` cho phép đóng hộp thoại an toàn.
+  4. **Kiểm tra Date input ở trạng thái `badInput`:**
+     - Tại ô `Hạn nộp` (`input[type="date"]`), gõ ngày sai định dạng (ví dụ ngày không tồn tại hoặc chuỗi không hợp lệ trên trình duyệt có hỗ trợ) khiến thuộc tính `validity.badInput` bằng `true`.
+     - Bấm nút `Tạo kỳ thu` hoặc `Lưu hạn nộp`.
+     - Quan sát phản hồi: form gọi `checkValidity()`, phát hiện dữ liệu không hợp lệ, chặn việc gửi form và hiển thị cảnh báo `Ngày hạn nộp chưa hợp lệ. Kiểm tra rồi thử lại.`; trình duyệt không gửi request nào lên server.
+  5. **Kiểm tra Số tiền lớn dạng chuỗi không làm tròn:**
+     - Mở kỳ thu có tổng tiền lớn `999999999999999999`.
+     - Quan sát giá trị tổng tiền trên bản xem trước, trên hộp thoại xác nhận và trên danh sách hóa đơn.
+     - Xác nhận số tiền được hiển thị đầy đủ từng chữ số `999.999.999.999.999.999 đ` thông qua hàm `formatVndDecimal`, không bị chuyển thành ký pháp khoa học (như `1e+18`) hoặc bị làm tròn sai số do giới hạn số thực của JavaScript Number.
+- **Kỳ vọng:** Layout 360px co giãn hợp lý không vỡ giao diện; theme sáng/tối có độ tương phản rõ ràng; thao tác keyboard-only thuận tiện với focus ring nhìn thấy; date `badInput` chặn gửi request sai; số tiền lớn chuỗi thập phân giữ nguyên độ chính xác từng chữ số.
+- **Kiểm sau:** Kiểm tra tab Network xác nhận không phát sinh HTTP request khi date input gặp trạng thái `badInput`.
+- **Trạng thái:** Not run.
+- **Nguồn:** `_agents_workspace/S08/01_contract.md:15,98,168,176,209`; `frontend/src/screens/s08/ApiBillingPage.tsx:8,29,33,36`; `frontend/src/lib/format.ts:8`; `frontend/src/test/s08-screens.test.tsx:22`.
 
 ## Điểm chưa xác định
 
