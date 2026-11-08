@@ -26,6 +26,15 @@ it('shows actions only for editable rows', async () => {
   expect(screen.getAllByRole('button', { name: 'Xóa' })).toHaveLength(1);
   expect(screen.getByText('Đã khóa')).toBeInTheDocument();
 });
+it('keeps edit and delete actions together in the value cell', async () => {
+  render(<FeeRatesPage />);
+  const edit = await screen.findByRole('button', { name: 'Sửa' });
+  const remove = screen.getByRole('button', { name: 'Xóa' });
+  const actions = edit.closest('.row-actions');
+  expect(actions).not.toBeNull();
+  expect(actions).toContainElement(remove);
+  expect(actions?.parentElement).toHaveAttribute('data-label', 'Hành động');
+});
 it('opens the edit form above the table with the current price focused and cancels it', async () => {
   render(<FeeRatesPage />);
   await screen.findByText('7.000,50 đ');
