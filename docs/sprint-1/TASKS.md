@@ -13,7 +13,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 | ☑ | S04 | M | Sơn + Tuấn | Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3 | S01 | Khóa xong request mới với cookie cũ thất bại; thử nhiều session và server role; UI cần test tích hợp để đóng. |
 | ☑ | S05 | L | Sơn + Tuấn | Hộ/nhân khẩu/biến động; WBS 2.2.1.1 | F01,S01 | CRUD/tra cứu, ownership; chuyển đi đổi trạng thái cư trú (không xóa bản ghi, DECISIONS D20) kèm lịch sử biến động và audit; validate trường đã chốt, test hộ khác bị chặn. |
 | ☐ | S06 | L | Kiệt + Sơn + Tuấn | Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3 | S05 bản API đầu | Chờ duyệt → duyệt/từ chối đúng quyền; lưu trạng thái/lịch sử, thông báo trong app/mock theo AC; cuối cùng ghép UI. |
-| ☐ | S07 | M | Quân + Kiệt; Tuấn kiểm tra | Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3 | F01,F02 | BigDecimal; 50m² × 10.000 = 500.000; hiệu lực/rounding đã chốt; không áp thay giá vào hóa đơn cũ. |
+| ☑ | S07 | M | Quân + Kiệt; Tuấn kiểm tra | Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3 | F01,F02 | BigDecimal; 50m² × 10.000 = 500.000; hiệu lực/rounding đã chốt; không áp thay giá vào hóa đơn cũ. |
 | ☐ | S08 | L | Quân + Tuấn | Kỳ thu/tự nguyện; WBS 2.3.1.2–3 | S07; S05 để ghép cuối | Không trùng kỳ/hộ/loại; tự nguyện không cộng nợ; giao dữ liệu thật cho thu tiền và đối chiếu độc lập. |
 | ☐ | S09 | L | Quân + Sơn | Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1 | S05,S08 | Thu đúng số tiền, nợ giảm đúng, transaction/audit; duplicate/concurrent không thu hai lần; chốt thu thiếu/thừa/sửa/hủy. |
 | ☐ | S10 | M | Kiệt + Quân | API hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2 | S08; S09 để ghép cuối | Chỉ dữ liệu hộ của account; chi tiết thành phần/kỳ/nợ đúng; pagination; thay householdId không xem được hộ khác. |
@@ -34,7 +34,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 - [ ] S04 — Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3
 - [x] S05 — Hộ/nhân khẩu/biến động; WBS 2.2.1.1
 - [ ] S06 — Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3
-- [ ] S07 — Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3
+- [x] S07 — Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3
 - [ ] S08 — Kỳ thu/tự nguyện; WBS 2.3.1.2–3
 - [ ] S09 — Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1
 - [ ] S10 — API hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2
@@ -329,4 +329,15 @@ AC "cuối cùng ghép UI": M-31, M-16, M-13 đã ghép API S06 ở mức mã v�
 Đầu ra giao cho: Kiệt (PR frontend riêng); Kiệt đồng ý chỉ theo lời Sơn.
 Lỗi còn lại: lỗi cũ không tự xóa ở M-16/M-13; hộp M-16 mở sau quyết định thất bại; thiếu test Esc, đổi tên đăng nhập, api→demo→api, tải lại sau duyệt/từ chối thất bại; npm báo 3 vulnerabilities; README/PRODUCT còn dòng lỗi thời nhỏ.
 Kết luận: UI đủ bằng chứng ở mức mã và test đơn vị; chưa tick S06 vì chưa thử tích hợp thật trên trình duyệt.
+```
+
+### S07 (tick 08/11/2026, theo lời Sơn): đơn giá phí và công thức
+```text
+Task: S07 (WBS 2.3.1.1, 2.3.1.3), backend; hợp đồng `_agents_workspace/S07/01_contract.md` (G1 duyệt 08/11/2026); quyết định D25 trong `docs/DECISIONS.md`.
+Commit: nhánh `hhoangsonnw/feat-s07` (worktree Orca feat-s07), HEAD `f5eef71`: 4a03993 feat, f44fce1 test, 68aa41a sửa C1 (assertion CHECK), f5eef71 sửa W1 (thiếu tham số trả 400). Chưa PR.
+Kiểm thử:
+  - Unit: `./mvnw -B -ntp verify` (JDK 21) trên f5eef71: 122 test, 0 lỗi, BUILD SUCCESS; `verify.log` dòng đầu SHA f5eef71.
+  - Integration: `./mvnw -B -ntp -Pintegration verify` trên f5eef71 với MySQL 8.4 (compose project `bluemoon`, V8 áp thành công): 97 test failsafe, gồm 3 test `FeeRateIntegrationIT` (CHECK, UNIQUE, race hai POST cùng tháng), BUILD SUCCESS. Sơn chạy 08/11/2026 12:42 +07.
+Review: Opus `bluemoon-risk-reviewer` vòng 1: không lỗi chặn sau khi sửa C1 và W1. Lời agy trên `qa/s07-agy` (c188766, báo 137 test) CHƯA được chạy lại trên cùng SHA, không dùng làm bằng chứng.
+Chưa kiểm / còn mở: D25 chưa commit vào nhánh; test QA của agy chưa đối chiếu; snapshot hóa đơn và thu thiếu/thừa thuộc S08/S09; PR và CI remote chưa có.
 ```
