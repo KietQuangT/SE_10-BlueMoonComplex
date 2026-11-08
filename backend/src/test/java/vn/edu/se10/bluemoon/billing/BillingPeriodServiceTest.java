@@ -24,6 +24,7 @@ import vn.edu.se10.bluemoon.billing.persistence.BillingSnapshotStore;
 import vn.edu.se10.bluemoon.billing.persistence.BillingReadStore;
 import vn.edu.se10.bluemoon.residency.application.HouseholdLookup;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.ArgumentCaptor;
 import vn.edu.se10.bluemoon.billing.application.BillingPeriodService;
 import vn.edu.se10.bluemoon.billing.persistence.CalculationMethod;
@@ -166,6 +167,30 @@ class BillingPeriodServiceTest {
         when(periods.lockById(5)).thenReturn(Optional.of(period));
         assertEquals("STALE_VERSION", assertThrows(ConflictException.class, () -> service.issue(5, 0, 1, 1)).code());
         verify(snapshots, never()).issue(anyLong(), anyLong(), any(), any());
+    }
+
+    @Test
+    void invalidTransitionsAreRejectedForEachState() {
+        var period = new BillingPeriod("2026-11", LocalDate.of(2026, 11, 30), null, 1, clock.instant());
+        ReflectionTestUtils.setField(period, "id", 5L);
+        when(periods.lockById(5)).thenReturn(Optional.of(period));
+        for (String state : List.of("DRAFT", "PENDING_APPROVAL", "ISSUED", "CANCELLED")) {
+            ReflectionTestUtils.setField(period, "status", state);
+            if (!state.equals("DRAFT")) {
+                invalidState(() -> service.updateDueDate(5, LocalDate.of(2026, 11, 29), 0, 1));
+                invalidState(() -> service.submit(5, 0, 1));
+            }
+            if (!state.equals("PENDING_APPROVAL")) {
+                invalidState(() -> service.withdraw(5, 0, 1));
+                invalidState(() -> service.returnToDraft(5, 0, "reason", 1));
+                invalidState(() -> service.issue(5, 0, 1, 1));
+            }
+            if (!state.equals("ISSUED")) invalidState(() -> service.cancel(5, 0, "reason", 1));
+        }
+    }
+
+    private static void invalidState(Executable action) {
+        assertEquals("INVALID_STATE", assertThrows(ConflictException.class, action).code());
     }
 
 }
