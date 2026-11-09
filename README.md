@@ -8,7 +8,7 @@ Repo là monorepo: API Spring Boot, giao diện React, MySQL và tài liệu ngh
 
 S01–S09 đã có triển khai trong mã nguồn local `main`. S09 bổ sung thu một phần hoặc toàn bộ hóa đơn, ghi phần nộp thừa thành credit của hộ, phân bổ credit theo FIFO, hủy receipt/đảo phân bổ có lý do, idempotency và audit trong transaction. Kế toán có API mode và Demo mode ở `/accountant/collections`; ADMIN có màn chỉ đọc tại `/admin/collections`.
 
-S09 nằm trên PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28). Backend verify, integration, frontend tests và build đã qua; CI `verify` trên PR đã xanh. Chưa có browser E2E walkthrough với backend thật, nên task S09 vẫn chờ review và kiểm tra luồng trình duyệt. Xem bằng chứng và giới hạn trong [docs/VALIDATION.md](docs/VALIDATION.md).
+S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) vào `origin/main`. Backend verify, integration, frontend tests, build và CI `verify` trên PR đã qua. Chưa có browser E2E walkthrough với backend thật; task S09 vẫn chưa tick trong khi còn review finding cần chốt và luồng trình duyệt cần kiểm tra. Xem bằng chứng và giới hạn trong [docs/VALIDATION.md](docs/VALIDATION.md).
 
 Các task báo cáo, đóng gói hồ sơ thẩm quyền, sao lưu/khôi phục, regression/performance và bàn giao vẫn theo dõi riêng ở TASKS.md. Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
 
