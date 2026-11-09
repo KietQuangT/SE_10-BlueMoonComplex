@@ -24,6 +24,9 @@
     <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-enforcer-plugin</artifactId><executions><execution><id>java-21</id><goals><goal>enforce</goal></goals><configuration><rules><requireJavaVersion><version>[21,22)</version><message>Dự án dùng JDK 21.</message></requireJavaVersion></rules></configuration></execution></executions></plugin>
   </plugins></build>
   <profiles><profile><id>integration</id><build><plugins>
-    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId><executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions></plugin>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-failsafe-plugin</artifactId>
+      <!-- Evict unused contexts and close their pools; retain full per-test concurrency. -->
+      <configuration><systemPropertyVariables><spring.test.context.cache.maxSize>4</spring.test.context.cache.maxSize></systemPropertyVariables></configuration>
+      <executions><execution><goals><goal>integration-test</goal><goal>verify</goal></goals></execution></executions></plugin>
   </plugins></build></profile></profiles>
 </project>
