@@ -8,10 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,10 +22,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import tools.jackson.databind.ObjectMapper;
 import vn.edu.se10.bluemoon.billing.application.ContributionInput;
@@ -43,21 +36,22 @@ import vn.edu.se10.bluemoon.residency.application.ResidentDonorLookup;
  * Bằng chứng trên MySQL thật cho VOL-01.1, 01.2, 02.1, 02.2, 03.1, 04.1, 05.1, 05.2 và 06.1.
  * {@code VoluntaryContributionService.record} dùng Propagation.NEVER nên lớp này không thể là
  * {@code @Transactional}: dữ liệu được commit thật và dọn theo ID/actor của chính test.
- * "Hôm nay" theo giờ Việt Nam được cố định là 9000-08-15.
+ * Lớp này là {@code @SpringBootTest} thuần, không khai báo cấu hình hay đồng hồ riêng, để dùng chung Spring context đã
+ * được cache với các IT thuần khác. Mỗi context được cache giữ một pool 10 kết nối và MySQL mặc định chỉ cho 151 kết nối:
+ * một context riêng làm các IT chạy sau (ví dụ PaymentConcurrencyIT) lỗi "Too many connections". Vì dùng đồng hồ thật nên
+ * mọi ngày được tính theo "hôm nay" giờ Việt Nam khi test bắt đầu (có thể chao đảo nếu test chạy đúng lúc qua nửa đêm).
  */
 @SpringBootTest
-@Import(VoluntaryCaseIT.FixedClock.class)
 class VoluntaryCaseIT {
-    private static final LocalDate TODAY = LocalDate.of(9000, 8, 15);
-    private static final LocalDate OPENS = LocalDate.of(9000, 8, 1);
-    private static final LocalDate CLOSES = LocalDate.of(9000, 8, 31);
-
     @Autowired JdbcTemplate jdbc;
     @Autowired ObjectMapper mapper;
     @Autowired VoluntaryCampaignService campaigns;
     @Autowired VoluntaryContributionService contributions;
     @Autowired ResidentDonorLookup donors;
 
+    LocalDate today;
+    LocalDate opens;
+    LocalDate closes;
     String marker;
     String token;
     long admin;
@@ -68,13 +62,11 @@ class VoluntaryCaseIT {
     long absent;
     long movedOut;
 
-    @TestConfiguration
-    static class FixedClock {
-        @Bean @Primary Clock voluntaryCaseClock() { return Clock.fixed(Instant.parse("9000-08-15T00:00:00Z"), ZoneOffset.UTC); }
-    }
-
     @BeforeEach
     void setUp() {
+        today = LocalDate.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+        opens = today.minusDays(10);
+        closes = today.plusDays(20);
         marker = "vol-" + UUID.randomUUID();
         token = "Vt" + marker.substring(4, 12);
         admin = user("ADMIN");
@@ -100,7 +92,7 @@ class VoluntaryCaseIT {
     // ---------------------------------------------------------------- VOL-01.1, 01.2, 02.1
     @Test
     void campaignLifecycleIsPersistedWithVersionsActorsAndAudit() {
-        var created = campaigns.create("  Quy Khuyen hoc " + token + "  ", "  Ung ho hoc sinh  ", OPENS, CLOSES, admin);
+        var created = campaigns.create("  Quy Khuyen hoc " + token + "  ", "  Ung ho hoc sinh  ", opens, closes, admin);
         long id = created.getId();
         var staff = campaigns.staffDetail(id);
         assertEquals("Quy Khuyen hoc " + token, staff.name());
@@ -112,14 +104,14 @@ class VoluntaryCaseIT {
         assertEquals(0L, staff.postedCount());
         assertEquals("0", staff.totalCollected());
 
-        campaigns.update(id, 0, "Quy Khuyen hoc dot 1 " + token, "Cap nhat mo ta", OPENS, CLOSES, admin);
+        campaigns.update(id, 0, "Quy Khuyen hoc dot 1 " + token, "Cap nhat mo ta", opens, closes, admin);
         assertEquals(1L, dbLong("SELECT version FROM voluntary_campaigns WHERE id=?", id));
         assertEquals("Quy Khuyen hoc dot 1 " + token, jdbc.queryForObject("SELECT name FROM voluntary_campaigns WHERE id=?", String.class, id));
         // Version cũ và đợt không tồn tại.
         assertEquals("STALE_VERSION", assertThrows(ConflictException.class,
-                () -> campaigns.update(id, 0, "Doi", null, OPENS, CLOSES, admin)).code());
+                () -> campaigns.update(id, 0, "Doi", null, opens, closes, admin)).code());
         assertEquals("CAMPAIGN_NOT_FOUND", assertThrows(NotFoundException.class,
-                () -> campaigns.update(999_999_999L, 0, "Doi", null, OPENS, CLOSES, admin)).code());
+                () -> campaigns.update(999_999_999L, 0, "Doi", null, opens, closes, admin)).code());
         assertEquals(1L, dbLong("SELECT version FROM voluntary_campaigns WHERE id=?", id));
 
         campaigns.publish(id, 1, admin);
@@ -129,7 +121,7 @@ class VoluntaryCaseIT {
         assertNotNull(jdbc.queryForObject("SELECT published_at FROM voluntary_campaigns WHERE id=?", Object.class, id));
         assertEquals("INVALID_STATE", assertThrows(ConflictException.class, () -> campaigns.publish(id, 2, admin)).code());
         assertEquals("INVALID_STATE", assertThrows(ConflictException.class,
-                () -> campaigns.update(id, 2, "Doi", null, OPENS, CLOSES, admin)).code());
+                () -> campaigns.update(id, 2, "Doi", null, opens, closes, admin)).code());
 
         campaigns.close(id, 2, admin);
         assertEquals(3L, dbLong("SELECT version FROM voluntary_campaigns WHERE id=?", id));
@@ -147,7 +139,7 @@ class VoluntaryCaseIT {
 
     @Test
     void anExpiredDraftCannotBePublishedAndStaysADraft() {
-        long id = campaigns.create("Het han " + token, null, OPENS, LocalDate.of(9000, 8, 10), admin).getId();
+        long id = campaigns.create("Het han " + token, null, opens, today.minusDays(5), admin).getId();
         assertEquals("INVALID_STATE", assertThrows(ConflictException.class, () -> campaigns.publish(id, 0, admin)).code());
         assertEquals("DRAFT", jdbc.queryForObject("SELECT status FROM voluntary_campaigns WHERE id=?", String.class, id));
         assertEquals(0L, auditCount("VOLUNTARY_CAMPAIGN_PUBLISHED", "VoluntaryCampaign", id));
@@ -156,11 +148,11 @@ class VoluntaryCaseIT {
     // ---------------------------------------------------------------- VOL-02.2
     @Test
     void residentsOnlySeePublishedCampaignsAndEndedOnesShowAsClosed() {
-        long draft = campaigns.create("Nhap " + token, null, OPENS, CLOSES, admin).getId();
-        long open = campaigns.create("Dang mo " + token, null, OPENS, CLOSES, admin).getId();
+        long draft = campaigns.create("Nhap " + token, null, opens, closes, admin).getId();
+        long open = campaigns.create("Dang mo " + token, null, opens, closes, admin).getId();
         campaigns.publish(open, 0, admin);
-        jdbc.update("INSERT INTO voluntary_campaigns (name, opens_on, closes_on, status, version, created_by, created_at, published_by, published_at) VALUES (?, '9000-08-01', '9000-08-10', 'PUBLISHED', 0, ?, NOW(6), ?, '9000-08-01 03:00:00')",
-                "Qua han " + token, admin, admin);
+        jdbc.update("INSERT INTO voluntary_campaigns (name, opens_on, closes_on, status, version, created_by, created_at, published_by, published_at) VALUES (?, ?, ?, 'PUBLISHED', 0, ?, NOW(6), ?, ?)",
+                "Qua han " + token, today.minusDays(30), today.minusDays(20), admin, admin, today.minusDays(30).atTime(3, 0));
         long ended = dbLong("SELECT id FROM voluntary_campaigns WHERE name=?", "Qua han " + token);
 
         var all = ids(campaigns.listResident(null, 0, 100).getContent().stream().map(c -> c.id()).toList());
@@ -354,13 +346,13 @@ class VoluntaryCaseIT {
 
     // ---------------------------------------------------------------- helpers
     private long openCampaign(String name) {
-        long id = campaigns.create(name, null, OPENS, CLOSES, admin).getId();
+        long id = campaigns.create(name, null, opens, closes, admin).getId();
         campaigns.publish(id, 0, admin);
         return id;
     }
 
     private ContributionInput input(long campaign, long resident, String amount, String reason, String key) {
-        return ContributionInput.parse(campaign, resident, amount, TODAY, reason, key);
+        return ContributionInput.parse(campaign, resident, amount, today, reason, key);
     }
 
     private long dbLong(String sql, Object... args) {
