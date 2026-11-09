@@ -302,6 +302,69 @@ class IdentitySessionIT {
         }
     }
 
+    // A dedicated MySQL database is required; the same JDBC session is used throughout.
+    @Test void residentSessionRefreshesHouseholdAndRejectsInactiveAccountWithoutBillingWrites() throws Exception {
+        String codeA = "s10-a-" + UUID.randomUUID();
+        String codeB = "s10-b-" + UUID.randomUUID();
+        long homeA = 0, homeB = 0, period = 0;
+        try {
+            jdbc.update("INSERT INTO households (household_code, apartment_code, area_m2, status, created_at, updated_at) VALUES (?, ?, 50, 'ACTIVE', NOW(6), NOW(6))", codeA, codeA);
+            homeA = jdbc.queryForObject("SELECT id FROM households WHERE household_code=?", Long.class, codeA);
+            jdbc.update("INSERT INTO households (household_code, apartment_code, area_m2, status, created_at, updated_at) VALUES (?, ?, 50, 'ACTIVE', NOW(6), NOW(6))", codeB, codeB);
+            homeB = jdbc.queryForObject("SELECT id FROM households WHERE household_code=?", Long.class, codeB);
+            String availablePeriod = null;
+            for (int year = 9999; year >= 9000 && availablePeriod == null; year--) {
+                String candidate = year + "-12";
+                if (jdbc.queryForObject("SELECT COUNT(*) FROM billing_periods WHERE period=?", Integer.class, candidate) == 0) availablePeriod = candidate;
+            }
+            assertThat(availablePeriod).as("fixture requires an unused billing period").isNotNull();
+            jdbc.update("INSERT INTO billing_periods (period,due_date,status,version,revision,receipt_count,created_by,created_at) VALUES (?,'2026-12-31','ISSUED',0,1,0,?,NOW(6))", availablePeriod, userId);
+            period = jdbc.queryForObject("SELECT id FROM billing_periods WHERE period=?", Long.class, availablePeriod);
+            for (long home : new long[] {homeA, homeB}) {
+                jdbc.update("INSERT INTO invoices (period_id,household_id,household_code,apartment_code,due_date,total,status,issued_at) VALUES (?,?, 'snapshot','snapshot','2026-12-31',100,'ISSUED',NOW(6))", period, home);
+            }
+            long invoiceA = jdbc.queryForObject("SELECT id FROM invoices WHERE period_id=? AND household_id=?", Long.class, period, homeA);
+            long invoiceB = jdbc.queryForObject("SELECT id FROM invoices WHERE period_id=? AND household_id=?", Long.class, period, homeB);
+            jdbc.update("UPDATE users SET role_id=(SELECT id FROM roles WHERE code='RESIDENT'), household_id=? WHERE id=?", homeA, userId);
+            Cookie session = rememberCookie(postLogin(newCsrfSession(), "test-password-only").andExpect(status().isOk()).andReturn());
+
+            var periodBefore = jdbc.queryForMap("SELECT * FROM billing_periods WHERE id=?", period);
+            var invoicesBefore = jdbc.queryForList("SELECT * FROM invoices WHERE period_id=? ORDER BY id", period);
+            int auditBefore = jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id=?", Integer.class, userId);
+            int receiptsBefore = jdbc.queryForObject("SELECT COUNT(*) FROM payment_receipts WHERE household_id IN (?,?)", Integer.class, homeA, homeB);
+            int allocationsBefore = jdbc.queryForObject("SELECT COUNT(*) FROM payment_credit_allocations WHERE household_id IN (?,?)", Integer.class, homeA, homeB);
+            int locksBefore = jdbc.queryForObject("SELECT COUNT(*) FROM payment_household_locks WHERE household_id IN (?,?)", Integer.class, homeA, homeB);
+
+            mvc.perform(get("/api/v1/resident/invoices").cookie(session)).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(1)).andExpect(jsonPath("$.content[0].invoiceId").value(invoiceA));
+            for (String path : List.of("/api/v1/resident/invoices/" + invoiceA, "/api/v1/resident/receipts", "/api/v1/resident/credit-allocations", "/api/v1/resident/billing-summary")) {
+                mvc.perform(get(path).cookie(session)).andExpect(status().isOk());
+            }
+            assertThat(jdbc.queryForMap("SELECT * FROM billing_periods WHERE id=?", period)).isEqualTo(periodBefore);
+            assertThat(jdbc.queryForList("SELECT * FROM invoices WHERE period_id=? ORDER BY id", period)).isEqualTo(invoicesBefore);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id=?", Integer.class, userId)).isEqualTo(auditBefore);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM payment_receipts WHERE household_id IN (?,?)", Integer.class, homeA, homeB)).isEqualTo(receiptsBefore);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM payment_credit_allocations WHERE household_id IN (?,?)", Integer.class, homeA, homeB)).isEqualTo(allocationsBefore);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM payment_household_locks WHERE household_id IN (?,?)", Integer.class, homeA, homeB)).isEqualTo(locksBefore);
+
+            jdbc.update("UPDATE users SET household_id=? WHERE id=?", homeB, userId);
+            mvc.perform(get("/api/v1/resident/invoices").cookie(session)).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.totalElements").value(1)).andExpect(jsonPath("$.content[0].invoiceId").value(invoiceB));
+            mvc.perform(get("/api/v1/resident/invoices/" + invoiceA).cookie(session)).andExpect(status().isNotFound());
+            mvc.perform(get("/api/v1/resident/invoices/" + invoiceB).cookie(session)).andExpect(status().isOk());
+            jdbc.update("UPDATE users SET status='INACTIVE' WHERE id=?", userId);
+            mvc.perform(get("/api/v1/resident/invoices").cookie(session)).andExpect(status().isUnauthorized());
+        } finally {
+            jdbc.update("UPDATE users SET household_id=NULL WHERE id=?", userId);
+            if (period != 0) {
+                jdbc.update("DELETE FROM invoices WHERE period_id=?", period);
+                jdbc.update("DELETE FROM billing_periods WHERE id=?", period);
+            }
+            if (homeA != 0) jdbc.update("DELETE FROM households WHERE id=?", homeA);
+            if (homeB != 0) jdbc.update("DELETE FROM households WHERE id=?", homeB);
+        }
+    }
+
     @Test void loginBranchesDoNotLogSecrets(org.springframework.boot.test.system.CapturedOutput output) throws Exception {
         CsrfSession csrf = newCsrfSession();
         postLogin(csrf, "wrong").andExpect(status().isUnauthorized());
