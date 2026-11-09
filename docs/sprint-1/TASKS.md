@@ -13,7 +13,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 | ☑ | S04 | M | Sơn + Tuấn | Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3 | S01 | Khóa xong request mới với cookie cũ thất bại; thử nhiều session và server role; UI cần test tích hợp để đóng. |
 | ☑ | S05 | L | Sơn + Tuấn | Hộ/nhân khẩu/biến động; WBS 2.2.1.1 | F01,S01 | CRUD/tra cứu, ownership; chuyển đi đổi trạng thái cư trú (không xóa bản ghi, DECISIONS D20) kèm lịch sử biến động và audit; validate trường đã chốt, test hộ khác bị chặn. |
 | ☑ | S06 | L | Kiệt + Sơn + Tuấn | Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3 | S05 bản API đầu | Chờ duyệt → duyệt/từ chối đúng quyền; lưu trạng thái/lịch sử, thông báo trong app/mock theo AC; cuối cùng ghép UI. || ☑ | S07 | M | Quân + Kiệt; Tuấn kiểm tra | Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3 | F01,F02 | BigDecimal; 50m² × 10.000 = 500.000; hiệu lực/rounding đã chốt; không áp thay giá vào hóa đơn cũ. |
-| ☐ | S08 | L | Quân + Tuấn | Kỳ thu/tự nguyện; WBS 2.3.1.2–3 | S07; S05 để ghép cuối | Không trùng kỳ/hộ/loại; tự nguyện không cộng nợ; giao dữ liệu thật cho thu tiền và đối chiếu độc lập. |
+| ☑ | S08 | L | Quân + Tuấn | Kỳ thu/tự nguyện; WBS 2.3.1.2–3 | S07; S05 để ghép cuối | Backend, UI/API, transaction/snapshot và tự nguyện; test backend/frontend đạt; chi tiết và giới hạn ở VALIDATION. |
 | ☐ | S09 | L | Quân + Sơn | Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1 | S05,S08 | Thu đúng số tiền, nợ giảm đúng, transaction/audit; duplicate/concurrent không thu hai lần; chốt thu thiếu/thừa/sửa/hủy. |
 | ☐ | S10 | M | Kiệt + Quân | API hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2 | S08; S09 để ghép cuối | Chỉ dữ liệu hộ của account; chi tiết thành phần/kỳ/nợ đúng; pagination; thay householdId không xem được hộ khác. |
 | ☐ | S11 | M | Tuấn + Quân + Kiệt | Export thu phí/cư trú; WBS 2.4.1.3 | S06,S09 | Excel mở được và tổng khớp; mẫu/cột/tỷ lệ đã duyệt; không export dữ liệu thừa; dùng dữ liệu thật từ DB. |
@@ -34,7 +34,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 - [x] S05 — Hộ/nhân khẩu/biến động; WBS 2.2.1.1
 - [x] S06 — Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3 (tick 08/11/2026 theo lời Sơn, có caveat UI: xem mục S06 UI)
 - [x] S07 — Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3
-- [ ] S08 — Kỳ thu/tự nguyện; WBS 2.3.1.2–3
+- [x] S08 — Kỳ thu/tự nguyện; WBS 2.3.1.2–3 (đã merge backend + UI/API; test pass; xem mục S08 bên dưới và docs/VALIDATION.md)
 - [ ] S09 — Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1
 - [ ] S10 — API hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2
 - [ ] S11 — Export thu phí/cư trú; WBS 2.4.1.3
@@ -45,6 +45,13 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 
 ## Bằng chứng task
 Khi hoàn tất, thêm: mã task; commit/PR; lệnh và kết quả test; đầu ra giao cho ai; assumption đã xác nhận; lỗi còn lại.
+
+### S08 — kỳ thu và khoản tự nguyện (hoàn tất, tick 09/11/2026)
+
+- Backend + UI/API đã merge vào local `main`; UI/Taste branch `feat-frontend-taste` đã merge tại `e54066d`.
+- Backend: `docs/VALIDATION.md` ghi `./mvnw -B -ntp -Pintegration verify` với MySQL 8.4 thành công: 213 unit + 120 integration, 0 lỗi.
+- UI/API: Sơn xác nhận sau merge đã chạy `cd frontend && npm test && npm run build`, cả hai qua; chưa lưu log hoặc số test riêng cho lượt sau merge.
+- Giới hạn còn lại: chưa kiểm bằng browser với backend thật; CI remote của merge local chưa xác nhận. Payment bắt buộc (thu thiếu/thừa, sửa/hủy/hoàn tiền) thuộc S09; S08 không coi đóng góp tự nguyện là payment hoặc công nợ.
 
 ### F00 (tick 05/11/2026)
 ```text
@@ -308,7 +315,7 @@ Lỗi còn lại, điều chưa kiểm thử:
   - V7 chưa chạy trên bản sao dữ liệu thật của S05 (DB Sơn có thể không có dữ liệu); chưa chạy Windows/máy thứ hai; chưa CI trên remote.
   - Thiếu test: "quay lại" với nhân khẩu RESIDING; thoát %/_ của q và apartment ở hàng chờ; thứ tự lock vs truy vấn đơn PENDING ở moveOut chỉ đọc code.
   - N+1 ở danh sách (~200 truy vấn/trang 100 dòng); `cancellable` luôn false ở phản hồi tạo/hủy; q rỗng ở hàng chờ trả 400; đơn bị hủy do move-out chỉ có nguyên nhân trong audit.
-  - Ảnh hưởng của TEMPORARILY_ABSENT tới phí (S08/S09) và báo cáo (S11) chưa có quy tắc.
+  - D24/D26 đã chốt TEMPORARILY_ABSENT không giảm phí kỳ thu; báo cáo S11 còn cần quy tắc/mẫu riêng.
   - Code worker dồn nhiều lệnh vào một dòng dài, khó đọc; chưa dọn.
 Kết luận: backend đủ bằng chứng server và tick cùng S06 theo lời Sơn. Push/PR chờ cổng G2/G3.
 ```
@@ -340,4 +347,13 @@ Kiểm thử:
   - Integration: `./mvnw -B -ntp -Pintegration verify` trên f5eef71 với MySQL 8.4 (compose project `bluemoon`, V8 áp thành công): 97 test failsafe, gồm 3 test `FeeRateIntegrationIT` (CHECK, UNIQUE, race hai POST cùng tháng), BUILD SUCCESS. Sơn chạy 08/11/2026 12:42 +07.
 Review: Opus `bluemoon-risk-reviewer` vòng 1: không lỗi chặn sau khi sửa C1 và W1. Lời agy trên `qa/s07-agy` (c188766, báo 137 test) CHƯA được chạy lại trên cùng SHA, không dùng làm bằng chứng.
 Chưa kiểm / còn mở: D25 chưa commit vào nhánh; test QA của agy chưa đối chiếu; snapshot hóa đơn và thu thiếu/thừa thuộc S08/S09; PR và CI remote chưa có.
+```
+
+### S09 — thu tiền và gạch nợ (chưa tick; triển khai + automated QA trên `hhoangsonnw/s09-contract`)
+```text
+Contract: `_agents_workspace/S09/01_contract.md` và `02_ui_contract.md`; quyết định D27/D28 ở `docs/DECISIONS.md`.
+Đầu ra: migration V10; receipt thu thiếu/đủ/thừa; credit FIFO; void/reverse; idempotency gắn actor; audit; API danh sách công nợ/lịch sử; UI Kế toán API thật + Demo và màn ADMIN chỉ đọc.
+QA Orca/Agy trên đúng worktree (09/11/2026): `cd backend && ./mvnw -B -ntp verify` — 227 test pass; `-Pintegration verify` với MySQL 8.4 cô lập cổng 3308 — 146 integration pass; frontend `npm test -- --run` — 28 file/134 test pass; `npm run build` — TypeScript/Vite pass. Không reset DB/volume.
+Đối chiếu coverage: thu thiếu/thừa, FIFO + đảo, concurrency/idempotency, quyền/privacy reason (`ReceiptAmountsTest`, `CreditAllocationAmountsTest`, `PaymentFlowIT`, `PaymentConcurrencyIT`, `PaymentApiTest`, `PaymentSchemaIT`); UI preview, retry cùng UUID/payload, đổi actor, ADMIN read-only, RESIDENT denial (`s09-page.test.tsx`, `s09-payments.test.ts`, `s09-csrf-actor.test.ts`, `s09-routes.test.tsx`).
+CI remote PR #28: job `verify` pass (2 phút 18 giây, theo lần kiểm 09/11/2026). Còn mở: PR review; chưa có browser E2E nối UI→API thật; chưa kiểm mobile/zoom/keyboard/screen reader. S09 chưa tick cho tới khi review và luồng UI được đối chiếu.
 ```

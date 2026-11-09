@@ -1,0 +1,110 @@
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { ApiCollectionsPage } from '../screens/s09/ApiCollectionsPage';
+import { messageForError } from '../api/errors';
+import { ApiHttpError } from '../api/client';
+import * as payments from '../api/payments';
+const state = vi.hoisted(() => ({ role: 'ACCOUNTANT', username: 'alice' }));
+vi.mock('../state/AppStateContext', () => ({ useAppState: () => ({ user: { role: state.role, username: state.username }, handleCallFailure: messageForError }) }));
+vi.mock('../api/payments', async (original) => ({ ...(await original<typeof import('../api/payments')>()), listPaymentInvoices: vi.fn(), invoiceDetail: vi.fn(), invoiceSummary: vi.fn(), creditBalance: vi.fn(), receiptHistory: vi.fn(), allocationHistory: vi.fn(), sendPending: vi.fn() }));
+const page = <T,>(content: T[]) => ({ content, page: 0, size: 20, totalElements: content.length, totalPages: 1 });
+const invoice: payments.PaymentInvoice = { invoiceId: 1, periodId: 2, householdId: 3, householdCode: 'H01', apartmentCode: 'A01', period: '2026-11', dueDate: '2026-11-30', total: '530000', settled: '0', remaining: '530000', paymentStatus: 'UNPAID' };
+beforeEach(() => {
+  sessionStorage.clear(); state.role = 'ACCOUNTANT'; state.username = 'alice';
+  vi.mocked(payments.listPaymentInvoices).mockResolvedValue(page([invoice]));
+  vi.mocked(payments.invoiceDetail).mockResolvedValue({ id: 1, issuedAt: '2026-01-01T00:00:00Z', lines: [{ feeTypeCode: 'M', feeTypeName: 'Phí quản lý', quantity: '1', unitPrice: '530000', amount: '530000' }] });
+  vi.mocked(payments.invoiceSummary).mockResolvedValue({ invoiceId: 1, total: '530000', settled: '0', remaining: '530000', status: 'UNPAID' });
+  vi.mocked(payments.creditBalance).mockResolvedValue({ householdId: 3, balance: '70000' });
+  vi.mocked(payments.receiptHistory).mockResolvedValue(page([]));
+  vi.mocked(payments.allocationHistory).mockResolvedValue(page([]));
+});
+afterEach(() => { cleanup(); vi.clearAllMocks(); });
+it('lets administrators inspect but never offers writes', async () => {
+  state.role = 'ADMIN'; render(<ApiCollectionsPage />);
+  fireEvent.click(await screen.findByRole('button', { name: /Xem A01/ }));
+  expect(await screen.findByText(/Phí quản lý:/)).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Ghi nhận tiền' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Phân bổ số dư' })).not.toBeInTheDocument();
+});
+it('retries an uncertain receipt with the same account, UUID and payload after remount', async () => {
+  vi.mocked(payments.sendPending).mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce({});
+  const view = render(<ApiCollectionsPage />);
+  fireEvent.click(await screen.findByRole('button', { name: /Xem A01/ }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Ghi nhận tiền' }));
+  fireEvent.change(screen.getByLabelText('Số tiền nhận (đồng)'), { target: { value: '600000' } });
+  expect(screen.getAllByText(/70\.000 đ/).length).toBeGreaterThan(0);
+  fireEvent.click(document.querySelector('dialog button.btn-primary')!);
+  await screen.findByRole('button', { name: 'Thử gửi lại' });
+  view.unmount(); state.username = 'bob'; const other = render(<ApiCollectionsPage />);
+  await screen.findByRole('button', { name: /Xem A01/ });
+  expect(screen.queryByRole('button', { name: 'Thử gửi lại' })).not.toBeInTheDocument();
+  other.unmount(); state.username = 'alice'; render(<ApiCollectionsPage />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Thử gửi lại' }));
+  await waitFor(() => expect(payments.sendPending).toHaveBeenCalledTimes(2));
+  expect(vi.mocked(payments.sendPending).mock.calls[1][0]).toEqual(vi.mocked(payments.sendPending).mock.calls[0][0]);
+});
+it('clears selected details and pending command when actor changes without unmounting', async () => {
+  payments.savePending('alice', { kind: 'void', url: '/api/v1/receipts/42/void', body: { reason: 'private', idempotencyKey: 'key' }, label: 'Hủy biên lai 42' });
+  const view = render(<ApiCollectionsPage />);
+  await screen.findByRole('button', { name: 'Thử gửi lại' });
+  fireEvent.click(await screen.findByRole('button', { name: /Xem A01/ }));
+  await screen.findByText(/Phí quản lý:/);
+  state.username = 'bob'; view.rerender(<ApiCollectionsPage />);
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Thử gửi lại' })).not.toBeInTheDocument());
+  expect(screen.queryByText(/Phí quản lý:/)).not.toBeInTheDocument();
+  expect(payments.loadPending('alice')).not.toBeNull();
+});
+it('searches and applies the requested invoice filters', async () => {
+  render(<ApiCollectionsPage />);
+  await screen.findByRole('button', { name: /Xem A01/ });
+  fireEvent.change(screen.getByLabelText('Mã hộ hoặc căn hộ'), { target: { value: 'A01' } });
+  fireEvent.change(screen.getByLabelText('Kỳ thu'), { target: { value: '2026-11' } });
+  fireEvent.change(screen.getByLabelText('Trạng thái'), { target: { value: 'PAID' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Tìm kiếm' }));
+  await waitFor(() => expect(payments.listPaymentInvoices).toHaveBeenLastCalledWith({ q: 'A01', period: '2026-11', paymentStatus: 'PAID', page: 0 }));
+});
+it('shows source allocations and offers reversal before voiding a used credit receipt', async () => {
+  vi.mocked(payments.receiptHistory).mockResolvedValue(page([{ receiptId: 9, invoiceId: 1, paidOn: '2026-11-09', amount: '600000', appliedAmount: '530000', creditAmount: '70000', debtAfter: '0', status: 'POSTED', recordedAt: '2026-11-09T00:00:00Z', recordedBy: 1, hasLateReason: false, voidedBy: null, voidedAt: null, hasVoidReason: false, activeAllocationCount: 1, canVoid: false }]));
+  vi.mocked(payments.allocationHistory).mockResolvedValue(page([{ allocationId: 10, invoiceId: 8, householdId: 3, amount: '50000', debtAfter: '0', status: 'ACTIVE', recordedBy: 1, recordedAt: '2026-11-09T00:00:00Z', reversedBy: null, reversedAt: null, hasReverseReason: false, sources: [{ receiptId: 9, amount: '50000' }] }]));
+  render(<ApiCollectionsPage />); fireEvent.click(await screen.findByRole('button', { name: /Xem A01/ }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Xem 1 phân bổ' }));
+  await waitFor(() => expect(payments.allocationHistory).toHaveBeenLastCalledWith(3, { receiptId: 9, page: 0 }));
+  expect(await screen.findByRole('button', { name: 'Đảo phân bổ' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Hủy biên lai' })).not.toBeInTheDocument();
+});
+
+it('clears a definitively rejected key and tells the user to inspect the ledger', async () => {
+  vi.mocked(payments.sendPending).mockRejectedValueOnce(new ApiHttpError({ status: 409, code: 'IDEMPOTENCY_CONFLICT' }));
+  render(<ApiCollectionsPage />); fireEvent.click(await screen.findByRole('button', { name: /Xem A01/ }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Ghi nhận tiền' }));
+  fireEvent.change(screen.getByLabelText('Số tiền nhận (đồng)'), { target: { value: '200000' } });
+  fireEvent.click(document.querySelector('dialog button.btn-primary')!);
+  expect(await screen.findByRole('alert')).toHaveTextContent('Kiểm tra lịch sử');
+  expect(payments.loadPending('alice')).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Thử gửi lại' })).not.toBeInTheDocument();
+});
+it('allocates only up to available credit and sends an exact amount', async () => {
+  vi.mocked(payments.sendPending).mockResolvedValueOnce({});
+  render(<ApiCollectionsPage />); fireEvent.click(await screen.findByRole('button', { name: /Xem A01/ }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Phân bổ số dư' }));
+  fireEvent.change(screen.getByLabelText('Số tiền phân bổ (đồng)'), { target: { value: '80000' } });
+  fireEvent.click(document.querySelector('dialog button.btn-primary')!);
+  expect(await screen.findByText(/không vượt số dư/)).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Số tiền phân bổ (đồng)'), { target: { value: '50000' } });
+  fireEvent.click(document.querySelector('dialog button.btn-primary')!);
+  await waitFor(() => expect(payments.sendPending).toHaveBeenCalledTimes(1));
+  expect(vi.mocked(payments.sendPending).mock.calls[0][0]).toMatchObject({ kind: 'allocation', url: '/api/v1/households/3/credit-allocations', body: { invoiceId: 1, amount: '50000' } });
+});
+it('requires a reason and sends a reversal command without showing the reason afterward', async () => {
+  vi.mocked(payments.allocationHistory).mockResolvedValue(page([{ allocationId: 10, invoiceId: 1, householdId: 3, amount: '50000', debtAfter: '0', status: 'ACTIVE', recordedBy: 1, recordedAt: '2026-11-09T00:00:00Z', reversedBy: null, reversedAt: null, hasReverseReason: false, sources: [{ receiptId: 9, amount: '50000' }] }]));
+  vi.mocked(payments.sendPending).mockResolvedValueOnce({});
+  render(<ApiCollectionsPage />); fireEvent.click(await screen.findByRole('button', { name: /Xem A01/ }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Đảo phân bổ' }));
+  fireEvent.click(document.querySelector('dialog button.btn-primary')!);
+  expect(await screen.findByText(/Nhập lý do, tối đa/)).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Lý do'), { target: { value: 'lý do riêng' } });
+  fireEvent.click(document.querySelector('dialog button.btn-primary')!);
+  await waitFor(() => expect(payments.sendPending).toHaveBeenCalledTimes(1));
+  expect(vi.mocked(payments.sendPending).mock.calls[0][0]).toMatchObject({ kind: 'reverse', url: '/api/v1/credit-allocations/10/reverse', body: { reason: 'lý do riêng' } });
+  await waitFor(() => expect(screen.queryByText('lý do riêng')).not.toBeInTheDocument());
+});
