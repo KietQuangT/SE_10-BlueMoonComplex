@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { cancelDeclaration, createDeclaration, fetchMyDeclarations, type DeclarationPage } from '../../api/residency';
 import { ChangeStatusBadge } from '../../components/ResidencyBadge';
+import { EmptyStatePanel, ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { PaginationBar } from '../../components/PaginationBar';
 import { ScreenHeader } from '../../components/ScreenHeader';
@@ -18,13 +19,15 @@ export function ApiAbsencePage(): React.ReactElement {
   const [notice, setNotice] = useState('');
   const [cancelNotice, setCancelNotice] = useState('');
   const [loadError, setLoadError] = useState('');
+  const [loading, setLoading] = useState(true);
   const [invalidField, setInvalidField] = useState('');
   const [busy, setBusy] = useState(false);
   const [cancelId, setCancelId] = useState<number | null>(null);
   const members = residents.filter((r) => r.householdId === user?.householdId && r.residencyStatus === 'Đang cư trú');
   const load = useCallback(async () => {
+    setLoading(true); setLoadError('');
     try { setData(await fetchMyDeclarations(page - 1, size)); setLoadError(''); }
-    catch (err) { setLoadError(handleCallFailure(err)); }
+    catch (err) { setLoadError(handleCallFailure(err)); } finally { setLoading(false); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, size]);
   useEffect(() => { void load(); }, [load]);
@@ -57,7 +60,6 @@ export function ApiAbsencePage(): React.ReactElement {
   };
   return <>
     <ScreenHeader screenCode="M-31" title="Khai báo tạm vắng" description="Gửi đơn cho thành viên trong hộ và xem kết quả duyệt." contract="api-live" tierLabel="Mức A" />
-    {loadError && <div className="banner banner-error" role="alert">{loadError}</div>}
     {dataLoadError && <div className="banner banner-error" role="alert">Không tải được danh sách nhân khẩu. Vui lòng tải lại trang rồi thử lại.</div>}
     <section className="surface-box surface-box-pad"><h2 className="box-title">Tạo đơn mới</h2>
       <form onSubmit={submit} noValidate className="form-grid absence-form">
@@ -69,8 +71,8 @@ export function ApiAbsencePage(): React.ReactElement {
       </form>
     </section>
     <h2 className="section-heading">Đơn của tôi</h2>{cancelNotice && <div className="banner banner-success" role="status">{cancelNotice}</div>}<section className="surface-box">
-      {!data ? <p>Đang tải danh sách...</p> : data.content.length === 0 ? <p>Chưa có đơn của hộ.</p> : <ul className="form-history">{data.content.map((d) => <li key={d.id}><div className="mobile-row-top"><strong>{d.residentName}</strong><ChangeStatusBadge status={d.status} /></div><span>{formatBusinessDate(d.effectiveDate)}{d.endDate ? ` – ${formatBusinessDate(d.endDate)}` : ''} · {d.reason}</span>{d.status === 'REJECTED' && d.decisionNote && <p className="field-hint">Lý do từ chối: {d.decisionNote}</p>}{d.cancellable && <button className="btn btn-secondary" type="button" onClick={() => { setError(''); setNotice(''); setCancelNotice(''); setInvalidField(''); setCancelId(d.id); }}>Hủy đơn</button>}</li>)}</ul>}
-      {data && <PaginationBar page={page} pageSize={size} totalItems={data.totalElements} onPageChange={setPage} onPageSizeChange={setSize} />}
+      {loading ? <SkeletonRows rows={3} /> : loadError ? <ErrorRetryPanel message={loadError} onRetry={() => void load()} /> : !data || data.content.length === 0 ? <EmptyStatePanel title="Chưa có đơn của hộ." description="Đơn mới và kết quả duyệt sẽ hiển thị tại đây sau khi bạn gửi khai báo." /> : <ul className="form-history">{data.content.map((d) => <li key={d.id}><div className="mobile-row-top"><strong>{d.residentName}</strong><ChangeStatusBadge status={d.status} /></div><span>{formatBusinessDate(d.effectiveDate)}{d.endDate ? ` – ${formatBusinessDate(d.endDate)}` : ''} · {d.reason}</span>{d.status === 'REJECTED' && d.decisionNote && <p className="field-hint">Lý do từ chối: {d.decisionNote}</p>}{d.cancellable && <button className="btn btn-secondary" type="button" onClick={() => { setError(''); setNotice(''); setCancelNotice(''); setInvalidField(''); setCancelId(d.id); }}>Hủy đơn</button>}</li>)}</ul>}
+      {data && !loading && !loadError && <PaginationBar label="Phân trang đơn của hộ" page={page} pageSize={size} totalItems={data.totalElements} onPageChange={setPage} onPageSizeChange={setSize} />}
     </section>
     <ConfirmDialog open={cancelId != null} title="Hủy đơn tạm vắng?" consequence="Đơn sẽ được lưu với trạng thái Đã hủy." confirmLabel="Hủy đơn" confirmTone="danger" busy={busy} onCancel={() => { setCancelId(null); setError(''); }} onConfirm={() => void cancel()}>{error && <p className="field-error" role="alert">{error}</p>}</ConfirmDialog>
   </>;

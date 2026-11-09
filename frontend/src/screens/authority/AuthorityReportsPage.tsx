@@ -1,3 +1,4 @@
+import { formatBusinessDate, formatInstantVn } from '../../lib/format';
 import { useState } from 'react';
 import { OpenQuestions, ScreenHeader } from '../../components/ScreenHeader';
 import { EmptyStatePanel, ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
@@ -8,20 +9,8 @@ export function AuthorityReportsPage() {
   const { reportPackages, residents, households, forcedUiState } = useAppState();
 
   const [selectedPackage, setSelectedPackage] = useState<ReportPackage | null>(null);
-  const [downloading, setDownloading] = useState(false);
-  const [downloadBanner, setDownloadBanner] = useState<string | null>(null);
 
   const approvedPackages = reportPackages.filter((p) => p.status === 'APPROVED');
-
-  const handleDownload = (pkg: ReportPackage) => {
-    setDownloading(true);
-    setTimeout(() => {
-      setDownloading(false);
-      setDownloadBanner(
-        `Đã tải xuống gói tài liệu đã ký số: "${pkg.typeLabel}-${pkg.period}.pdf".`,
-      );
-    }, 700);
-  };
 
   if (forcedUiState === 'loading') {
     return (
@@ -60,7 +49,7 @@ export function AuthorityReportsPage() {
         contract="assumed"
         tierLabel="Mức C"
         title="Báo cáo đã được phê duyệt"
-        description="PBI-023: Dành cho Cơ quan chức năng. Chỉ hiển thị dữ liệu do Ban Quản Trị xác thực và đóng gói."
+        description="Xem những gói dữ liệu đã được Ban quản trị kiểm tra, phê duyệt."
       />
 
       <div className="notice-box notice-warning mb-6">
@@ -70,11 +59,7 @@ export function AuthorityReportsPage() {
         </p>
       </div>
 
-      {downloadBanner && (
-        <div className="notice-box notice-success mb-6">
-          <p>{downloadBanner}</p>
-        </div>
-      )}
+      <p id="authority-download-note" className="field-hint mb-6">Tải tệp chưa khả dụng. Chọn Xem gói để kiểm tra nội dung được phép chia sẻ.</p>
 
       {/* Danh sách gói báo cáo */}
       <div className="station-panel p-5 bg-white border border-border mb-8">
@@ -105,13 +90,13 @@ export function AuthorityReportsPage() {
                     <td className="py-3 px-3 font-medium text-rail">{pkg.typeLabel}</td>
                     <td className="py-3 px-3 font-mono font-bold text-teal-brand">{pkg.period}</td>
                     <td className="py-3 px-3 font-mono text-xs text-slate">
-                      {pkg.approvedAt ? new Date(pkg.approvedAt).toLocaleDateString('vi-VN') : '-'}
+                      {formatInstantVn(pkg.approvedAt)}
                     </td>
                     <td className="py-3 px-3 text-slate">{pkg.approvedBy}</td>
                     <td className="py-3 px-3 text-xs text-slate">
                       {pkg.allowedFields.length} trường được duyệt
                     </td>
-                    <td className="py-3 px-3 text-right space-x-2">
+                    <td className="py-3 px-3 text-right"><div className="row-actions">
                       <button
                         onClick={() => setSelectedPackage(pkg)}
                         className="btn btn-secondary btn-sm"
@@ -119,12 +104,11 @@ export function AuthorityReportsPage() {
                         Xem gói
                       </button>
                       <button
-                        onClick={() => handleDownload(pkg)}
-                        disabled={downloading}
+                        disabled aria-describedby="authority-download-note"
                         className="btn btn-primary btn-sm"
                       >
                         Tải về
-                      </button>
+                      </button></div>
                     </td>
                   </tr>
                 ))}
@@ -137,18 +121,18 @@ export function AuthorityReportsPage() {
       {/* Xem chi tiết gói đã chọn */}
       {selectedPackage && (
         <div className="station-panel p-5 bg-white border border-border mb-8">
-          <div className="flex justify-between items-center mb-4">
+          <div className="filter-row justify-between mb-4">
             <div>
               <h3 className="font-bold text-rail text-base">
                 Nội dung gói: {selectedPackage.typeLabel} - Kỳ {selectedPackage.period}
               </h3>
               <span className="text-xs text-slate">
-                Phê duyệt bởi: {selectedPackage.approvedBy} · Trạng thái: {selectedPackage.status}
+                Phê duyệt bởi: {selectedPackage.approvedBy} · Trạng thái: {selectedPackage.status === 'APPROVED' ? 'Đã phê duyệt' : selectedPackage.status}
               </span>
             </div>
             <button
               onClick={() => setSelectedPackage(null)}
-              className="text-xs text-slate hover:text-rail underline"
+              className="btn btn-ghost btn-sm"
             >
               Đóng xem trước
             </button>
@@ -192,7 +176,7 @@ export function AuthorityReportsPage() {
                         <td className="py-2 px-3 text-slate">{r.residencyStatus}</td>
                       )}
                       {selectedPackage.allowedFields.includes('dateOfBirth') && (
-                        <td className="py-2 px-3 font-mono text-xs">{r.dateOfBirth}</td>
+                        <td className="py-2 px-3 font-mono text-xs">{formatBusinessDate(r.dateOfBirth)}</td>
                       )}
                       {selectedPackage.allowedFields.includes('relationshipToHead') && (
                         <td className="py-2 px-3 text-slate">{r.relationshipToHead}</td>

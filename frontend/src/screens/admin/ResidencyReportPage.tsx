@@ -1,3 +1,4 @@
+import { formatBusinessDate } from '../../lib/format';
 import { useState } from 'react';
 import { OpenQuestions, ScreenHeader } from '../../components/ScreenHeader';
 import { EmptyStatePanel, ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
@@ -8,24 +9,12 @@ export function ResidencyReportPage() {
 
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedHousehold, setSelectedHousehold] = useState<string>('ALL');
-  const [downloading, setDownloading] = useState(false);
-  const [successBanner, setSuccessBanner] = useState<string | null>(null);
 
   const filteredResidents = residents.filter((r) => {
     if (selectedStatus !== 'ALL' && r.residencyStatus !== selectedStatus) return false;
     if (selectedHousehold !== 'ALL' && String(r.householdId) !== selectedHousehold) return false;
     return true;
   });
-
-  const handleExport = () => {
-    setDownloading(true);
-    setTimeout(() => {
-      setDownloading(false);
-      setSuccessBanner(
-        `Đã xuất tệp dữ liệu "Bao-cao-luu-tru-${new Date().toISOString().slice(0, 10)}.xlsx" (${filteredResidents.length} dòng).`,
-      );
-    }, 800);
-  };
 
   if (forcedUiState === 'loading') {
     return (
@@ -34,7 +23,7 @@ export function ResidencyReportPage() {
           screenCode="M-18"
           contract="assumed"
           tierLabel="Mức C"
-          title="Xuất báo cáo lưu trú"
+          title="Báo cáo lưu trú"
           description="Kết xuất danh sách cư trú và nhân khẩu căn hộ theo định dạng bảng tính."
         />
         <SkeletonRows rows={5} />
@@ -49,7 +38,7 @@ export function ResidencyReportPage() {
           screenCode="M-18"
           contract="assumed"
           tierLabel="Mức C"
-          title="Xuất báo cáo lưu trú"
+          title="Báo cáo lưu trú"
           description="Kết xuất danh sách cư trú và nhân khẩu căn hộ theo định dạng bảng tính."
         />
         <ErrorRetryPanel onRetry={() => window.location.reload()} />
@@ -59,24 +48,19 @@ export function ResidencyReportPage() {
 
   return (
     <div className="wayfinding-page">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-        <ScreenHeader
+      <ScreenHeader
           screenCode="M-18"
           contract="assumed"
           tierLabel="Mức C"
-          title="Xuất báo cáo lưu trú"
-          description="PBI-022: Tải xuống danh sách nhân khẩu cư trú tại chung cư BlueMoon theo mẫu tổng hợp."
-        />
-        <div>
-          <button
-            onClick={handleExport}
-            disabled={downloading || filteredResidents.length === 0}
+          title="Báo cáo lưu trú"
+          description="Lọc và xem trước danh sách nhân khẩu cư trú tại chung cư BlueMoon."
+          actions={<button
+            disabled aria-describedby="residency-export-note"
             className="btn btn-primary"
           >
-            <span>{downloading ? 'Đang tạo file Excel...' : '⤓ Tải xuống tệp Excel'}</span>
-          </button>
-        </div>
-      </div>
+            <span>Tải tệp Excel</span>
+          </button>}
+        />
 
       <div className="notice-box notice-warning mb-6">
         <p className="font-semibold">Lưu ý về mẫu chuẩn báo cáo pháp lý</p>
@@ -85,19 +69,15 @@ export function ResidencyReportPage() {
         </p>
       </div>
 
-      {successBanner && (
-        <div className="notice-box notice-success mb-6">
-          <p>{successBanner}</p>
-        </div>
-      )}
+      <p id="residency-export-note" className="field-hint mb-6">Tải tệp Excel chưa khả dụng. Bạn có thể lọc và xem danh sách bên dưới.</p>
 
       {/* Bộ lọc */}
       <div className="station-panel p-4 bg-white border border-border mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-bold uppercase text-slate mb-1">Hộ gia đình</label>
+            <label htmlFor="residency-report-household" className="block text-xs font-bold uppercase text-slate mb-1">Hộ gia đình</label>
             <select
-              value={selectedHousehold}
+              id="residency-report-household" value={selectedHousehold}
               onChange={(e) => setSelectedHousehold(e.target.value)}
               className="w-full px-3 py-2 border border-border rounded text-sm bg-white"
             >
@@ -111,9 +91,9 @@ export function ResidencyReportPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase text-slate mb-1">Trạng thái cư trú</label>
+            <label htmlFor="residency-report-status" className="block text-xs font-bold uppercase text-slate mb-1">Trạng thái cư trú</label>
             <select
-              value={selectedStatus}
+              id="residency-report-status" value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
               className="w-full px-3 py-2 border border-border rounded text-sm bg-white"
             >
@@ -140,10 +120,10 @@ export function ResidencyReportPage() {
         />
       ) : (
         <div className="station-panel p-5 bg-white border border-border mb-8 overflow-x-auto">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-bold text-rail text-sm">Xem trước dữ liệu sẽ xuất ({filteredResidents.length} dòng)</h3>
+          <div className="filter-row justify-between mb-3">
+            <h3 className="font-bold text-rail text-sm">Xem trước danh sách ({filteredResidents.length} dòng)</h3>
             <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate font-mono">
-              Placeholder Mẫu cột: chờ chốt
+              Mẫu báo cáo chưa được xác nhận
             </span>
           </div>
 
@@ -168,7 +148,7 @@ export function ResidencyReportPage() {
                     </td>
                     <td className="py-2.5 px-3 font-medium text-rail">{r.fullName}</td>
                     <td className="py-2.5 px-3 text-slate">{r.relationshipToHead}</td>
-                    <td className="py-2.5 px-3 font-mono text-xs">{r.dateOfBirth}</td>
+                    <td className="py-2.5 px-3 font-mono text-xs">{formatBusinessDate(r.dateOfBirth)}</td>
                     <td className="py-2.5 px-3 font-mono text-xs text-slate">
                       {r.identityNumberMasked || 'Chưa cung cấp'}
                     </td>

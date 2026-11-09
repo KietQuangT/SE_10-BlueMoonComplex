@@ -1,6 +1,14 @@
 import { ApiHttpError } from './client';
 
 const BY_CODE: Record<string, string> = {
+  PASSWORD_CHANGE_REQUIRED: 'Bạn cần đổi mật khẩu trước khi tiếp tục. Mở hồ sơ để đổi mật khẩu.',
+  BILLING_INPUT_CHANGED: 'Dữ liệu tính phí đã thay đổi. Kế toán cần rút và trình lại kỳ thu.',
+  STALE_VERSION: 'Dữ liệu đã thay đổi. Tải lại rồi kiểm tra trước khi thử lại.',
+  IDEMPOTENCY_CONFLICT: 'Thông tin ghi nhận không khớp lần thử trước. Kiểm tra sổ đóng góp trước khi thao tác tiếp.',
+  INVALID_AMOUNT: 'Số tiền phải là số nguyên dương, tối đa 18 chữ số. Kiểm tra rồi nhập lại.',
+  INVALID_PAID_DATE: 'Ngày nhận tiền phải trong thời gian đợt thực sự mở và không sau hôm nay. Kiểm tra rồi nhập lại.',
+  CAMPAIGN_NOT_RECEIVABLE: 'Đợt chưa được công bố nên chưa thể ghi đóng góp. Chọn một đợt đã công bố.',
+  REASON_REQUIRED: 'Nhập lý do, tối đa 255 ký tự, trước khi xác nhận.',
   FEE_RATE_FROZEN: 'Không sửa được đơn giá của tháng hiện tại hoặc tháng đã qua.',
   FEE_RATE_DUPLICATE_MONTH: 'Đã có đơn giá cho loại phí này trong tháng đó.',
   FEE_RATE_NOT_FOUND: 'Không tìm thấy đơn giá này. Tải lại danh sách.',
