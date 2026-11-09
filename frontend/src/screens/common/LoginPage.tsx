@@ -51,6 +51,7 @@ export function LoginPage(): React.ReactElement {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [motionPaused, setMotionPaused] = useState(false);
   const [status, setStatus] = useState<LoginStatus>('idle');
   const [requestId, setRequestId] = useState<string | undefined>();
   const [fieldErrors, setFieldErrors] = useState<{ username?: string; password?: string }>({});
@@ -102,7 +103,7 @@ export function LoginPage(): React.ReactElement {
   };
 
   return (
-    <div className="login-page">
+    <div className="login-page" data-motion={motionPaused ? 'paused' : 'running'}>
       <div className="login-scene" aria-hidden="true">
         <div className="scene-stars" />
         <div className="scene-twinkle" />
@@ -116,21 +117,28 @@ export function LoginPage(): React.ReactElement {
             <span className="line-mark" aria-hidden="true" />
             <span className="rail-brand-title">BlueMoon Complex</span>
           </span>
-          <ThemeToggle />
+          <div className="login-appearance-controls">
+            <button type="button" className="btn btn-ghost btn-sm motion-toggle"
+              aria-label={motionPaused ? 'Bật nền động' : 'Dừng nền động'}
+              title={motionPaused ? 'Bật nền động' : 'Dừng nền động'} aria-pressed={motionPaused}
+              onClick={() => setMotionPaused((value) => !value)}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                {motionPaused ? <path d="m8 5 11 7-11 7Z" /> : <path d="M8 5v14M16 5v14" />}
+              </svg>
+              <span className="motion-toggle-label">{motionPaused ? 'Bật nền động' : 'Dừng nền động'}</span>
+            </button>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
       <main className="login-main">
         <section className="login-hero">
         <div className="login-wrap wrap login-stack">
-          <div className="login-copy">
-            <h1>Quản lý cư trú và thu phí</h1>
-          </div>
-
           <div className="login-card" role="group" aria-labelledby="login-form-title">
-            <p id="login-form-title" className="login-card-title">
+            <h1 id="login-form-title" className="login-card-title">
               Đăng nhập
-            </p>
+            </h1>
 
             {navState?.passwordChanged ? (
               <div className="banner banner-success" role="status">

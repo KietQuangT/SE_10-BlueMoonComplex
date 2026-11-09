@@ -147,3 +147,43 @@ Chưa tick foundation DoD khi các điều kiện này chưa có bằng chứng.
 ### S08: sửa kiểm thử tích hợp PR #20, 09/11/2026
 - Trên nền `ac4cd20aaca4e6f26921841658e5284df08d68a9`, ba lớp billing tái hiện 1 failure, 7 errors với MySQL 8.4 riêng; lỗi stub spy qua proxy MANDATORY làm Mockito dở dang, và truy vấn DATETIME sai kiểu `Instant`.
 - Sau sửa test và ngày fixture đóng góp, `cd backend && ./mvnw -B -ntp -Pintegration verify` với JDK 21.0.9 và container MySQL 8.4 riêng: 213 unit, 120 integration, 0 lỗi, BUILD SUCCESS (1 phút 39 giây). Không dùng DB hoặc volume chia sẻ; CI remote cần kiểm sau push.
+
+### S08 UI review fixes (08/11/2026)
+
+- `cd frontend && npm test`: 19 files, 102 tests passed; React `act(...)` warnings in existing fee-rates and auth-session tests.
+- `cd frontend && npx tsc -b`: passed.
+- `cd frontend && npm run build`: passed.
+- Focused regression tests cover Demo route isolation, account-scoped contribution retry, definitive 409 rejection, revision selection across all period statuses, and stale-version reselection.
+- Browser checks with the real backend were not run. Unresolved contributions are retained in memory across route navigation and account changes, but not a full page reload or tab closure. No backend files or schema changed.
+
+## S08 — audit và chỉnh UI/UX theo ui-audit, 09/11/2026
+
+Kiểm chứng bản cập nhật `hhoangsonnw/feat-s08-ui-ux`, nền `f081bee87c98d80144e1d106b2cde45e54504594`. Thiết kế tham chiếu `ui-audit` SHA `68e4199e4ecf91163e2903cee42aceb9c1fdfc71`; hành vi vẫn theo hợp đồng S08 và API thật.
+
+| Lệnh / phạm vi | Kết quả |
+|---|---|
+| `cd frontend && npm test` | 20 file, 109/109 test qua, 3,17 giây; gồm 7 hồi quy UX mới |
+| `cd frontend && npm run build` | TypeScript và Vite qua; JS 507,77 kB (gzip 141,66 kB), cảnh báo chunk >500 kB |
+| Impeccable source detector: frontend/src/screens/s08 và frontend/src/api/errors.ts | Không finding tĩnh (`[]`) |
+| `git diff --check` | Qua |
+
+Báo cáo phạm vi/phát hiện/cách sửa: `frontend/S08_UI_UX_AUDIT.md`. Log thật nằm ở `.agent_out/s08-ux-tests.log`, `.agent_out/s08-ux-build.log`, `.agent_out/s08-ui-detect.json` (không commit các log). Test còn cảnh báo React `act` ở FeeRatesPage/AppStateProvider; không bỏ qua test nào.
+
+Đã xem thiết kế tham chiếu trong Arc. Chưa kiểm bằng mắt bản sau sửa ở 360px/desktop/sáng/tối, focus/Tab/Esc/zoom 200% và toàn bộ luồng trên API thật: CUA không đọc được tab :5174 người dùng mở. Không suy từ test jsdom hoặc detector mã nguồn thành chứng nhận WCAG hay bằng chứng layout. Backend/schema không đổi; không chạy Maven/MySQL IT trong lượt frontend này.
+
+
+## Frontend — chốt đợt Taste UI/UX toàn ứng dụng, 09/11/2026
+
+Nền `c3b3f7fd539a3460f627bd812f9e050b1e2ffdce`. Chỉnh bố cục dùng chung, header/hành động, native form dialog, điều hướng bàn phím/phân trang, phục hồi lỗi danh sách tạm vắng, nhãn/ngày báo cáo, cách ly Demo đơn giá, Demo kỳ thu theo D26 và khóa tải báo cáo chưa khả dụng. Login có dừng nền động; bỏ dòng “Quản lý cư trú và thu phí” theo yêu cầu cuối, giữ “Đăng nhập” là h1.
+
+| Lệnh / phạm vi | Kết quả |
+|---|---|
+| `cd frontend && npm test` | **24 file, 119/119 test qua**, 5,81 giây; gồm 10 hồi quy mới |
+| `cd frontend && npm run build` | TypeScript và Vite qua; JS 499,79 kB, gzip 140,88 kB |
+| `git diff --check` | Qua |
+| Taste consistency `--quick --stops`, 1440/1024/820/768/390 | **12 cấu hình / 60 lượt viewport**, không probe error; không coi checker PASS vì còn luật marketing không áp dụng cho app |
+| Taste `perf.mjs --runs 3`, đơn giá 1440/390 | **0 FAIL, 4 WARN** (JS 494,4 KiB và 6 file font tại mỗi viewport), không request hỏng/tràn ngang |
+
+Chi tiết/bằng chứng/miễn trừ: `frontend/TASTE_UI_UX_AUDIT.md`. Log và ảnh nằm trong `.agent_out/taste-global/` (ignored), test còn cảnh báo React `act` tại FeeRatesPage/AppStateProvider. Ma trận dự kiến 41 cấu hình được dừng theo yêu cầu tạm chốt của người dùng: **29 cấu hình còn lại chưa hoàn tất kiểm ảnh**. Có ảnh bổ sung cho đơn giá, đóng góp API và hai form; Login được kiểm lại sau khi bỏ tiêu đề. Dùng bản sao frontend với fixture chỉ đọc và một Chrome headless mỗi lượt, không gọi backend thật.
+
+Không đổi backend/schema/hợp đồng API, không chạy Maven/MySQL, không tick thêm TASKS. Chưa kiểm thao tác ghi thật, screen reader, zoom 200%, iOS/thiết bị thật; `--quick` bỏ qua hover/motion/forms/reduced-motion/nội dung ẩn. `layout/check.mjs` không chạy được trọn vẹn với cấu trúc app (thiếu `.wrap`, nhánh chụp ảnh lỗi `sections.map`); không sửa toolkit hoặc coi đó là đạt. Chưa có API tải báo cáo thật; UI chỉ cho xem trước. Không đưa các giới hạn này thành chứng nhận WCAG hay kiểm chứng bảo mật server.

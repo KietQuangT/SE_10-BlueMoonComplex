@@ -8,8 +8,6 @@ export function CollectionRatePage() {
   const { invoices, forcedUiState } = useAppState();
 
   const [selectedPeriod, setSelectedPeriod] = useState('2026-10');
-  const [exporting, setExporting] = useState(false);
-  const [successBanner, setSuccessBanner] = useState<string | null>(null);
 
   // Compute stats for selected period
   const periodInvoices = invoices.filter((i) => i.period === selectedPeriod);
@@ -21,16 +19,6 @@ export function CollectionRatePage() {
     periodTotalRequired > 0n
       ? ((Number(periodTotalPaid) / Number(periodTotalRequired)) * 100).toFixed(1)
       : '0.0';
-
-  const handleExport = () => {
-    setExporting(true);
-    setTimeout(() => {
-      setExporting(false);
-      setSuccessBanner(
-        `Đã xuất tệp "Bao-cao-ty-le-thu-${selectedPeriod}.xlsx" chứa tổng thu, tổng nợ và tỷ lệ thu.`,
-      );
-    }, 700);
-  };
 
   if (forcedUiState === 'loading') {
     return (
@@ -64,24 +52,19 @@ export function CollectionRatePage() {
 
   return (
     <div className="wayfinding-page">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-        <ScreenHeader
+      <ScreenHeader
           screenCode="M-22"
           contract="assumed"
           tierLabel="Mức C"
           title="Báo cáo tỷ lệ thu phí"
-          description="PBI-021: Theo dõi tỷ lệ hoàn thành thu phí và kết xuất bảng tổng hợp kế toán."
-        />
-        <div>
-          <button
-            onClick={handleExport}
-            disabled={exporting || periodInvoices.length === 0}
+          description="Theo dõi số tiền đã thu, còn nợ và tỷ lệ hoàn thành theo kỳ."
+          actions={<button
+            disabled aria-describedby="collection-export-note"
             className="btn btn-primary"
           >
-            <span>{exporting ? 'Đang tạo bảng tính...' : '⤓ Xuất bảng Excel'}</span>
-          </button>
-        </div>
-      </div>
+            <span>Xuất bảng Excel</span>
+          </button>}
+        />
 
       <div className="notice-box notice-warning mb-6">
         <p className="font-semibold">Công thức tỷ lệ thu: Chờ chốt quy tắc</p>
@@ -90,21 +73,17 @@ export function CollectionRatePage() {
         </p>
       </div>
 
-      {successBanner && (
-        <div className="notice-box notice-success mb-6">
-          <p>{successBanner}</p>
-        </div>
-      )}
+      <p id="collection-export-note" className="field-hint mb-6">Xuất bảng Excel chưa khả dụng. Số liệu của kỳ đã chọn hiển thị bên dưới.</p>
 
       {/* Bộ chọn kỳ */}
       <div className="station-panel p-4 bg-white border border-border mb-6">
         <div className="flex flex-wrap items-center gap-4">
           <div>
-            <label className="block text-xs font-bold uppercase text-slate mb-1">
+            <label htmlFor="collection-report-period" className="block text-xs font-bold uppercase text-slate mb-1">
               Chọn kỳ thu phí
             </label>
             <select
-              value={selectedPeriod}
+              id="collection-report-period" value={selectedPeriod}
               onChange={(e) => setSelectedPeriod(e.target.value)}
               className="px-4 py-2 border border-border rounded text-sm font-mono bg-white"
             >

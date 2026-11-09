@@ -1,3 +1,4 @@
+import { SHOW_DEV_TOOLS } from '../../lib/devTools';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ApiHttpError } from '../../api/client';
@@ -243,18 +244,18 @@ export function CreateAccountPage(): React.ReactElement {
             </div>
           ) : null}
           <div className="form-field span-2 form-actions">
-            <button type="submit" className="btn btn-primary" disabled={busy}>
-              {busy ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
-            </button>
             <Link to="/admin/accounts" className="btn btn-secondary">
               Hủy
             </Link>
+            <button type="submit" className="btn btn-primary" disabled={busy}>
+              {busy ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
+            </button>
           </div>
         </form>
       </section>
-      <p className="field-hint">
+      {SHOW_DEV_TOOLS && <p className="field-hint">
         Nơi xem email mô phỏng cho QA và demo: bảng <code>mock_emails</code> qua SQL, chưa có màn hình.
-      </p>
+      </p>}
     </>
   );
 }
