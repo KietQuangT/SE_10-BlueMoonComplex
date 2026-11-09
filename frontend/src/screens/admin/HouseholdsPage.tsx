@@ -32,7 +32,7 @@ export function HouseholdsPage(): React.ReactElement {
     <ScreenHeader
       screenCode="M-12"
       title="Hộ gia đình"
-      description="Tra cứu theo mã căn hộ hoặc mã hộ. Danh sách tìm và phân trang trên máy chủ (≤ 3 giây với 10.000 hồ sơ)."
+      description="Tra cứu theo mã căn hộ hoặc mã hộ, lọc trạng thái và xem thông tin cư trú."
       contract={mode === 'api' ? 'api-live' : 'db-ready'}
       tierLabel="Mức B"
       actions={
@@ -135,6 +135,7 @@ export function HouseholdsPage(): React.ReactElement {
               </table>
             </div>
             <PaginationBar
+              label="Phân trang hộ gia đình"
               page={paged.page}
               pageSize={paged.pageSize}
               totalItems={paged.totalItems}
@@ -144,7 +145,6 @@ export function HouseholdsPage(): React.ReactElement {
           </>
         )}
       </section>
-      <p className="field-hint">Tra cứu nhân khẩu theo tên hoặc số giấy tờ: chờ quyết định.</p>
     </>
   );
 }

@@ -1,7 +1,8 @@
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useState } from 'react';
 import { OpenQuestions, ScreenHeader } from '../../components/ScreenHeader';
 import { EmptyStatePanel, ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
-import { formatVnd, normalizeApartmentCode } from '../../lib/format';
+import { formatVnd, formatBusinessDate, formatPeriod, normalizeApartmentCode } from '../../lib/format';
 import { useAppState } from '../../state/AppStateContext';
 import type { InvoiceRecord, PaymentTransaction } from '../../types/domain';
 
@@ -95,7 +96,7 @@ export function CollectionsPage() {
         contract="assumed"
         tierLabel="Mức C"
         title="Thu tiền mặt tại quầy"
-        description="PBI-015: Quy trình 3 bước (Tìm căn hộ → Bấm Đã thu tiền → Xác nhận biên lai)."
+        description="Tìm căn hộ, kiểm tra khoản còn nợ và xác nhận tiền mặt đã nhận."
       />
 
       {errorBanner && (
@@ -125,7 +126,7 @@ export function CollectionsPage() {
             <div>
               <span className="text-xs text-slate block">Kỳ hóa đơn</span>
               <span className="font-mono font-bold text-lg text-rail">
-                {recentReceipt.period}
+                {formatPeriod(recentReceipt.period)}
               </span>
             </div>
             <div>
@@ -153,8 +154,9 @@ export function CollectionsPage() {
 
       {/* Tìm kiếm căn hộ */}
       <div className="station-panel p-4 bg-white border border-border mb-6">
-        <form onSubmit={handleSearchSubmit} className="flex gap-3">
-          <div className="flex-1">
+        <form onSubmit={handleSearchSubmit} className="filter-row">
+          <label className="form-field flex-1">
+            <span className="sr-only">Mã căn hộ cần thu</span>
             <input
               type="text"
               value={searchTerm}
@@ -162,7 +164,7 @@ export function CollectionsPage() {
               placeholder="Nhập mã căn hộ cần thu (Ví dụ: A01, A1, B05)..."
               className="w-full px-4 py-2 border border-border rounded text-sm font-mono"
             />
-          </div>
+          </label>
           <button
             type="submit"
             className="btn btn-secondary btn-sm"
@@ -178,7 +180,7 @@ export function CollectionsPage() {
       {/* Danh sách hóa đơn chưa đóng */}
       <div className="station-panel p-5 bg-white border border-border mb-8">
         <div className="station-strip bg-amber-stripe mb-4"></div>
-        <div className="flex justify-between items-center mb-3">
+        <div className="filter-row justify-between mb-3">
           <h2 className="text-base font-bold text-rail">
             Các khoản đang nợ phí ({filteredInvoices.length} khoản)
           </h2>
@@ -215,7 +217,7 @@ export function CollectionsPage() {
                     <td className="py-3 px-3 font-mono font-bold text-base text-rail">
                       {inv.apartmentCode}
                     </td>
-                    <td className="py-3 px-3 font-mono text-sm">{inv.period}</td>
+                    <td className="py-3 px-3 font-mono text-sm">{formatPeriod(inv.period)}</td>
                     <td className="py-3 px-3 text-xs text-slate">
                       {inv.lines.map((l, idx) => (
                         <div key={idx}>
@@ -226,7 +228,7 @@ export function CollectionsPage() {
                     <td className="py-3 px-3 text-right font-mono font-bold text-base text-amber-700">
                       {formatVnd(inv.remaining)}
                     </td>
-                    <td className="py-3 px-3 font-mono text-xs text-slate">{inv.dueDate}</td>
+                    <td className="py-3 px-3 font-mono text-xs text-slate">{formatBusinessDate(inv.dueDate)}</td>
                     <td className="py-3 px-3 text-center">
                       <button
                         onClick={() => handleInitiateCollect(inv)}
@@ -263,72 +265,16 @@ export function CollectionsPage() {
         ]}
       />
 
-      {/* Modal xác nhận thu tiền mặt */}
-      {selectedInvoice && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 border border-border">
-            <div className="station-strip bg-teal-brand mb-3"></div>
-            <h3 className="text-lg font-bold text-rail mb-1">Xác nhận đã nhận tiền mặt</h3>
-            <p className="text-xs text-slate mb-4">
-              Vui lòng kiểm đếm chính xác tiền mặt trước khi xác nhận gạch nợ.
-            </p>
-
-            <div className="bg-ground p-4 rounded border border-border mb-4 space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate uppercase font-bold">Căn hộ:</span>
-                <span className="font-mono font-bold text-rail text-base">
-                  Căn {selectedInvoice.apartmentCode}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate uppercase font-bold">Kỳ hóa đơn:</span>
-                <span className="font-mono text-rail">{selectedInvoice.period}</span>
-              </div>
-              <div className="flex justify-between items-center pt-2 border-t border-border">
-                <span className="text-xs text-slate uppercase font-bold">Số tiền thu:</span>
-                <span className="font-mono font-bold text-teal-brand text-lg">
-                  {formatVnd(selectedInvoice.remaining)}
-                </span>
-              </div>
-              <div className="text-xs text-slate-500 italic">
-                * Số tiền thu là ô chỉ đọc, bằng số nợ (Thu thiếu/thừa/sửa/hủy: chờ chốt theo Q8).
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-xs font-bold uppercase text-slate mb-1">
-                Ghi chú giao dịch (Tùy chọn)
-              </label>
-              <input
-                type="text"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Ví dụ: Người nộp là bác Lan (chủ hộ)"
-                className="w-full px-3 py-2 border border-border rounded text-sm"
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectedInvoice(null)}
-                disabled={isSubmitting}
-                className="btn btn-secondary btn-sm"
-              >
-                Hủy bỏ
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmCollect}
-                disabled={isSubmitting}
-                className="btn btn-primary btn-sm"
-              >
-                {isSubmitting ? 'Đang ghi sổ...' : 'Xác nhận Đã thu tiền'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog open={!!selectedInvoice}
+        title={`Xác nhận thu tiền căn ${selectedInvoice?.apartmentCode ?? ''}`}
+        consequence={`Kỳ ${formatPeriod(selectedInvoice?.period)} · ${formatVnd(selectedInvoice?.remaining ?? '0')}. Kiểm đếm tiền mặt trước khi ghi nhận.`}
+        confirmLabel="Xác nhận đã thu tiền" busy={isSubmitting}
+        onCancel={() => setSelectedInvoice(null)} onConfirm={() => void handleConfirmCollect()}>
+        <p className="field-hint">Số tiền bằng toàn bộ khoản còn nợ. Quy tắc thu thiếu/thừa đang chờ chốt.</p>
+        <label className="form-field" htmlFor="collection-note">Ghi chú giao dịch (không bắt buộc)
+          <input id="collection-note" className="input" value={note} disabled={isSubmitting} onChange={(e) => setNote(e.target.value)} />
+        </label>
+      </ConfirmDialog>
     </div>
   );
 }

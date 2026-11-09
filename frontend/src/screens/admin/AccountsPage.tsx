@@ -247,6 +247,7 @@ export function AccountsPage(): React.ReactElement {
               </table>
             </div>
             <PaginationBar
+              label="Phân trang tài khoản"
               page={paged.page}
               pageSize={paged.pageSize}
               totalItems={paged.totalItems}
@@ -257,8 +258,7 @@ export function AccountsPage(): React.ReactElement {
         )}
       </section>
       <p className="field-hint">
-        Ghi nhận chuyển đi (M-15) và vô hiệu hóa tài khoản là hai thao tác tách rời: schema chưa liên
-        kết nhân khẩu với tài khoản.
+        Ghi nhận chuyển đi không tự khóa tài khoản. Nếu cần chặn đăng nhập, hãy vô hiệu hóa tài khoản tương ứng tại đây.
       </p>
 
       <ConfirmDialog
