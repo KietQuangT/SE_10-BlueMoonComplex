@@ -60,6 +60,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/households").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/v1/households", "/api/v1/households/*").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/households/*").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/invoices/*/receipts", "/api/v1/invoices/*/payment-summary", "/api/v1/payment-invoices", "/api/v1/households/*/credit-allocations", "/api/v1/households/*/credit-balance").hasAnyRole("ADMIN", "ACCOUNTANT")
+                .requestMatchers(HttpMethod.POST, "/api/v1/invoices/*/receipts", "/api/v1/receipts/*/void", "/api/v1/households/*/credit-allocations", "/api/v1/credit-allocations/*/reverse").hasRole("ACCOUNTANT")
                 .requestMatchers(HttpMethod.GET, "/api/v1/fee-types", "/api/v1/fee-rates", "/api/v1/fee-preview").hasAnyRole("ADMIN", "ACCOUNTANT")
                 .requestMatchers(HttpMethod.POST, "/api/v1/fee-rates").hasRole("ACCOUNTANT")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/fee-rates/*").hasRole("ACCOUNTANT")

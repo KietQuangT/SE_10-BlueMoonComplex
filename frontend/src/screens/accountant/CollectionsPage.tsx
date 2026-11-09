@@ -1,12 +1,12 @@
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useState } from 'react';
-import { OpenQuestions, ScreenHeader } from '../../components/ScreenHeader';
+import { ScreenHeader } from '../../components/ScreenHeader';
 import { EmptyStatePanel, ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
 import { formatVnd, formatBusinessDate, formatPeriod, normalizeApartmentCode } from '../../lib/format';
 import { useAppState } from '../../state/AppStateContext';
 import type { InvoiceRecord, PaymentTransaction } from '../../types/domain';
 
-export function CollectionsPage() {
+export function CollectionsPage({ readOnly = false }: { readOnly?: boolean }) {
   const { invoices, collectInvoiceCashDemo, forcedUiState } = useAppState();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -230,12 +230,12 @@ export function CollectionsPage() {
                     </td>
                     <td className="py-3 px-3 font-mono text-xs text-slate">{formatBusinessDate(inv.dueDate)}</td>
                     <td className="py-3 px-3 text-center">
-                      <button
+                      {!readOnly && <button
                         onClick={() => handleInitiateCollect(inv)}
                         className="btn btn-primary btn-sm"
                       >
                         Đã thu tiền
-                      </button>
+                      </button>}
                     </td>
                   </tr>
                 ))}
@@ -245,32 +245,12 @@ export function CollectionsPage() {
         )}
       </div>
 
-      <OpenQuestions
-        items={[
-          {
-            code: 'Q8',
-            text: 'Quy định về thu thiếu hoặc thu thừa tiền (ví dụ cư dân chỉ nộp một phần hoặc đóng trước nhiều tháng)? Giao diện hiện tại cố định số tiền thu bằng đúng số nợ (chỉ đọc).',
-            owner: 'Quân / Kiệt',
-          },
-          {
-            code: 'Q8.1',
-            text: 'Quy trình sửa/hủy giao dịch thu tiền nhầm căn hộ chưa được định nghĩa trong tài liệu yêu cầu.',
-            owner: 'Quân / Sơn',
-          },
-          {
-            code: 'Q20',
-            text: 'Quyền tra cứu danh sách căn hộ cho Kế toán hiện đang bị hoãn trong ma trận F01 nhưng là yêu cầu bắt buộc để Kế toán chọn căn thu tiền.',
-            owner: 'Sơn / Quân',
-          },
-        ]}
-      />
-
       <ConfirmDialog open={!!selectedInvoice}
         title={`Xác nhận thu tiền căn ${selectedInvoice?.apartmentCode ?? ''}`}
         consequence={`Kỳ ${formatPeriod(selectedInvoice?.period)} · ${formatVnd(selectedInvoice?.remaining ?? '0')}. Kiểm đếm tiền mặt trước khi ghi nhận.`}
         confirmLabel="Xác nhận đã thu tiền" busy={isSubmitting}
         onCancel={() => setSelectedInvoice(null)} onConfirm={() => void handleConfirmCollect()}>
-        <p className="field-hint">Số tiền bằng toàn bộ khoản còn nợ. Quy tắc thu thiếu/thừa đang chờ chốt.</p>
+        <p className="field-hint">Ở chế độ Demo, thao tác này ghi nhận toàn bộ khoản còn nợ.</p>
         <label className="form-field" htmlFor="collection-note">Ghi chú giao dịch (không bắt buộc)
           <input id="collection-note" className="input" value={note} disabled={isSubmitting} onChange={(e) => setNote(e.target.value)} />
         </label>
