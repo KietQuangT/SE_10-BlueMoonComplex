@@ -57,7 +57,7 @@ public class ResidentInvoiceService {
         long householdId = validateResidentHousehold(user);
         validatePaging(page, size);
         if (invoiceId != null && invoiceId <= 0) {
-            throw new BadRequestException("VALIDATION");
+            throw new BadRequestException("INVALID_FILTER");
         }
         String validStatus = validateReceiptStatus(status);
         return readStore.receipts(householdId, invoiceId, validStatus, page, size);
@@ -68,7 +68,7 @@ public class ResidentInvoiceService {
         long householdId = validateResidentHousehold(user);
         validatePaging(page, size);
         if (invoiceId != null && invoiceId <= 0) {
-            throw new BadRequestException("VALIDATION");
+            throw new BadRequestException("INVALID_FILTER");
         }
         String validStatus = validateAllocationStatus(status);
         return readStore.creditAllocations(householdId, invoiceId, validStatus, page, size);
@@ -92,7 +92,7 @@ public class ResidentInvoiceService {
 
     private static void validatePaging(int page, int size) {
         if (page < 0 || size < 1 || size > 100) {
-            throw new BadRequestException("VALIDATION");
+            throw new BadRequestException("INVALID_FILTER");
         }
     }
 

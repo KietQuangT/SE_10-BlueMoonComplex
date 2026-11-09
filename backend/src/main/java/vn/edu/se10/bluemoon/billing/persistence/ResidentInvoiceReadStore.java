@@ -53,19 +53,20 @@ public class ResidentInvoiceReadStore {
                     LEFT JOIN (
                         SELECT invoice_id, SUM(applied_amount) AS paid
                         FROM payment_receipts
-                        WHERE status = 'POSTED'
+                        WHERE household_id = :householdId AND status = 'POSTED'
                         GROUP BY invoice_id
                     ) r ON r.invoice_id = i.id
                     LEFT JOIN (
                         SELECT invoice_id, SUM(amount) AS paid
                         FROM payment_credit_allocations
-                        WHERE status = 'ACTIVE'
+                        WHERE household_id = :householdId AND status = 'ACTIVE'
                         GROUP BY invoice_id
                     ) a ON a.invoice_id = i.id
                     WHERE i.household_id = :householdId
                       AND i.status IN ('ISSUED', 'CANCELLED')
                       AND (:period IS NULL OR p.period = :period)
-                ) d WHERE """ + statusClause;
+                ) d
+                """ + "WHERE " + statusClause;
 
         Long totalCount = jdbc.queryForObject("SELECT COUNT(*) " + base, params, Long.class);
         long total = totalCount != null ? totalCount : 0L;
@@ -124,13 +125,13 @@ public class ResidentInvoiceReadStore {
                 LEFT JOIN (
                     SELECT invoice_id, SUM(applied_amount) AS paid
                     FROM payment_receipts
-                    WHERE invoice_id = :invoiceId AND status = 'POSTED'
+                    WHERE invoice_id = :invoiceId AND household_id = :householdId AND status = 'POSTED'
                     GROUP BY invoice_id
                 ) r ON r.invoice_id = i.id
                 LEFT JOIN (
                     SELECT invoice_id, SUM(amount) AS paid
                     FROM payment_credit_allocations
-                    WHERE invoice_id = :invoiceId AND status = 'ACTIVE'
+                    WHERE invoice_id = :invoiceId AND household_id = :householdId AND status = 'ACTIVE'
                     GROUP BY invoice_id
                 ) a ON a.invoice_id = i.id
                 WHERE i.id = :invoiceId
@@ -238,6 +239,7 @@ public class ResidentInvoiceReadStore {
                 JOIN invoices i ON i.id = r.invoice_id
                 JOIN billing_periods p ON p.id = i.period_id
                 WHERE r.household_id = :householdId
+                  AND i.household_id = :householdId
                   AND (:invoiceId IS NULL OR r.invoice_id = :invoiceId)
                   AND (:status IS NULL OR r.status = :status)
                   AND i.status IN ('ISSUED', 'CANCELLED')
@@ -294,6 +296,7 @@ public class ResidentInvoiceReadStore {
                 JOIN invoices i ON i.id = a.invoice_id
                 JOIN billing_periods p ON p.id = i.period_id
                 WHERE a.household_id = :householdId
+                  AND i.household_id = :householdId
                   AND (:invoiceId IS NULL OR a.invoice_id = :invoiceId)
                   AND (:status IS NULL OR a.status = :status)
                   AND i.status IN ('ISSUED', 'CANCELLED')
@@ -333,13 +336,13 @@ public class ResidentInvoiceReadStore {
                 LEFT JOIN (
                     SELECT invoice_id, SUM(applied_amount) AS paid
                     FROM payment_receipts
-                    WHERE status = 'POSTED'
+                    WHERE household_id = :householdId AND status = 'POSTED'
                     GROUP BY invoice_id
                 ) r ON r.invoice_id = i.id
                 LEFT JOIN (
                     SELECT invoice_id, SUM(amount) AS paid
                     FROM payment_credit_allocations
-                    WHERE status = 'ACTIVE'
+                    WHERE household_id = :householdId AND status = 'ACTIVE'
                     GROUP BY invoice_id
                 ) a ON a.invoice_id = i.id
                 WHERE i.household_id = :householdId

@@ -45,6 +45,11 @@ class ResidentInvoiceIT {
         long household = jdbc.queryForObject("SELECT id FROM households WHERE household_code=?", Long.class, marker);
         var user = resident(household);
 
+        jdbc.update("INSERT INTO fee_rates (fee_type_id, unit_price, effective_from, created_by, created_at) " +
+                "SELECT id, 10000.00, '9970-01-01', ?, NOW(6) FROM fee_types WHERE code='MANAGEMENT_FEE'", accountant);
+        jdbc.update("INSERT INTO fee_rates (fee_type_id, unit_price, effective_from, created_by, created_at) " +
+                "SELECT id, 30000.00, '9970-01-01', ?, NOW(6) FROM fee_types WHERE code='WASTE_FEE'", accountant);
+
         // Period 1 and Invoice A: 530,000 VND
         long periodA = createPeriod("9970-01", accountant, "2026-11-30");
         long invoiceA = createInvoice(periodA, household, marker, marker, "2026-11-30", new BigDecimal("530000"), "ISSUED");
@@ -257,7 +262,15 @@ class ResidentInvoiceIT {
 
     private void createLine(long invoiceId, String feeTypeCode, String feeTypeName, String calcMethod, BigDecimal quantity, BigDecimal areaM2, BigDecimal unitPrice, BigDecimal amount) {
         long feeTypeId = jdbc.queryForObject("SELECT id FROM fee_types WHERE code=?", Long.class, feeTypeCode);
-        long feeRateId = jdbc.queryForObject("SELECT id FROM fee_rates WHERE fee_type_id=? LIMIT 1", Long.class, feeTypeId);
+        List<Long> rateIds = jdbc.query("SELECT id FROM fee_rates WHERE fee_type_id=? ORDER BY id DESC LIMIT 1", (rs, rowNum) -> rs.getLong(1), feeTypeId);
+        long feeRateId;
+        if (!rateIds.isEmpty()) {
+            feeRateId = rateIds.getFirst();
+        } else {
+            jdbc.update("INSERT INTO fee_rates (fee_type_id, unit_price, effective_from, created_by, created_at) " +
+                    "VALUES (?, ?, '1970-01-01', (SELECT id FROM users LIMIT 1), NOW(6))", feeTypeId, unitPrice);
+            feeRateId = jdbc.queryForObject("SELECT id FROM fee_rates WHERE fee_type_id=? ORDER BY id DESC LIMIT 1", Long.class, feeTypeId);
+        }
         jdbc.update("INSERT INTO invoice_lines (invoice_id, fee_type_id, fee_type_code, fee_type_name, calculation_method, area_m2, quantity, unit_price, fee_rate_id, amount) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", invoiceId, feeTypeId, feeTypeCode, feeTypeName, calcMethod, areaM2, quantity, unitPrice, feeRateId, amount);
     }
