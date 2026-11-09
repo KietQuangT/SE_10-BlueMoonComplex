@@ -1,6 +1,7 @@
 import React from 'react';
 
 interface PaginationBarProps {
+  label?: string;
   page: number;
   pageSize: number;
   totalItems: number;
@@ -9,6 +10,7 @@ interface PaginationBarProps {
 }
 
 export function PaginationBar({
+  label = 'Phân trang danh sách',
   page,
   pageSize,
   totalItems,
@@ -20,7 +22,7 @@ export function PaginationBar({
   const endIdx = Math.min(totalItems, page * pageSize);
 
   return (
-    <div className="pagination-bar">
+    <nav className="pagination-bar" aria-label={label}>
       <span className="topbar-meta tabular">
         Hiển thị {startIdx}–{endIdx} / {totalItems} bản ghi
       </span>
@@ -48,8 +50,8 @@ export function PaginationBar({
         >
           Trang trước
         </button>
-        <span className="tabular page-count">
-          {page} / {totalPages}
+        <span className="tabular page-count" aria-live="polite">
+          Trang {page} / {totalPages}
         </span>
         <button
           type="button"
@@ -60,6 +62,6 @@ export function PaginationBar({
           Trang sau
         </button>
       </div>
-    </div>
+    </nav>
   );
 }

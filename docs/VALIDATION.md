@@ -170,3 +170,20 @@ Kiểm chứng bản cập nhật `hhoangsonnw/feat-s08-ui-ux`, nền `f081bee87
 Báo cáo phạm vi/phát hiện/cách sửa: `frontend/S08_UI_UX_AUDIT.md`. Log thật nằm ở `.agent_out/s08-ux-tests.log`, `.agent_out/s08-ux-build.log`, `.agent_out/s08-ui-detect.json` (không commit các log). Test còn cảnh báo React `act` ở FeeRatesPage/AppStateProvider; không bỏ qua test nào.
 
 Đã xem thiết kế tham chiếu trong Arc. Chưa kiểm bằng mắt bản sau sửa ở 360px/desktop/sáng/tối, focus/Tab/Esc/zoom 200% và toàn bộ luồng trên API thật: CUA không đọc được tab :5174 người dùng mở. Không suy từ test jsdom hoặc detector mã nguồn thành chứng nhận WCAG hay bằng chứng layout. Backend/schema không đổi; không chạy Maven/MySQL IT trong lượt frontend này.
+
+
+## Frontend — chốt đợt Taste UI/UX toàn ứng dụng, 09/11/2026
+
+Nền `c3b3f7fd539a3460f627bd812f9e050b1e2ffdce`. Chỉnh bố cục dùng chung, header/hành động, native form dialog, điều hướng bàn phím/phân trang, phục hồi lỗi danh sách tạm vắng, nhãn/ngày báo cáo, cách ly Demo đơn giá, Demo kỳ thu theo D26 và khóa tải báo cáo chưa khả dụng. Login có dừng nền động; bỏ dòng “Quản lý cư trú và thu phí” theo yêu cầu cuối, giữ “Đăng nhập” là h1.
+
+| Lệnh / phạm vi | Kết quả |
+|---|---|
+| `cd frontend && npm test` | **24 file, 119/119 test qua**, 5,81 giây; gồm 10 hồi quy mới |
+| `cd frontend && npm run build` | TypeScript và Vite qua; JS 499,79 kB, gzip 140,88 kB |
+| `git diff --check` | Qua |
+| Taste consistency `--quick --stops`, 1440/1024/820/768/390 | **12 cấu hình / 60 lượt viewport**, không probe error; không coi checker PASS vì còn luật marketing không áp dụng cho app |
+| Taste `perf.mjs --runs 3`, đơn giá 1440/390 | **0 FAIL, 4 WARN** (JS 494,4 KiB và 6 file font tại mỗi viewport), không request hỏng/tràn ngang |
+
+Chi tiết/bằng chứng/miễn trừ: `frontend/TASTE_UI_UX_AUDIT.md`. Log và ảnh nằm trong `.agent_out/taste-global/` (ignored), test còn cảnh báo React `act` tại FeeRatesPage/AppStateProvider. Ma trận dự kiến 41 cấu hình được dừng theo yêu cầu tạm chốt của người dùng: **29 cấu hình còn lại chưa hoàn tất kiểm ảnh**. Có ảnh bổ sung cho đơn giá, đóng góp API và hai form; Login được kiểm lại sau khi bỏ tiêu đề. Dùng bản sao frontend với fixture chỉ đọc và một Chrome headless mỗi lượt, không gọi backend thật.
+
+Không đổi backend/schema/hợp đồng API, không chạy Maven/MySQL, không tick thêm TASKS. Chưa kiểm thao tác ghi thật, screen reader, zoom 200%, iOS/thiết bị thật; `--quick` bỏ qua hover/motion/forms/reduced-motion/nội dung ẩn. `layout/check.mjs` không chạy được trọn vẹn với cấu trúc app (thiếu `.wrap`, nhánh chụp ảnh lỗi `sections.map`); không sửa toolkit hoặc coi đó là đạt. Chưa có API tải báo cáo thật; UI chỉ cho xem trước. Không đưa các giới hạn này thành chứng nhận WCAG hay kiểm chứng bảo mật server.

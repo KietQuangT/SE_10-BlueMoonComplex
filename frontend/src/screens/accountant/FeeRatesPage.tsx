@@ -19,6 +19,15 @@ function nextMonth(): string {
 }
 
 export function FeeRatesPage() {
+  const { mode } = useAppState();
+  if (mode === 'demo') return <div className="wayfinding-page">
+    <ScreenHeader screenCode="M-20" contract="api-live" title="Đơn giá các loại phí" description="Đơn giá thật chỉ được đọc và thay đổi trong chế độ Backend thật." />
+    <EmptyStatePanel title="Đơn giá chưa có bản Demo" description="Chuyển sang Backend thật để xem hoặc cập nhật đơn giá. Demo không gọi dữ liệu trên máy chủ." />
+  </div>;
+  return <ApiFeeRatesPage />;
+}
+
+function ApiFeeRatesPage() {
   const { user, handleCallFailure } = useAppState();
   const canWrite = user?.role === 'ACCOUNTANT';
   const [types, setTypes] = useState<FeeType[]>([]);
@@ -108,21 +117,20 @@ export function FeeRatesPage() {
     finally { setBusy(false); }
   };
   return <div className="wayfinding-page">
-    <ScreenHeader screenCode="M-20" contract="api-live" tierLabel="Mức C" title="Đơn giá các loại phí" description="Đơn giá áp dụng theo tháng. Đơn giá của tháng hiện tại và các tháng đã qua không sửa được." />
+    <ScreenHeader screenCode="M-20" contract="api-live" tierLabel="Mức C" title="Đơn giá các loại phí" description="Đơn giá áp dụng theo tháng. Đơn giá của tháng hiện tại và các tháng đã qua không sửa được." actions={canWrite ? <button type="button" className="btn btn-primary" onClick={() => { setError(''); setSuccess(''); changeDraft({ editing: null, feeTypeId: types[0] ? String(types[0].id) : '', month: nextMonth(), price: '' }); }}>Thêm đơn giá</button> : undefined} />
     {!canWrite && <div className="banner">Bạn chỉ xem được đơn giá của các loại phí; chỉ Kế toán được thêm, sửa hoặc xóa.</div>}
     {success && <div className="banner" role="status">{success}</div>}
     {error && !draft && !deleting && <div className="banner banner-error" role="alert">{error}</div>}
-    {canWrite && <button type="button" className="btn btn-primary" onClick={() => { setError(''); setSuccess(''); changeDraft({ editing: null, feeTypeId: types[0] ? String(types[0].id) : '', month: nextMonth(), price: '' }); }}>Thêm đơn giá</button>}
-    {draft && <div className="surface-box surface-box-pad" role="region" aria-label={draft.editing ? 'Sửa đơn giá' : 'Thêm đơn giá'}><h2>{draft.editing ? 'Sửa đơn giá' : 'Thêm đơn giá'}</h2><form noValidate onSubmit={(e) => void save(e)}>
+    {draft && <div className="surface-box surface-box-pad" role="region" aria-label={draft.editing ? 'Sửa đơn giá' : 'Thêm đơn giá'}><h2 className="box-title">{draft.editing ? 'Sửa đơn giá' : 'Thêm đơn giá'}</h2><form className="stack-form" noValidate onSubmit={(e) => void save(e)}>
       {!draft.editing && <><div className="form-field"><label htmlFor="fee-type">Loại phí</label><select id="fee-type" className="select" value={draft.feeTypeId} onChange={(e) => changeDraft({ ...draft, feeTypeId: e.target.value })}><option value="">Chọn loại phí</option>{types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div><div className="form-field"><label htmlFor="fee-month">Tháng hiệu lực</label><input id="fee-month" className="input" type="month" min={nextMonth()} value={draft.month} onChange={(e) => changeDraft({ ...draft, month: e.target.value })} /></div></>}
       {draft.editing && <p>{draft.editing.feeTypeName} · {formatMonthYear(draft.editing.effectiveFrom)}</p>}
       <div className="form-field"><label htmlFor="fee-price">Đơn giá</label><input id="fee-price" ref={priceRef} className="input" type="text" inputMode="decimal" value={draft.price} aria-describedby={error ? 'fee-error' : undefined} onChange={(e) => changeDraft({ ...draft, price: e.target.value })} /></div>
-      {error && <p id="fee-error" className="field-error" role="alert">{error}</p>}<button type="button" className="btn btn-secondary" disabled={busy} onClick={() => { changeDraft(null); setError(''); }}>Hủy</button><button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Đang lưu...' : 'Lưu'}</button>
+      {error && <p id="fee-error" className="field-error" role="alert">{error}</p>}<div className="form-actions"><button type="button" className="btn btn-secondary" disabled={busy} onClick={() => { changeDraft(null); setError(''); }}>Hủy</button><button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Đang lưu...' : 'Lưu'}</button></div>
     </form></div>}
     <section className="surface-box surface-box-pad">
       <div className="form-field"><label htmlFor="fee-filter">Loại phí</label><select id="fee-filter" className="select" value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1); }}><option value="">Tất cả</option>{types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
       {loading ? <SkeletonRows /> : loadError ? <ErrorRetryPanel message={loadError} onRetry={() => setVersion((v) => v + 1)} /> : !data?.content.length ? <EmptyStatePanel title="Chưa có đơn giá nào." description={canWrite ? 'Kế toán thêm đơn giá để hệ thống tính phí.' : ''} /> : <div className="table-scroll"><table className="ledger-table"><thead><tr><th>Loại phí</th><th>Đơn vị</th><th>Đơn giá</th><th>Hiệu lực từ</th><th>Trạng thái</th><th>Hành động</th></tr></thead><tbody>{data.content.map((rate) => <tr key={rate.id}><td data-label="Loại phí">{rate.feeTypeName}</td><td data-label="Đơn vị">{types.find((t) => t.id === rate.feeTypeId)?.unit ?? '—'}</td><td data-label="Đơn giá">{formatVndDecimal(rate.unitPrice)}</td><td data-label="Hiệu lực từ">{formatMonthYear(rate.effectiveFrom)}</td><td data-label="Trạng thái">{rate.editable ? 'Có thể sửa' : 'Đã khóa'}</td><td data-label="Hành động">{canWrite && rate.editable && <div className="row-actions"><button type="button" className="btn btn-secondary" onClick={() => { setError(''); setSuccess(''); changeDraft({ editing: rate, feeTypeId: String(rate.feeTypeId), month: rate.effectiveFrom.slice(0, 7), price: String(rate.unitPrice) }); }}>Sửa</button><button type="button" className="btn btn-secondary" onClick={() => { setError(''); setSuccess(''); setDeleting(rate); }}>Xóa</button></div>}</td></tr>)}</tbody></table></div>}
-      {!loading && !loadError && data && <PaginationBar page={page} pageSize={size} totalItems={data.totalElements} onPageChange={setPage} onPageSizeChange={setSize} />}
+      {!loading && !loadError && data && <PaginationBar label="Phân trang đơn giá" page={page} pageSize={size} totalItems={data.totalElements} onPageChange={setPage} onPageSizeChange={setSize} />}
       <p>Ví dụ: 10.000 đ × 50 m² = 500.000 đ cho Phí quản lý.</p>
     </section>
     <ConfirmDialog open={!!deleting} title={`Xóa đơn giá của ${deleting?.feeTypeName ?? ''} từ tháng ${deleting ? formatMonthYear(deleting.effectiveFrom) : ''}?`} consequence="Thao tác này không hoàn tác." confirmLabel="Xóa" confirmTone="danger" busy={busy} onCancel={() => { setDeleting(null); setError(''); }} onConfirm={() => void remove()}>{error && <p role="alert">{error}</p>}</ConfirmDialog>
