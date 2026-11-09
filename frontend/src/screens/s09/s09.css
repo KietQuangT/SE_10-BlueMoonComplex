@@ -1,0 +1,13 @@
+.s09-page > .notice-box, .s09-section, .s09-filters { margin-bottom: var(--space-5); }
+.s09-filters { display: grid; grid-template-columns: minmax(180px, 2fr) minmax(150px, 1fr) minmax(180px, 1fr) auto; gap: var(--space-3); align-items: end; }
+.s09-section h2 { margin: 0 0 var(--space-4); }
+.s09-section h3 { margin: var(--space-5) 0 var(--space-3); }
+.s09-section .table-scroll { container-type: inline-size; }
+.s09-totals, .s09-preview { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-3); }
+.s09-totals dt, .s09-preview dt { color: var(--text-secondary); }
+.s09-totals dd, .s09-preview dd { margin: var(--space-1) 0 0; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.s09-actions, .s09-heading-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.s09-heading-row h3 { flex: 1; }
+.s09-pending h2 { font-size: var(--text-lg); margin: 0; }
+.s09-pending p { margin-block: var(--space-2); }
+@media (max-width: 720px) { .s09-filters { grid-template-columns: 1fr; } .s09-actions .btn { flex: 1 1 100%; } }

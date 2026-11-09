@@ -187,3 +187,41 @@ Nền `c3b3f7fd539a3460f627bd812f9e050b1e2ffdce`. Chỉnh bố cục dùng chung
 Chi tiết/bằng chứng/miễn trừ: `frontend/TASTE_UI_UX_AUDIT.md`. Log và ảnh nằm trong `.agent_out/taste-global/` (ignored), test còn cảnh báo React `act` tại FeeRatesPage/AppStateProvider. Ma trận dự kiến 41 cấu hình được dừng theo yêu cầu tạm chốt của người dùng: **29 cấu hình còn lại chưa hoàn tất kiểm ảnh**. Có ảnh bổ sung cho đơn giá, đóng góp API và hai form; Login được kiểm lại sau khi bỏ tiêu đề. Dùng bản sao frontend với fixture chỉ đọc và một Chrome headless mỗi lượt, không gọi backend thật.
 
 Không đổi backend/schema/hợp đồng API, không chạy Maven/MySQL, không tick thêm TASKS. Chưa kiểm thao tác ghi thật, screen reader, zoom 200%, iOS/thiết bị thật; `--quick` bỏ qua hover/motion/forms/reduced-motion/nội dung ẩn. `layout/check.mjs` không chạy được trọn vẹn với cấu trúc app (thiếu `.wrap`, nhánh chụp ảnh lỗi `sections.map`); không sửa toolkit hoặc coi đó là đạt. Chưa có API tải báo cáo thật; UI chỉ cho xem trước. Không đưa các giới hạn này thành chứng nhận WCAG hay kiểm chứng bảo mật server.
+
+## S09 backend — thu tiền và công nợ, 09/11/2026
+
+- Worktree `s09-contract`, thay đổi chưa commit; JDK 21.0.9. MySQL 8.4.13 là container thử cô lập cổng `127.0.0.1:3308`, không dùng DB hoặc volume dự án. Flyway đã áp V10 trên DB thử.
+- `cd backend && ./mvnw -B -ntp verify` với `JAVA_HOME` trỏ JDK 21: **222 test, 0 lỗi, BUILD SUCCESS** (10,7 giây).
+- `cd backend && DB_HOST=127.0.0.1 DB_PORT=3308 DB_NAME=bluemoon DB_USER=bluemoon DB_PASSWORD=<mật-khẩu-test-local> ./mvnw -B -ntp -Pintegration verify` với JDK 21: **222 unit/API + 143 integration, 0 lỗi, BUILD SUCCESS** (71 giây).
+- Kiểm tra mới gồm phân chia tiền, FIFO qua nhiều receipt, replay và xung đột theo actor/payload, đảo/hủy, ngày và lý do nhập muộn, chéo hộ, 401/403/CSRF, rollback receipt khi audit lỗi, receipt tranh hủy kỳ, hủy tranh thu, 10 lần hai phân bổ khác kỳ tranh credit, 5 lần replay/thu đồng thời. Lượt full trước phát hiện deadlock nâng khóa hộ; sau sửa sang upsert khóa exclusive, các lượt trên và full verify đã qua.
+- Giới hạn: test cạnh tranh chỉ kiểm các lịch chạy thực tế đã quan sát, không chứng minh mọi lịch; chưa có test HTTP thật toàn luồng thanh toán, chưa kiểm audit rollback cho từng lệnh đảo/phân bổ/hủy hoặc log request dưới mọi cấu hình; chưa chạy CI remote, Windows hoặc máy thứ hai. UI S09 thuộc lượt sau; không tick task S09.
+
+### S09 — vòng sửa sau review, 09/11/2026
+
+- Summary của hóa đơn `CANCELLED` trả trạng thái `CANCELLED` và nợ có thể thu bằng `0`; test integration xác nhận tổng gốc được giữ. Số tiền có số mũ lớn bị từ chối trước khi mở rộng; test dùng `1E+100000000` và `1E-100000000` với giới hạn thời gian. Cổng billing ủy quyền tăng `receipt_count` cho `BillingReceiptGuard` hiện có.
+- Bốn lệnh đều gắn actor vào fingerprint; regression xác nhận cùng key/payload với actor khác trả xung đột, không replay kết quả.
+- Sau sửa, JDK 21.0.9: `cd backend && ./mvnw -B -ntp verify` **224 test, 0 lỗi, BUILD SUCCESS** (12,6 giây). MySQL 8.4.13 cô lập tại `127.0.0.1:3308`: `cd backend && DB_HOST=127.0.0.1 DB_PORT=3308 DB_NAME=bluemoon DB_USER=bluemoon DB_PASSWORD=<mật-khẩu-test-local> ./mvnw -B -ntp -Pintegration verify` **224 unit/API + 145 integration, 0 lỗi, BUILD SUCCESS** (67 giây). Các giới hạn kiểm thử và UI ở mục S09 phía trên vẫn còn.
+
+### S09 — API đọc cho UI và quyền riêng tư D28, 09/11/2026
+
+- Bổ sung danh sách công nợ có tìm mã hộ/căn hộ, lọc kỳ/trạng thái và phân trang; lịch sử phân bổ có các receipt nguồn FIFO, trạng thái và metadata đảo; lịch sử receipt có metadata hủy, số allocation đang hoạt động và `canVoid`. GET chỉ ADMIN/ACCOUNTANT. Nội dung lý do giữ trong DB nhưng response đọc/ghi và `payment_commands.result_json` chỉ có cờ `hasLateReason`, `hasVoidReason`, `hasReverseReason`, theo D28.
+- JDK 21.0.9: `cd backend && ./mvnw -B -ntp verify` **226 test, 0 lỗi, BUILD SUCCESS** (10,7 giây). MySQL 8.4.13 cô lập tại `127.0.0.1:3308`: `cd backend && DB_HOST=127.0.0.1 DB_PORT=3308 DB_NAME=bluemoon DB_USER=bluemoon DB_PASSWORD=<mật-khẩu-test-local> ./mvnw -B -ntp -Pintegration verify` **226 unit/API + 146 integration, 0 lỗi, BUILD SUCCESS** (67 giây).
+- MockMvc kiểm quyền, JSON và không lộ lý do; MySQL kiểm tổng tiền theo receipt/allocation, trạng thái trước/sau đảo, lọc, tìm literal `%`, phân trang, nguồn FIFO và cờ. Chưa kiểm end-to-end với frontend/HTTP thật, chưa đo hiệu năng dữ liệu lớn, chưa CI remote. Không tick S09 khi UI chưa nghiệm thu.
+- Sau full verify, thêm một MockMvc regression xác nhận GET receipt/allocation có cờ nhưng không có trường lý do raw; `cd backend && ./mvnw -B -ntp -Dtest=PaymentApiTest test`: **5 test, 0 lỗi, BUILD SUCCESS** (6,1 giây). Không có thay đổi production sau full verify.
+
+### S09 — UI thu tiền, 09/11/2026
+
+- `/accountant/collections` dùng API thật trong API mode và giữ Demo; `/admin/collections` chỉ đọc. Danh sách mặc định công nợ mọi kỳ, có lọc hóa đơn đã trả; hỗ trợ thu, phân bổ, hủy và đảo, phép tính VND nguyên bằng BigInt. Retry lưu UUID và payload trong sessionStorage theo username, kiểm tra actor trước mỗi lần gửi và gửi lại sau CSRF; reason chỉ hiển thị dưới dạng cờ.
+- `cd frontend && npm test`: **28 file, 134/134 test qua** (5,07 giây). Có regression đổi tài khoản ngay khi component còn mounted, retry nguyên payload, CSRF đổi actor, quyền ADMIN, lọc, phân bổ và đảo. Còn cảnh báo React `act(...)` ở test FeeRatesPage và AppStateProvider hiện có.
+- `cd frontend && npm run build`: TypeScript và Vite qua; JS 518,42 kB (gzip 145,87 kB), có cảnh báo chunk >500 kB.
+- `git diff --check`: qua.
+- Chưa walkthrough với backend/HTTP thật, chưa kiểm bằng mắt mobile, zoom 200%, keyboard/screen reader hoặc CI remote; test jsdom không chứng minh các trường hợp đó. Không chạy lại backend/MySQL trong lượt UI; bằng chứng backend ở trên. Không tick S09.
+- QA bổ sung qua Orca/Agy (`gemini-3.8-flash`, high) trên đúng worktree `s09-contract`: `cd frontend && npm test -- --run` **28 file, 134 test qua**; `cd frontend && npm run build` **TypeScript/Vite qua**; không sửa file. Không có browser/E2E harness trong repo nên chưa walkthrough thật các kích thước/zoom/keyboard.
+- Worker có thử thêm `cd backend && ./mvnw -B -ntp test` ngoài phạm vi UI; lệnh thất bại nhưng phần output nguyên nhân không được lưu trong terminal archive. Backend vẫn có bằng chứng `verify` và integration pass ở trên; cần chạy lại đúng lệnh nếu cần chẩn đoán riêng.
+
+### S09 — QA backend và luồng UI qua Orca/Agy, 09/11/2026
+
+- Worktree `s09-contract`, model `gemini-3.8-flash`, effort `high`. Agy chạy `cd backend && ./mvnw -B -ntp verify`: **227 test pass**; MySQL 8.4 cô lập ở port 3308 với `-Pintegration verify`: **146 integration test pass**. Không reset DB/volume.
+- Coverage backend được đối chiếu tới `ReceiptAmountsTest`, `CreditAllocationAmountsTest`, `PaymentFlowIT`, `PaymentConcurrencyIT`, `PaymentApiTest` và `PaymentSchemaIT`: thu thiếu/thừa, FIFO + đảo, concurrency/idempotency, quyền và cờ privacy reason.
+- Frontend: `cd frontend && npm test -- --run`: **28 file, 134 test pass**; `cd frontend && npm run build`: TypeScript/Vite pass. Đã đối chiếu các test trong `s09-page.test.tsx`, `s09-payments.test.ts`, `s09-csrf-actor.test.ts` và `s09-routes.test.tsx` với preview, lọc, retry cùng UUID/payload, đổi actor, ADMIN read-only và RESIDENT denial.
+- Chưa có browser/E2E harness trong repo; chưa walkthrough UI nối API thật, kích thước mobile, zoom 200%, keyboard/screen reader. Kết quả trên xác nhận backend unit/API + MySQL integration và frontend DOM tests/build, không thay thế E2E hoặc CI remote.
