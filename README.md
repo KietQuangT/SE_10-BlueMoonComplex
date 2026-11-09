@@ -8,7 +8,7 @@ Repo là monorepo: API Spring Boot, giao diện React, MySQL và tài liệu ngh
 
 S01–S10 đã có triển khai trong mã nguồn backend. S08 (kỳ thu/tự nguyện) và S09 (thu tiền/gạch nợ) đã được đánh dấu hoàn thành theo yêu cầu của Sơn trong `TASKS.md`, với các giới hạn còn lưu trong `VALIDATION.md`. S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) vào `origin/main`.
 
-S10 bổ sung API tra cứu và chi tiết hóa đơn/lịch sử gạch nợ cho cư dân (`/api/resident/invoices`), kiểm tra quyền theo hộ ở server (chặn IDOR/truy cập chéo hộ), snapshot hóa đơn và ledger với cô lập giao dịch `REPEATABLE_READ`, hỗ trợ phân trang và lọc theo trạng thái thanh toán. Backend S10 đã được Sơn duyệt G2 ngày 09/11/2026.
+S10 bổ sung API tra cứu và chi tiết hóa đơn/lịch sử gạch nợ cho cư dân (`/api/v1/resident/invoices`), kiểm tra quyền theo hộ ở server (chặn IDOR/truy cập chéo hộ), snapshot hóa đơn và ledger với cô lập giao dịch `REPEATABLE_READ`, hỗ trợ phân trang và lọc theo trạng thái thanh toán. Backend S10 đã được Sơn duyệt G2 ngày 09/11/2026.
 
 Các giới hạn hiện tại: UI cư dân cho S10 là lượt riêng (chưa ghép giao diện cư dân); chưa có browser E2E walkthrough với backend thật; phép đo hiệu năng 10.000 bản ghi và kiểm tra EXPLAIN được chuyển sang S14; test snapshot chưa chạy thử loại bỏ `REPEATABLE_READ` để đo độ nhạy; test `MOVED_OUT` tạo nhân khẩu chuyển đi trong hộ nhưng chưa chứng minh account thuộc nhân khẩu do schema chưa nối account–nhân khẩu. Xem chi tiết bằng chứng và giới hạn trong [docs/VALIDATION.md](docs/VALIDATION.md).
 
@@ -32,7 +32,7 @@ Các task tiếp theo (S11 export báo cáo, S12 gói dữ liệu cơ quan, S13 
 - **Hộ và cư trú:** quản lý hộ/nhân khẩu, lịch sử biến động, chuyển đi, khai báo tạm vắng, duyệt/từ chối và ghi nhận cư dân đã quay lại.
 - **Phí và hóa đơn:** quản lý đơn giá theo kỳ, xem trước phí, tạo kỳ thu và snapshot các dòng phí khi phát hành.
 - **Thu bắt buộc S09:** nhiều receipt cho một hóa đơn; thu thừa trở thành credit hộ; phân bổ credit FIFO; hủy receipt và đảo phân bổ lưu lịch sử; idempotency bằng UUID và audit nghiệp vụ trong transaction; Kế toán thao tác, ADMIN chỉ đọc.
-- **Hóa đơn cư dân S10 (backend):** tra cứu danh sách hóa đơn theo hộ (`/api/resident/invoices`), xem chi tiết hóa đơn kèm lịch sử gạch nợ/biên lai; xác thực quyền sở hữu hộ ở server (chặn IDOR/truy cập chéo hộ); giao dịch `REPEATABLE_READ` bảo đảm tính nhất quán giữa snapshot hóa đơn và ledger thanh toán; phân trang và lọc theo trạng thái thanh toán (`ALL`, `PAID`, `PARTIAL`, `UNPAID`). Giao diện UI cư dân thực hiện ở lượt riêng.
+- **Hóa đơn cư dân S10 (backend):** tra cứu danh sách hóa đơn theo hộ (`/api/v1/resident/invoices`), xem chi tiết hóa đơn kèm lịch sử gạch nợ/biên lai; xác thực quyền sở hữu hộ ở server (chặn IDOR/truy cập chéo hộ); giao dịch `REPEATABLE_READ` bảo đảm tính nhất quán giữa snapshot hóa đơn và ledger thanh toán; phân trang và lọc theo trạng thái thanh toán (`ALL`, `PAID`, `PARTIAL`, `UNPAID`). Giao diện UI cư dân thực hiện ở lượt riêng.
 - **Frontend:** có các màn hình v1; một số luồng dùng API thật, một số luồng vẫn là Demo. Chế độ Demo giữ bộ dữ liệu riêng, không ghi vào backend.
 
 Backend kiểm tra quyền và phạm vi hộ ở server. Các thay đổi dữ liệu dùng transaction và audit nghiệp vụ; schema thay đổi qua migration Flyway mới. Không có tài khoản mặc định; ADMIN đầu tiên được tạo bằng profile bootstrap tương tác.
@@ -149,17 +149,20 @@ export DB_HOST=127.0.0.1
 export DB_PORT=3306
 export DB_NAME=bluemoon
 export DB_USER=bluemoon
-read -s -p "Nhập DB_PASSWORD: " DB_PASSWORD && export DB_PASSWORD && echo
+printf 'Nhập DB_PASSWORD: '
+read -rs DB_PASSWORD
+printf '\n'
+export DB_PASSWORD
 ```
 
-*(Trên Windows PowerShell, có thể gán an toàn bằng: `$env:DB_HOST="127.0.0.1"; $env:DB_PORT="3306"; $env:DB_NAME="bluemoon"; $env:DB_USER="bluemoon"; $env:DB_PASSWORD = Read-Host -Prompt "Nhập DB_PASSWORD"`)*
+*(Trên Windows PowerShell, có thể nhập mật khẩu có che bằng `Get-Credential`: `$env:DB_HOST="127.0.0.1"; $env:DB_PORT="3306"; $env:DB_NAME="bluemoon"; $env:DB_USER="bluemoon"; $cred = Get-Credential -UserName $env:DB_USER -Message "Nhập DB_PASSWORD"; $env:DB_PASSWORD = $cred.GetNetworkCredential().Password`)*
 
 #### 3. Đóng gói backend (JDK 21)
 Build file JAR bằng Maven Wrapper:
 
 ```bash
 cd backend
-./mvnw -B -ntp package -DskipTests
+./mvnw -B -ntp package
 ```
 *(Trên Windows dùng `mvnw.cmd`)*
 
@@ -190,7 +193,7 @@ Các giá trị nhập vào được kiểm tra nghiêm ngặt theo quy tắc ng
 
 #### 7. Xử lý khi đã có ADMIN (kể cả inactive)
 - `BootstrapAdminService` thực hiện khóa dòng role ADMIN (`findByCodeForUpdate("ADMIN")`) và kiểm tra `users.existsByRole_Code("ADMIN")`.
-- Kiểm tra này tính **tất cả** tài khoản mang vai trò `ADMIN` trong database, **kể cả tài khoản đang bị vô hiệu hóa / inactive (`active = false`)**.
+- Kiểm tra này tính **tất cả** tài khoản mang vai trò `ADMIN` trong database, **kể cả tài khoản đang bị vô hiệu hóa / status `INACTIVE`**.
 - Nếu cơ sở dữ liệu đã có ít nhất một tài khoản `ADMIN`: tiến trình sẽ bỏ qua tạo mới và in ra thông báo:
   ```text
   Đã có ADMIN, bỏ qua.
