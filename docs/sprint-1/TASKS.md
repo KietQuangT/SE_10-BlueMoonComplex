@@ -341,3 +341,12 @@ Kiểm thử:
 Review: Opus `bluemoon-risk-reviewer` vòng 1: không lỗi chặn sau khi sửa C1 và W1. Lời agy trên `qa/s07-agy` (c188766, báo 137 test) CHƯA được chạy lại trên cùng SHA, không dùng làm bằng chứng.
 Chưa kiểm / còn mở: D25 chưa commit vào nhánh; test QA của agy chưa đối chiếu; snapshot hóa đơn và thu thiếu/thừa thuộc S08/S09; PR và CI remote chưa có.
 ```
+
+### S09 — thu tiền và gạch nợ (chưa tick; triển khai + automated QA trên `hhoangsonnw/s09-contract`)
+```text
+Contract: `_agents_workspace/S09/01_contract.md` và `02_ui_contract.md`; quyết định D27/D28 ở `docs/DECISIONS.md`.
+Đầu ra: migration V10; receipt thu thiếu/đủ/thừa; credit FIFO; void/reverse; idempotency gắn actor; audit; API danh sách công nợ/lịch sử; UI Kế toán API thật + Demo và màn ADMIN chỉ đọc.
+QA Orca/Agy trên đúng worktree (09/11/2026): `cd backend && ./mvnw -B -ntp verify` — 227 test pass; `-Pintegration verify` với MySQL 8.4 cô lập cổng 3308 — 146 integration pass; frontend `npm test -- --run` — 28 file/134 test pass; `npm run build` — TypeScript/Vite pass. Không reset DB/volume.
+Đối chiếu coverage: thu thiếu/thừa, FIFO + đảo, concurrency/idempotency, quyền/privacy reason (`ReceiptAmountsTest`, `CreditAllocationAmountsTest`, `PaymentFlowIT`, `PaymentConcurrencyIT`, `PaymentApiTest`, `PaymentSchemaIT`); UI preview, retry cùng UUID/payload, đổi actor, ADMIN read-only, RESIDENT denial (`s09-page.test.tsx`, `s09-payments.test.ts`, `s09-csrf-actor.test.ts`, `s09-routes.test.tsx`).
+Còn mở: chưa có browser E2E nối UI→API thật; chưa kiểm mobile/zoom/keyboard/screen reader; chưa CI remote. Chưa tick trước khi PR được review và CI đạt.
+```

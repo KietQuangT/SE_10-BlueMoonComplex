@@ -133,10 +133,12 @@ export async function sendAuthenticatedWrite<TResponse>(
   method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   body?: unknown,
   extraHeaders?: Record<string, string>,
+  beforeSend?: () => Promise<void>,
 ): Promise<TResponse> {
   const csrf = await ensureCsrfToken();
-  const execute = async (tokenObj: CsrfResponse): Promise<Response> =>
-    fetch(url, {
+  const execute = async (tokenObj: CsrfResponse): Promise<Response> => {
+    if (beforeSend) await beforeSend();
+    return fetch(url, {
       method,
       credentials: 'include',
       headers: {
@@ -147,6 +149,7 @@ export async function sendAuthenticatedWrite<TResponse>(
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
+  };
 
   let res = await execute(csrf);
   if (res.status === 403) {
