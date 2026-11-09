@@ -132,6 +132,7 @@ export async function sendAuthenticatedWrite<TResponse>(
   url: string,
   method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   body?: unknown,
+  extraHeaders?: Record<string, string>,
 ): Promise<TResponse> {
   const csrf = await ensureCsrfToken();
   const execute = async (tokenObj: CsrfResponse): Promise<Response> =>
@@ -142,6 +143,7 @@ export async function sendAuthenticatedWrite<TResponse>(
         'Content-Type': 'application/json',
         Accept: 'application/json',
         [tokenObj.headerName]: tokenObj.token,
+        ...extraHeaders,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
