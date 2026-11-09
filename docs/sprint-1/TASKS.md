@@ -12,15 +12,18 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 | ☑ | S03 | M | Kiệt + Sơn | Đổi mật khẩu, hồ sơ; WBS 2.1.1.2,2.1.2.1 | S01 | Kiểm tra mật khẩu cũ/mới, tối thiểu 8 ký tự; đổi xong các session cũ bị từ chối; DTO không lộ hash. |
 | ☑ | S04 | M | Sơn + Tuấn | Vô hiệu account và test EP-01; WBS 2.1.2.2,2.1.1.3 | S01 | Khóa xong request mới với cookie cũ thất bại; thử nhiều session và server role; UI cần test tích hợp để đóng. |
 | ☑ | S05 | L | Sơn + Tuấn | Hộ/nhân khẩu/biến động; WBS 2.2.1.1 | F01,S01 | CRUD/tra cứu, ownership; chuyển đi đổi trạng thái cư trú (không xóa bản ghi, DECISIONS D20) kèm lịch sử biến động và audit; validate trường đã chốt, test hộ khác bị chặn. |
-| ☑ | S06 | L | Kiệt + Sơn + Tuấn | Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3 | S05 bản API đầu | Chờ duyệt → duyệt/từ chối đúng quyền; lưu trạng thái/lịch sử, thông báo trong app/mock theo AC; cuối cùng ghép UI. || ☑ | S07 | M | Quân + Kiệt; Tuấn kiểm tra | Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3 | F01,F02 | BigDecimal; 50m² × 10.000 = 500.000; hiệu lực/rounding đã chốt; không áp thay giá vào hóa đơn cũ. |
-| ☐ | S08 | L | Quân + Tuấn | Kỳ thu/tự nguyện; WBS 2.3.1.2–3 | S07; S05 để ghép cuối | Không trùng kỳ/hộ/loại; tự nguyện không cộng nợ; giao dữ liệu thật cho thu tiền và đối chiếu độc lập. |
-| ☐ | S09 | L | Quân + Sơn | Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1 | S05,S08 | Thu đúng số tiền, nợ giảm đúng, transaction/audit; duplicate/concurrent không thu hai lần; chốt thu thiếu/thừa/sửa/hủy. |
-| ☐ | S10 | M | Kiệt + Quân | API hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2 | S08; S09 để ghép cuối | Chỉ dữ liệu hộ của account; chi tiết thành phần/kỳ/nợ đúng; pagination; thay householdId không xem được hộ khác. |
+| ☑ | S06 | L | Kiệt + Sơn + Tuấn | Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3 | S05 bản API đầu | Chờ duyệt → duyệt/từ chối đúng quyền; lưu trạng thái/lịch sử, thông báo trong app/mock theo AC; cuối cùng ghép UI. |
+| ☑ | S07 | M | Quân + Kiệt; Tuấn kiểm tra | Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3 | F01,F02 | BigDecimal; 50m² × 10.000 = 500.000; hiệu lực/rounding đã chốt; không áp thay giá vào hóa đơn cũ. |
+| ☑ | S08 | L | Quân + Tuấn | Kỳ thu/tự nguyện; WBS 2.3.1.2–3 | S07; S05 để ghép cuối | Không trùng kỳ/hộ/loại; tự nguyện không cộng nợ; giao dữ liệu thật cho thu tiền và đối chiếu độc lập. |
+| ☑ | S09 | L | Quân + Sơn | Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1 | S05,S08 | Thu đúng số tiền, nợ giảm đúng, transaction/audit; duplicate/concurrent không thu hai lần; chốt thu thiếu/thừa/sửa/hủy. |
+| ☑ | S10 | M | Kiệt + Quân | API hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2 | S08; S09 để ghép cuối | Chỉ dữ liệu hộ của account; chi tiết thành phần/kỳ/nợ đúng; pagination; thay householdId không xem được hộ khác. |
 | ☐ | S11 | M | Tuấn + Quân + Kiệt | Export thu phí/cư trú; WBS 2.4.1.3 | S06,S09 | Excel mở được và tổng khớp; mẫu/cột/tỷ lệ đã duyệt; không export dữ liệu thừa; dùng dữ liệu thật từ DB. |
 | ☐ | S12 | M | Tuấn + Sơn | Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023 | S11 | Chỉ gói/trường BQT phê duyệt; cơ quan không truy DB thô; có test deny trường/hộ ngoài phạm vi. |
 | ☐ | S13 | M | Tuấn; Sơn hỗ trợ | Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4 | F02; dữ liệu mẫu S09 | Job backup có lịch/retention được chốt; restore vào DB thử riêng rồi đối chiếu; không xóa DB gốc. |
 | ☐ | S14 | L | Cả nhóm; Tuấn điều phối | Hồi quy/quyền/hiệu năng nền; WBS 2.4.1.4 | S02–S13 hoàn tất; có thể chuẩn bị trước | E2E hộ→kỳ→thu→báo cáo; ca sai/IDOR/duplicate; 10k và thời gian có cấu hình đo; sửa và test lại. |
 | ☐ | S15 | S | Cả nhóm; Kiệt tổng hợp | Đóng gói/bàn giao v1; WBS 2.4.1.4 | S14 | Cài từ máy sạch, dữ liệu giả, hướng dẫn, kết quả test và lỗi còn lại có PO chấp nhận; không còn blocker. |
+
+S08 và S09 được Sơn yêu cầu đánh dấu hoàn thành; các giới hạn còn ghi trong `docs/VALIDATION.md`. S10 backend được Sơn duyệt G2 ngày 09/11/2026; UI cư dân là lượt riêng, phép đo 10.000 bản ghi/EXPLAIN chuyển sang S14.
 
 ## Checklist có thể tick
 
@@ -34,9 +37,9 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 - [x] S05 — Hộ/nhân khẩu/biến động; WBS 2.2.1.1
 - [x] S06 — Khai báo/duyệt/tra cứu; WBS 2.2.1.2–3 (tick 08/11/2026 theo lời Sơn, có caveat UI: xem mục S06 UI)
 - [x] S07 — Đơn giá/công thức; WBS 2.3.1.1,2.3.1.3
-- [ ] S08 — Kỳ thu/tự nguyện; WBS 2.3.1.2–3
-- [ ] S09 — Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1
-- [ ] S10 — API hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2
+- [x] S08 — Kỳ thu/tự nguyện; WBS 2.3.1.2–3
+- [x] S09 — Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1
+- [x] S10 — API hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2 (backend G2; UI lượt riêng; NFR chuyển S14)
 - [ ] S11 — Export thu phí/cư trú; WBS 2.4.1.3
 - [ ] S12 — Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023
 - [ ] S13 — Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4
