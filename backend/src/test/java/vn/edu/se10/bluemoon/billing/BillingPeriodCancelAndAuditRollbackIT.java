@@ -118,6 +118,7 @@ class BillingPeriodCancelAndAuditRollbackIT {
         // Assert replacement period for the same month can be created
         var replacement = billingService.create("9000-07", LocalDate.of(9000, 7, 31), actor);
         assertEquals("DRAFT", replacement.getStatus());
+        assertEquals(Long.valueOf(period), replacement.getReplacesPeriodId());
         // Clean up replacement
         jdbc.update("DELETE FROM billing_periods WHERE id=?", replacement.getId());
     }

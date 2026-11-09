@@ -64,6 +64,26 @@ class BillingPeriodServiceIT {
                 "SELECT total FROM invoices WHERE period_id=? AND household_id=?", BigDecimal.class, period.getId(), household));
         assertEquals(2, jdbc.queryForObject(
                 "SELECT COUNT(*) FROM invoice_lines WHERE invoice_id=(SELECT id FROM invoices WHERE period_id=? AND household_id=?)", Integer.class, period.getId(), household));
+        // Từng dòng hóa đơn giữ diện tích, đơn giá và thành tiền của snapshot, không theo diện tích 60 mới.
+        assertEquals(0, new BigDecimal("50").compareTo(jdbc.queryForObject(
+                "SELECT l.area_m2 FROM invoice_lines l JOIN invoices i ON i.id=l.invoice_id WHERE i.period_id=? AND i.household_id=? AND l.fee_type_code='MANAGEMENT_FEE'",
+                BigDecimal.class, period.getId(), household)));
+        assertEquals(0, new BigDecimal("10000").compareTo(jdbc.queryForObject(
+                "SELECT l.unit_price FROM invoice_lines l JOIN invoices i ON i.id=l.invoice_id WHERE i.period_id=? AND i.household_id=? AND l.fee_type_code='MANAGEMENT_FEE'",
+                BigDecimal.class, period.getId(), household)));
+        assertEquals(0, new BigDecimal("500000").compareTo(jdbc.queryForObject(
+                "SELECT l.amount FROM invoice_lines l JOIN invoices i ON i.id=l.invoice_id WHERE i.period_id=? AND i.household_id=? AND l.fee_type_code='MANAGEMENT_FEE'",
+                BigDecimal.class, period.getId(), household)));
+        // Hộ ACTIVE mới tạo sau khi phát hành không được chèn thêm hóa đơn vào kỳ đã phát hành.
+        long lateHousehold = household();
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM invoices WHERE period_id=? AND household_id=?",
+                Integer.class, period.getId(), lateHousehold));
+        // Phát hành ghi đúng một audit BILLING_PERIOD_ISSUED cùng transaction.
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM audit_log WHERE actor_user_id=? AND action='BILLING_PERIOD_ISSUED'",
+                Integer.class, actor));
+        // Hóa đơn không tồn tại trả NotFound với mã cố định.
+        assertEquals("INVOICE_NOT_FOUND", assertThrows(vn.edu.se10.bluemoon.common.error.NotFoundException.class,
+                () -> reads.invoice(999_999_999L)).code());
     }
 
     @Test
