@@ -1,3 +1,6 @@
+import { FormDialog } from '../../components/FormDialog';
+import { CampaignCard } from '../s08/CampaignCard';
+import '../s08/s08.css';
 import { useState } from 'react';
 import { OpenQuestions, ScreenHeader } from '../../components/ScreenHeader';
 import { EmptyStatePanel, ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
@@ -59,45 +62,22 @@ export function VoluntaryAdminPage() {
     );
   }
 
-  if (forcedUiState === 'empty' || voluntaryCampaigns.length === 0) {
-    return (
-      <div className="wayfinding-page">
-        <ScreenHeader
-          screenCode="M-17"
-          contract="assumed"
-          tierLabel="Mức C"
-          title="Quản lý đợt vận động tự nguyện"
-          description="Tạo, xuất bản và theo dõi các đợt vận động đóng góp từ thiện, vì người nghèo, khuyến học."
-        />
-        <EmptyStatePanel
-          title="Chưa có đợt vận động tự nguyện nào"
-          description="Tạo đợt vận động mới để hiển thị thông báo kêu gọi ủng hộ tới ứng dụng cư dân."
-          actionLabel="+ Tạo đợt vận động mới"
-          onAction={handleOpenCreate}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="wayfinding-page">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-        <ScreenHeader
+      <ScreenHeader
           screenCode="M-17"
           contract="assumed"
           tierLabel="Mức C"
           title="Quản lý đợt vận động tự nguyện"
-          description="PBI-012: Các khoản vận động không bắt buộc, không cộng vào công nợ chung cư."
-        />
-        <div>
-          <button
+          description="Các khoản vận động không bắt buộc, không cộng vào công nợ chung cư."
+          actions={<button
             onClick={handleOpenCreate}
             className="btn btn-primary"
           >
             <span>+ Tạo đợt vận động mới</span>
-          </button>
-        </div>
-      </div>
+          </button>}
+        />
 
       <div className="notice-box notice-warning mb-6">
         <p className="font-semibold">Lưu ý quy tắc nghiệp vụ quan trọng</p>
@@ -107,50 +87,18 @@ export function VoluntaryAdminPage() {
       </div>
 
       {successBanner && (
-        <div className="notice-box notice-success mb-6">
+        <div className="notice-box notice-success mb-6" role="status">
           <p>{successBanner}</p>
         </div>
       )}
 
-      {/* Danh sách đợt vận động */}
-      <div className="space-y-4 mb-8">
-        {voluntaryCampaigns.map((camp) => (
-          <div key={camp.id} className="station-panel p-5 bg-white border border-border">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3">
-                  <h2 className="text-lg font-bold text-rail">{camp.name}</h2>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase bg-teal-50 text-teal-brand border border-teal-200">
-                    {camp.status === 'PUBLISHED' ? 'Đã xuất bản' : camp.status}
-                  </span>
-                  <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-semibold">
-                    Không tính vào công nợ
-                  </span>
-                </div>
-                <p className="text-sm text-slate mt-2">{camp.description}</p>
-                <div className="flex flex-wrap gap-4 text-xs text-slate mt-3">
-                  <div>
-                    <span className="font-semibold text-rail">Thời gian mở:</span> {camp.opensOn}
-                  </div>
-                  <div>
-                    <span className="font-semibold text-rail">Hạn đóng:</span> {camp.closesOn}
-                  </div>
-                  <div>
-                    <span className="font-semibold text-rail">Đã ghi nhận:</span>{' '}
-                    <span className="font-bold text-teal-brand">{camp.contributionsCount} lượt đóng góp</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <span className="text-xs text-slate block uppercase font-bold">Tổng thu đợt này</span>
-                <span className="text-xl font-bold font-mono text-teal-brand">
-                  {camp.totalCollectedDisplay} đ
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="campaign-list">
+        {forcedUiState === 'empty' || voluntaryCampaigns.length === 0 ? <EmptyStatePanel
+          title="Chưa có đợt vận động tự nguyện nào"
+          description="Chọn Tạo đợt vận động mới để nhập nội dung và thời gian."
+        /> : voluntaryCampaigns.map((camp) => <CampaignCard key={camp.id}
+          campaign={{ ...camp, postedCount: camp.contributionsCount, totalCollected: camp.totalCollectedDisplay.replace(/\./g, '') }}
+          resident={false} selected={false} disabled={false} />)}
       </div>
 
       <OpenQuestions
@@ -173,89 +121,20 @@ export function VoluntaryAdminPage() {
         ]}
       />
 
-      {/* Modal tạo đợt mới */}
-      {createModalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 border border-border">
-            <h3 className="text-lg font-bold text-rail mb-3">Tạo đợt vận động tự nguyện mới</h3>
-            <form onSubmit={handlePublish} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate mb-1">
-                  Tên đợt vận động <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Ví dụ: Quỹ vì người nghèo năm 2026"
-                  className="w-full px-3 py-2 border border-border rounded text-sm"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase text-slate mb-1">
-                  Mục đích / Nội dung vận động
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
-                  placeholder="Mô tả mục đích sử dụng số tiền quyên góp..."
-                  className="w-full px-3 py-2 border border-border rounded text-sm"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate mb-1">
-                    Ngày bắt đầu <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={opensOn}
-                    onChange={(e) => setOpensOn(e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded text-sm font-mono"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate mb-1">
-                    Ngày kết thúc <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={closesOn}
-                    onChange={(e) => setClosesOn(e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded text-sm font-mono"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="p-3 bg-amber-50 rounded border border-amber-200 text-xs text-amber-900">
-                Lưu ý: Đợt vận động sau khi xuất bản sẽ hiển thị công khai tới mọi cư dân nhưng hoàn toàn không bắt buộc và không ghi nợ.
-              </div>
-
-              <div className="flex justify-end gap-3 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setCreateModalOpen(false)}
-                  className="btn btn-secondary btn-sm"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-sm"
-                >
-                  Xuất bản ngay
-                </button>
-              </div>
-            </form>
-          </div>
+      <FormDialog open={createModalOpen} title="Tạo đợt vận động tự nguyện mới"
+        description="Đợt được công bố trong chế độ Demo, không tạo khoản nợ cho hộ gia đình."
+        submitLabel="Công bố đợt" onSubmit={handlePublish} onCancel={() => setCreateModalOpen(false)}>
+        <label className="form-field" htmlFor="demo-campaign-name">Tên đợt vận động
+          <input id="demo-campaign-name" className="input" required maxLength={150} value={name} onChange={(e) => setName(e.target.value)} />
+        </label>
+        <label className="form-field" htmlFor="demo-campaign-description">Mục đích / Nội dung vận động
+          <textarea id="demo-campaign-description" className="textarea" rows={3} maxLength={2000} value={description} onChange={(e) => setDescription(e.target.value)} />
+        </label>
+        <div className="form-grid">
+          <label className="form-field">Ngày bắt đầu<input className="input" type="date" required max={closesOn || undefined} value={opensOn} onChange={(e) => setOpensOn(e.target.value)} /></label>
+          <label className="form-field">Ngày kết thúc<input className="input" type="date" required min={opensOn || undefined} value={closesOn} onChange={(e) => setClosesOn(e.target.value)} /></label>
         </div>
-      )}
+      </FormDialog>
     </div>
   );
 }

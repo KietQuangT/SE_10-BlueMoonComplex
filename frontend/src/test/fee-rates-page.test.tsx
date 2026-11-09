@@ -5,8 +5,8 @@ import { ApiHttpError } from '../api/client';
 import { messageForError } from '../api/errors';
 import * as fees from '../api/fees';
 
-const state = vi.hoisted(() => ({ role: 'ACCOUNTANT' }));
-vi.mock('../state/AppStateContext', () => ({ useAppState: () => ({ user: { role: state.role, username: 'accountant' }, handleCallFailure: messageForError }) }));
+const state = vi.hoisted(() => ({ role: 'ACCOUNTANT', mode: 'api' }));
+vi.mock('../state/AppStateContext', () => ({ useAppState: () => ({ mode: state.mode, user: { role: state.role, username: 'accountant' }, handleCallFailure: messageForError }) }));
 vi.mock('../api/fees', () => ({ fetchFeeTypes: vi.fn(), fetchFeeRates: vi.fn(), createFeeRate: vi.fn(), updateFeeRate: vi.fn(), deleteFeeRate: vi.fn() }));
 const rates: fees.FeeRate[] = [
   { id: 1, feeTypeId: 1, feeTypeCode: 'MANAGEMENT_FEE', feeTypeName: 'Phí quản lý', unitPrice: 7000.5, effectiveFrom: '2099-12-01', createdAt: '', editable: true },
@@ -14,7 +14,7 @@ const rates: fees.FeeRate[] = [
 ];
 beforeEach(() => {
   vi.setSystemTime(new Date('2026-11-01T00:00:00Z'));
-  state.role = 'ACCOUNTANT';
+  state.role = 'ACCOUNTANT'; state.mode = 'api';
   vi.mocked(fees.fetchFeeTypes).mockResolvedValue([{ id: 1, code: 'MANAGEMENT_FEE', name: 'Phí quản lý', calculationMethod: 'AREA', unit: 'm²/tháng' }]);
   vi.mocked(fees.fetchFeeRates).mockResolvedValue({ content: rates, page: 0, size: 10, totalElements: 2, totalPages: 1 });
 });
@@ -133,4 +133,13 @@ it('defaults to the next Vietnam month at the UTC boundary', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Thêm đơn giá' }));
   expect(screen.getByLabelText('Tháng hiệu lực')).toHaveValue('2027-01');
   fireEvent.click(screen.getByRole('button', { name: 'Hủy' }));
+});
+
+
+it('never reads or changes real fee rates when the user enters Demo mode', () => {
+  state.mode = 'demo';
+  render(<FeeRatesPage />);
+  expect(screen.queryByRole('button', { name: 'Thêm đơn giá' })).not.toBeInTheDocument();
+  expect(fees.fetchFeeRates).not.toHaveBeenCalled();
+  expect(fees.fetchFeeTypes).not.toHaveBeenCalled();
 });

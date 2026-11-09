@@ -16,7 +16,7 @@ export function CampaignCard({ campaign, resident, selected, disabled, onSelect 
   resident: boolean;
   selected: boolean;
   disabled: boolean;
-  onSelect: () => void;
+  onSelect?: () => void;
 }) {
   const label = campaignStatus(campaign);
   return (
@@ -41,7 +41,7 @@ export function CampaignCard({ campaign, resident, selected, disabled, onSelect 
           <div><dt>Hạn đóng</dt><dd><time dateTime={campaign.closesOn}>{formatBusinessDate(campaign.closesOn)}</time></dd></div>
           {!resident && <div><dt>Đã ghi nhận</dt><dd>{campaign.postedCount ?? 0} lượt đóng góp</dd></div>}
         </dl>
-        {!resident && <button type="button" className="btn btn-secondary" disabled={disabled}
+        {!resident && onSelect && <button type="button" className="btn btn-secondary" disabled={disabled}
           aria-expanded={selected} aria-controls={selected ? 'campaign-details' : undefined} aria-describedby={`campaign-${campaign.id}`} onClick={onSelect}>
           Xem chi tiết
         </button>}

@@ -63,7 +63,7 @@ function useNavGroups(role: RoleCode): NavGroup[] {
           items: [
             { to: '/accountant/fee-rates', label: 'Đơn giá phí', icon: 'coins' },
             { to: '/admin/voluntary', label: 'Đóng góp tự nguyện', icon: 'heart' },
-            { to: '/admin/billing-periods', label: 'Tạo kỳ thu', icon: 'receipt' },
+            { to: '/admin/billing-periods', label: 'Kỳ thu bắt buộc', icon: 'receipt' },
           ],
         },
         {
@@ -140,18 +140,25 @@ export function AppShell(): React.ReactElement {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const previousPath = useRef(location.pathname);
 
   useEffect(() => {
     setMenuOpen(false);
+    if (previousPath.current !== location.pathname) {
+      previousPath.current = location.pathname;
+      document.getElementById('main-content')?.focus();
+    }
   }, [location.pathname]);
 
   useEffect(() => {
     if (!menuOpen) return;
+    menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
     const onDoc = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMenuOpen(false);
+      if (e.key === 'Escape') { setMenuOpen(false); menuButtonRef.current?.focus(); }
     };
     document.addEventListener('mousedown', onDoc);
     document.addEventListener('keydown', onKey);
@@ -274,15 +281,26 @@ export function AppShell(): React.ReactElement {
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
-                aria-haspopup="true"
+                ref={menuButtonRef}
+                aria-haspopup="menu"
                 aria-expanded={menuOpen}
+                aria-controls={menuOpen ? 'mobile-user-menu' : undefined}
                 onClick={() => setMenuOpen((v) => !v)}
               >
                 <Icon name="user-cog" size={18} />
                 Menu
               </button>
               {menuOpen ? (
-                <div className="mobile-user-popover" role="menu">
+                <div id="mobile-user-menu" className="mobile-user-popover" role="menu" aria-label="Menu tài khoản và điều hướng"
+                  onKeyDown={(event) => {
+                    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+                    event.preventDefault();
+                    const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+                    const index = items.indexOf(document.activeElement as HTMLElement);
+                    const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1
+                      : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+                    items[next]?.focus();
+                  }}>
                   <span className="popover-user">
                     {user.fullName} · {roleDisplayName(user.role)}
                   </span>
