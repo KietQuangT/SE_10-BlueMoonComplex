@@ -153,6 +153,18 @@ class ResidentInvoiceApiTest {
         mvc.perform(get("/api/v1/resident/credit-allocations?status=UNKNOWN").with(authentication(auth("RESIDENT", 10L))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_FILTER"));
+
+        when(service.invoices(any(), any(), any(), eq(-1), anyInt()))
+                .thenThrow(new BadRequestException("INVALID_FILTER"));
+        mvc.perform(get("/api/v1/resident/invoices?page=-1").with(authentication(auth("RESIDENT", 10L))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_FILTER"));
+
+        when(service.invoices(any(), any(), any(), anyInt(), eq(0)))
+                .thenThrow(new BadRequestException("INVALID_FILTER"));
+        mvc.perform(get("/api/v1/resident/invoices?size=0").with(authentication(auth("RESIDENT", 10L))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_FILTER"));
     }
 
     // 7. Not found invoice / other household invoice -> 404 INVOICE_NOT_FOUND

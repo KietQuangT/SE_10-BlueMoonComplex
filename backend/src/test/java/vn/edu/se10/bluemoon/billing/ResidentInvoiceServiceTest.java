@@ -72,12 +72,15 @@ class ResidentInvoiceServiceTest {
     }
 
     @Test void pagingValidation() {
-        assertThrows(BadRequestException.class, () ->
+        var ex1 = assertThrows(BadRequestException.class, () ->
                 service.invoices(resident(10L), null, null, -1, 20));
-        assertThrows(BadRequestException.class, () ->
+        assertEquals("INVALID_FILTER", ex1.code());
+        var ex2 = assertThrows(BadRequestException.class, () ->
                 service.invoices(resident(10L), null, null, 0, 0));
-        assertThrows(BadRequestException.class, () ->
+        assertEquals("INVALID_FILTER", ex2.code());
+        var ex3 = assertThrows(BadRequestException.class, () ->
                 service.invoices(resident(10L), null, null, 0, 101));
+        assertEquals("INVALID_FILTER", ex3.code());
     }
 
     @Test void periodValidation() {
