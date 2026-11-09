@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { AppShell } from './components/AppShell';
 import { QaDrawer } from './components/QaDrawer';
+import { ApiBillingPage } from './screens/s08/ApiBillingPage';
+import { ApiVoluntaryPage } from './screens/s08/ApiVoluntaryPage';
 import { defaultHomeByRole } from './lib/format';
 import { useAppState } from './state/AppStateContext';
 import type { RoleCode } from './types/domain';
@@ -97,6 +99,7 @@ function RequireRole({ roles }: { roles: RoleCode[] }): React.ReactElement {
 }
 
 export function App(): React.ReactElement {
+  const { mode } = useAppState();
   return (
     <BrowserRouter>
       <Routes>
@@ -122,8 +125,8 @@ export function App(): React.ReactElement {
             <Route path="/admin/households/:id/residents/new" element={<HouseholdFormPage mode="resident" />} />
             <Route path="/admin/move-outs" element={<MoveOutPage />} />
             <Route path="/admin/absence-approvals" element={<AbsenceApprovalsPage />} />
-            <Route path="/admin/voluntary" element={<VoluntaryAdminPage />} />
-            <Route path="/admin/billing-periods" element={<BillingPeriodsPage />} />
+            <Route path="/admin/voluntary" element={mode === 'api' ? <ApiVoluntaryPage /> : <VoluntaryAdminPage />} />
+            <Route path="/admin/billing-periods" element={mode === 'api' ? <ApiBillingPage /> : <BillingPeriodsPage />} />
             <Route path="/admin/reports/residency" element={<ResidencyReportPage />} />
             <Route path="/admin/reports/packages" element={<ReportPackagesPage />} />
           </Route>
@@ -132,6 +135,8 @@ export function App(): React.ReactElement {
 
           {/* ACCOUNTANT Routes */}
           <Route element={<RequireRole roles={['ACCOUNTANT']} />}>
+            <Route path="/accountant/billing-periods" element={mode === 'api' ? <ApiBillingPage /> : <div className="wayfinding-page">Kỳ thu chưa khả dụng trong chế độ Demo.</div>} />
+            <Route path="/accountant/voluntary" element={mode === 'api' ? <ApiVoluntaryPage /> : <div className="wayfinding-page">Đóng góp chưa khả dụng trong chế độ Demo.</div>} />
             <Route path="/accountant/collections" element={<CollectionsPage />} />
             <Route path="/accountant/collection-rate" element={<CollectionRatePage />} />
           </Route>
@@ -142,7 +147,7 @@ export function App(): React.ReactElement {
             <Route path="/resident/invoices/:id" element={<InvoiceDetailPage />} />
             <Route path="/resident/household" element={<MyHouseholdPage />} />
             <Route path="/resident/absence" element={<AbsencePage />} />
-            <Route path="/resident/voluntary" element={<ResidentVoluntaryPage />} />
+            <Route path="/resident/voluntary" element={mode === 'api' ? <ApiVoluntaryPage /> : <ResidentVoluntaryPage />} />
           </Route>
 
           {/* AUTHORITY Routes */}

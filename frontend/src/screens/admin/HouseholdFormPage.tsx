@@ -199,12 +199,12 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
               />
             </div>
             <div className="form-field span-2 form-actions">
-              <button type="submit" className="btn btn-primary" disabled={saving}>
-                {isEdit ? 'Lưu thay đổi' : 'Thêm hộ'}
-              </button>
               <Link to={backTo} className="btn btn-secondary">
                 Hủy
               </Link>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                {isEdit ? 'Lưu thay đổi' : 'Thêm hộ'}
+              </button>
             </div>
           </form>
         ) : (
@@ -305,12 +305,12 @@ export function HouseholdFormPage({ mode }: { mode: 'household' | 'resident' }):
             </div>
             )}
             <div className="form-field span-2 form-actions">
-              <button type="submit" className="btn btn-primary" disabled={saving}>
-                Thêm nhân khẩu
-              </button>
               <Link to={backTo} className="btn btn-secondary">
                 Hủy
               </Link>
+              <button type="submit" className="btn btn-primary" disabled={saving}>
+                Thêm nhân khẩu
+              </button>
             </div>
           </form>
         )}
