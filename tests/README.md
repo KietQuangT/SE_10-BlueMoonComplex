@@ -1,18 +1,27 @@
 # Hướng dẫn kiểm thử thủ công
 
-1. Chuẩn bị môi trường phát triển theo README dự án: Java 21, Maven wrapper, Node.js, MySQL 8.4 và Docker Compose; dùng cơ sở dữ liệu thử nghiệm riêng. Không dùng dữ liệu cư dân thật; không ghi mật khẩu thật, token hoặc cookie vào tài liệu hay bằng chứng. Dùng placeholder như `<ADMIN_PASSWORD>`.
-2. Đường dẫn được yêu cầu cho stack là `tools/dev/dev-all.sh` và `tools/dev/dev-close.sh`; nạp đơn giá bằng `tools/dev/seed-fee-dev.sh`. Các script này nằm trong `tools/dev/` và có khi nhánh tài liệu được merge; nếu chưa có thì dùng README mục 4.6 cho bootstrap và báo quản trị viên. Khi script chưa có, đánh dấu bước chạy stack hoặc nạp dữ liệu là Blocked. Không chạy `docker compose down -v` hoặc xóa volume.
-3. Bootstrap ADMIN qua console tương tác theo README mới mục 7.3; nếu chưa có bản mới, dùng mục 4.6 của README hiện tại. Không có tài khoản mặc định. ADMIN dùng màn tạo tài khoản để tạo ACCOUNTANT và RESIDENT; RESIDENT phải gắn hộ ACTIVE. Mật khẩu tạm chỉ có trong email mô phỏng, không ghi lại giá trị.
-4. Chạy ca trong `cases/`; mã gốc như `AUTH-03`, nhánh như `AUTH-03.1`. Ghi Pass, Fail, Blocked hoặc Not run, kết quả thực tế và bằng chứng đã che dữ liệu; mã phủ chỉ chứng minh ca được liệt kê, không chứng minh đã chạy.
-5. Khi Fail, dùng `templates/bug-report.md`: ghi môi trường, dữ liệu giả, bước tối thiểu, kỳ vọng, thực tế và ảnh đã che thông tin nhạy cảm; gửi người phụ trách qua kênh dự án. Không gửi bí mật.
+Tài liệu này hướng dẫn chạy và ghi nhận các ca trong [cases/](cases/). Danh sách ca chỉ là kế hoạch kiểm thử; không thể hiện rằng ca đã được thực thi. Kết quả chạy thực tế được ghi trong [report/](report/) và [docs/VALIDATION.md](../docs/VALIDATION.md).
 
-## Mức độ nghiêm trọng
+## Chuẩn bị
 
-- **Blocker:** chặn toàn bộ việc kiểm hoặc luồng chính không có cách tiếp tục.
-- **Critical:** mất dữ liệu, lộ dữ liệu hoặc sai quyền nghiêm trọng.
-- **Major:** chức năng chính sai, có thể kiểm phần khác.
-- **Minor:** lỗi hiển thị hoặc nội dung ít ảnh hưởng nghiệp vụ.
+1. Theo hướng dẫn chạy local ở [README gốc](../README.md). Dùng account và dữ liệu giả.
+2. Chỉ dùng database local dành riêng cho kiểm thử. Integration tests có thể ghi fixture và chạy migration; không dùng DB chung hoặc dữ liệu cư dân thật.
+3. Không ghi mật khẩu, token, cookie, email thật hoặc thông tin định danh vào ảnh/log/báo cáo. Dùng placeholder như ADMIN_PASSWORD và che dữ liệu trong bằng chứng.
+4. Không dùng docker compose down -v, không xóa volume và không reset DB để khắc phục test lỗi. Ghi tình trạng Blocked nếu không có DB test an toàn.
 
-## Điểm chưa xác định
+## Chạy bộ ca
 
-Ba script `tools/dev/` không có trong worktree hiện tại; chưa thể xác nhận cách chạy/dừng stack hoặc nạp dữ liệu theo các đường dẫn đó. README hiện có hướng dẫn bootstrap mục 4.6 thay vì 7.3.
+- Chọn bộ phù hợp trong cases/: auth.md, accounts.md, households.md, residents.md, declarations.md, billing.md, voluntary.md, fees.md, routes.md, ui-common.md, rbac.md, e2e.md.
+- Làm theo đúng tiền điều kiện của từng ca. Dùng mã gốc và nhánh ca, ví dụ AUTH-03 hoặc AUTH-03.1.
+- Ghi một trong các trạng thái: **Pass**, **Fail**, **Blocked**, **Not run**. Ghi môi trường, bước đã chạy, kết quả kỳ vọng/thực tế và bằng chứng đã che dữ liệu.
+- Không đánh dấu Pass chỉ vì endpoint, component hoặc test case tồn tại.
+
+## Khi gặp lỗi
+
+Dùng [templates/bug-report.md](templates/bug-report.md). Ghi bước tái hiện tối thiểu, dữ liệu giả, kết quả mong đợi/thực tế, mức độ nghiêm trọng và log/ảnh đã làm sạch. Không gửi bí mật hoặc dữ liệu thật.
+
+Mức độ: **Blocker** chặn luồng chính; **Critical** sai quyền, lộ hoặc mất dữ liệu; **Major** sai chức năng chính; **Minor** lỗi hiển thị/nội dung ít ảnh hưởng.
+
+## Giới hạn đã biết
+
+Các ca S09 hiện có trong bộ unit/API và component tests; chưa có browser E2E walkthrough nối UI với API thật. Kết quả test tự động mới nhất và các giới hạn theo từng task được ghi ở [docs/VALIDATION.md](../docs/VALIDATION.md).

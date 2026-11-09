@@ -28,6 +28,7 @@ import { ReportPackagesPage } from './screens/admin/ReportPackagesPage';
 
 // Accountant Screens
 import { CollectionsPage } from './screens/accountant/CollectionsPage';
+import { ApiCollectionsPage } from './screens/s09/ApiCollectionsPage';
 import { FeeRatesPage } from './screens/accountant/FeeRatesPage';
 import { CollectionRatePage } from './screens/accountant/CollectionRatePage';
 
@@ -99,7 +100,7 @@ function RequireRole({ roles }: { roles: RoleCode[] }): React.ReactElement {
 }
 
 export function App(): React.ReactElement {
-  const { mode } = useAppState();
+  const { mode, user } = useAppState();
   return (
     <BrowserRouter>
       <Routes>
@@ -127,6 +128,7 @@ export function App(): React.ReactElement {
             <Route path="/admin/absence-approvals" element={<AbsenceApprovalsPage />} />
             <Route path="/admin/voluntary" element={mode === 'api' ? <ApiVoluntaryPage /> : <VoluntaryAdminPage />} />
             <Route path="/admin/billing-periods" element={mode === 'api' ? <ApiBillingPage /> : <BillingPeriodsPage />} />
+            <Route path="/admin/collections" element={mode === 'api' ? <ApiCollectionsPage key={user?.username} /> : <CollectionsPage readOnly />} />
             <Route path="/admin/reports/residency" element={<ResidencyReportPage />} />
             <Route path="/admin/reports/packages" element={<ReportPackagesPage />} />
           </Route>
@@ -137,7 +139,7 @@ export function App(): React.ReactElement {
           <Route element={<RequireRole roles={['ACCOUNTANT']} />}>
             <Route path="/accountant/billing-periods" element={mode === 'api' ? <ApiBillingPage /> : <div className="wayfinding-page">Kỳ thu chưa khả dụng trong chế độ Demo.</div>} />
             <Route path="/accountant/voluntary" element={mode === 'api' ? <ApiVoluntaryPage /> : <div className="wayfinding-page">Đóng góp chưa khả dụng trong chế độ Demo.</div>} />
-            <Route path="/accountant/collections" element={<CollectionsPage />} />
+            <Route path="/accountant/collections" element={mode === 'api' ? <ApiCollectionsPage key={user?.username} /> : <CollectionsPage />} />
             <Route path="/accountant/collection-rate" element={<CollectionRatePage />} />
           </Route>
 
