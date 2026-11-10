@@ -212,6 +212,7 @@ class XlsxReportWriterTest {
             // Check rows
             assertEquals("=SUM(1,2)", getCell(sheet, 10, 2));
             assertEquals(CellType.STRING, sheet.getRow(10).getCell(2).getCellType());
+            assertTrue(sheet.getRow(10).getCell(2).getCellStyle().getWrapText());
             assertEquals("Đang cư trú", getCell(sheet, 10, 3));
 
             assertEquals("@AdminUser", getCell(sheet, 11, 2));
@@ -223,6 +224,27 @@ class XlsxReportWriterTest {
 
             assertEquals("-DangerCmd", getCell(sheet, 13, 2));
             assertEquals(CellType.STRING, sheet.getRow(13).getCell(2).getCellType());
+        }
+    }
+
+    @Test
+    void writeResidencyReport_wrapsLongResidentNamesAndAdjustsRowHeight() throws IOException {
+        var metadata = new ReportMetadata("CURRENT_RESIDENCY_V1", "1.0", testInstant, "Danh sách cư trú hiện tại");
+        String longName = "Nguyễn Hoàng Minh Phương ".repeat(6).trim(); // ~149 ký tự
+        var rows = List.of(
+            new ResidencyReportRow("00101", "A101", longName, "RESIDING")
+        );
+        var totals = new ResidencyReportTotals(1, 1, 0);
+        var data = new ResidencyReportData(metadata, totals, rows);
+
+        byte[] bytes = writer.writeResidencyReport(data);
+        try (XSSFWorkbook wb = new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
+            Sheet sheet = wb.getSheetAt(0);
+            Row row = sheet.getRow(10);
+            Cell nameCell = row.getCell(2);
+            assertEquals(longName, nameCell.getStringCellValue());
+            assertTrue(nameCell.getCellStyle().getWrapText(), "Name cell must have wrapText enabled");
+            assertTrue(row.getHeightInPoints() > 15.0f, "Row height must adjust for long resident name");
         }
     }
 
