@@ -21,6 +21,7 @@ import {
   formatPeriod,
   formatVnd,
 } from '../../lib/format';
+import { useAppState } from '../../state/AppStateContext';
 import { Pager } from '../s08/Pager';
 
 export function ResidentInvoiceStatusBadge({
@@ -109,6 +110,7 @@ interface ReceiptHistoryBlockProps {
   invoiceId?: number;
   reloadTrigger?: number;
   onAuthError: (err: unknown) => void;
+  onForbiddenError?: (err: ApiHttpError) => void;
   onDataNotFound?: () => void;
   showInvoiceLink?: boolean;
 }
@@ -117,19 +119,35 @@ export function ReceiptHistoryBlock({
   invoiceId,
   reloadTrigger,
   onAuthError,
+  onForbiddenError,
   onDataNotFound,
   showInvoiceLink = true,
 }: ReceiptHistoryBlockProps): React.ReactElement {
+  const { user } = useAppState();
+  const userKey = `${user?.username ?? ''}:${user?.householdId ?? ''}`;
+  const userKeyRef = useRef(userKey);
+  userKeyRef.current = userKey;
+
   const [data, setData] = useState<PageResponse<ResidentReceipt> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<ReceiptFilterStatus>('ALL');
   const [page, setPage] = useState(0);
 
+  const isMountedRef = useRef(true);
   const genRef = useRef(0);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      genRef.current++;
+    };
+  }, []);
 
   const load = useCallback(async () => {
     const currentGen = ++genRef.current;
+    const keyAtStart = userKeyRef.current;
     setLoading(true);
     setError(null);
     try {
@@ -139,16 +157,23 @@ export function ReceiptHistoryBlock({
         page,
         size: 20,
       });
-      if (genRef.current !== currentGen) return;
+      if (!isMountedRef.current || userKeyRef.current !== keyAtStart || genRef.current !== currentGen) return;
       setData(res);
       setError(null);
     } catch (err: unknown) {
-      if (genRef.current !== currentGen) return;
+      if (!isMountedRef.current || userKeyRef.current !== keyAtStart || genRef.current !== currentGen) return;
       if (err instanceof ApiHttpError) {
         if (err.problem.status === 401) {
           setData(null);
           onAuthError(err);
           return;
+        }
+        if (err.problem.status === 403) {
+          setData(null);
+          if (onForbiddenError) {
+            onForbiddenError(err);
+            return;
+          }
         }
         if (err.problem.status === 404 && invoiceId != null) {
           setData(null);
@@ -158,11 +183,11 @@ export function ReceiptHistoryBlock({
       }
       setError(messageForError(err));
     } finally {
-      if (genRef.current === currentGen) {
+      if (isMountedRef.current && userKeyRef.current === keyAtStart && genRef.current === currentGen) {
         setLoading(false);
       }
     }
-  }, [invoiceId, statusFilter, page, onAuthError, onDataNotFound]);
+  }, [invoiceId, statusFilter, page, onAuthError, onForbiddenError, onDataNotFound]);
 
   useEffect(() => {
     void load();
@@ -305,6 +330,7 @@ interface AllocationHistoryBlockProps {
   invoiceId?: number;
   reloadTrigger?: number;
   onAuthError: (err: unknown) => void;
+  onForbiddenError?: (err: ApiHttpError) => void;
   onDataNotFound?: () => void;
   showInvoiceLink?: boolean;
 }
@@ -313,19 +339,35 @@ export function AllocationHistoryBlock({
   invoiceId,
   reloadTrigger,
   onAuthError,
+  onForbiddenError,
   onDataNotFound,
   showInvoiceLink = true,
 }: AllocationHistoryBlockProps): React.ReactElement {
+  const { user } = useAppState();
+  const userKey = `${user?.username ?? ''}:${user?.householdId ?? ''}`;
+  const userKeyRef = useRef(userKey);
+  userKeyRef.current = userKey;
+
   const [data, setData] = useState<PageResponse<ResidentAllocation> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<AllocationFilterStatus>('ALL');
   const [page, setPage] = useState(0);
 
+  const isMountedRef = useRef(true);
   const genRef = useRef(0);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      genRef.current++;
+    };
+  }, []);
 
   const load = useCallback(async () => {
     const currentGen = ++genRef.current;
+    const keyAtStart = userKeyRef.current;
     setLoading(true);
     setError(null);
     try {
@@ -335,16 +377,23 @@ export function AllocationHistoryBlock({
         page,
         size: 20,
       });
-      if (genRef.current !== currentGen) return;
+      if (!isMountedRef.current || userKeyRef.current !== keyAtStart || genRef.current !== currentGen) return;
       setData(res);
       setError(null);
     } catch (err: unknown) {
-      if (genRef.current !== currentGen) return;
+      if (!isMountedRef.current || userKeyRef.current !== keyAtStart || genRef.current !== currentGen) return;
       if (err instanceof ApiHttpError) {
         if (err.problem.status === 401) {
           setData(null);
           onAuthError(err);
           return;
+        }
+        if (err.problem.status === 403) {
+          setData(null);
+          if (onForbiddenError) {
+            onForbiddenError(err);
+            return;
+          }
         }
         if (err.problem.status === 404 && invoiceId != null) {
           setData(null);
@@ -354,11 +403,11 @@ export function AllocationHistoryBlock({
       }
       setError(messageForError(err));
     } finally {
-      if (genRef.current === currentGen) {
+      if (isMountedRef.current && userKeyRef.current === keyAtStart && genRef.current === currentGen) {
         setLoading(false);
       }
     }
-  }, [invoiceId, statusFilter, page, onAuthError, onDataNotFound]);
+  }, [invoiceId, statusFilter, page, onAuthError, onForbiddenError, onDataNotFound]);
 
   useEffect(() => {
     void load();

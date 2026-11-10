@@ -28,8 +28,12 @@ import './s10.css';
 export function ApiInvoiceDetailPage(): React.ReactElement {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { handleCallFailure } = useAppState();
+  const { handleCallFailure, user } = useAppState();
+  const userKey = `${user?.username ?? ''}:${user?.householdId ?? ''}`;
+  const userKeyRef = useRef(userKey);
+  userKeyRef.current = userKey;
 
+  const [reloadTrigger, setReloadTrigger] = useState(0);
   const [detail, setDetail] = useState<ResidentInvoiceDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +42,17 @@ export function ApiInvoiceDetailPage(): React.ReactElement {
   const [notFound, setNotFound] = useState(false);
   const [invalidId, setInvalidId] = useState(false);
 
+  const isMountedRef = useRef(true);
   const genRef = useRef(0);
+  const isBlockedRef = useRef(false);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      genRef.current++;
+    };
+  }, []);
 
   const backLink = (
     <Link to="/resident/invoices" className="btn btn-ghost btn-sm back-link" style={{ marginBottom: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -49,6 +63,8 @@ export function ApiInvoiceDetailPage(): React.ReactElement {
 
   const handleAuthError = useCallback(
     (err: unknown) => {
+      if (!isMountedRef.current) return;
+      isBlockedRef.current = true;
       setAuthError(true);
       setDetail(null);
       if (err instanceof ApiHttpError && err.problem.code === 'PASSWORD_CHANGE_REQUIRED') {
@@ -60,21 +76,40 @@ export function ApiInvoiceDetailPage(): React.ReactElement {
     [handleCallFailure, navigate],
   );
 
+  const handleForbiddenError = useCallback(
+    (err: unknown) => {
+      if (!isMountedRef.current) return;
+      isBlockedRef.current = true;
+      setDetail(null);
+      if (err instanceof ApiHttpError && err.problem.code === 'PASSWORD_CHANGE_REQUIRED') {
+        navigate('/profile?tab=password');
+        return;
+      }
+      setForbiddenError(messageForError(err));
+    },
+    [navigate],
+  );
+
   const handleHistoryNotFound = useCallback(() => {
+    if (!isMountedRef.current) return;
     // 404 history after detail succeeded means data inconsistency: clear detail and show not found
     setDetail(null);
     setNotFound(true);
   }, []);
 
   const loadDetail = useCallback(async () => {
-    if (!id || Number.isNaN(Number(id)) || Number(id) <= 0) {
+    if (!id || !/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) {
       setInvalidId(true);
+      setDetail(null);
       setLoading(false);
       return;
     }
 
     const numericId = Number(id);
     const gen = ++genRef.current;
+    const keyAtStart = userKeyRef.current;
+    setInvalidId(false);
+    setDetail(null);
     setLoading(true);
     setError(null);
     setNotFound(false);
@@ -82,22 +117,18 @@ export function ApiInvoiceDetailPage(): React.ReactElement {
 
     try {
       const res = await fetchResidentInvoiceDetail(numericId);
-      if (genRef.current !== gen) return;
+      if (!isMountedRef.current || userKeyRef.current !== keyAtStart || genRef.current !== gen || isBlockedRef.current) return;
       setDetail(res);
       setError(null);
     } catch (err: unknown) {
-      if (genRef.current !== gen) return;
+      if (!isMountedRef.current || userKeyRef.current !== keyAtStart || genRef.current !== gen) return;
       if (err instanceof ApiHttpError) {
         if (err.problem.status === 401) {
           handleAuthError(err);
           return;
         }
         if (err.problem.status === 403) {
-          if (err.problem.code === 'PASSWORD_CHANGE_REQUIRED') {
-            navigate('/profile?tab=password');
-            return;
-          }
-          setForbiddenError(messageForError(err));
+          handleForbiddenError(err);
           return;
         }
         if (err.problem.status === 404) {
@@ -107,15 +138,22 @@ export function ApiInvoiceDetailPage(): React.ReactElement {
       }
       setError(messageForError(err));
     } finally {
-      if (genRef.current === gen) {
+      if (isMountedRef.current && userKeyRef.current === keyAtStart && genRef.current === gen) {
         setLoading(false);
       }
     }
-  }, [id, handleAuthError, navigate]);
+  }, [id, handleAuthError, handleForbiddenError]);
 
   useEffect(() => {
     void loadDetail();
-  }, [loadDetail]);
+  }, [loadDetail, reloadTrigger]);
+
+  const handleReloadAll = () => {
+    isBlockedRef.current = false;
+    setForbiddenError(null);
+    setAuthError(false);
+    setReloadTrigger((prev) => prev + 1);
+  };
 
   if (invalidId) {
     return (
@@ -184,7 +222,7 @@ export function ApiInvoiceDetailPage(): React.ReactElement {
     );
   }
 
-  if (error || !detail) {
+  if (error || !detail || detail.invoiceId !== Number(id)) {
     return (
       <>
         {backLink}
@@ -203,19 +241,29 @@ export function ApiInvoiceDetailPage(): React.ReactElement {
     <>
       {backLink}
 
-      <ScreenHeader
-        screenCode="M-33"
-        title={`Hóa đơn kỳ ${formatPeriod(detail.period)}`}
-        description={`Căn ${detail.apartmentCode} · Hộ ${detail.householdCode} · Phát hành ${formatInstantVn(detail.issuedAt)} · Hạn nộp ${formatBusinessDate(detail.dueDate)}`}
-        contract="api-live"
-        tierLabel="Mức A"
-        actions={
-          <ResidentInvoiceStatusBadge
-            invoiceStatus={detail.invoiceStatus}
-            paymentStatus={detail.paymentStatus}
-          />
-        }
-      />
+      <div className="s10-toolbar-row">
+        <ScreenHeader
+          screenCode="M-33"
+          title={`Hóa đơn kỳ ${formatPeriod(detail.period)}`}
+          description={`Căn ${detail.apartmentCode} · Hộ ${detail.householdCode} · Phát hành ${formatInstantVn(detail.issuedAt)} · Hạn nộp ${formatBusinessDate(detail.dueDate)}`}
+          contract="api-live"
+          tierLabel="Mức A"
+          actions={
+            <ResidentInvoiceStatusBadge
+              invoiceStatus={detail.invoiceStatus}
+              paymentStatus={detail.paymentStatus}
+            />
+          }
+        />
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm"
+          onClick={handleReloadAll}
+          aria-label="Tải lại chi tiết hóa đơn"
+        >
+          Tải lại
+        </button>
+      </div>
 
       {isCancelled && (
         <div className="banner banner-neutral s10-notice-banner" role="alert">
@@ -223,7 +271,7 @@ export function ApiInvoiceDetailPage(): React.ReactElement {
             <Icon name="info" />
             <span>
               <strong>Hóa đơn đã bị hủy</strong>
-              {detail.cancelledAt ? ` vào ngày ${formatBusinessDate(detail.cancelledAt.slice(0, 10))}` : ''}.
+              {detail.cancelledAt ? ` vào ngày ${formatInstantVn(detail.cancelledAt).slice(0, 10)}` : ''}.
               Tổng tiền gốc chỉ để đối chiếu, không phát sinh nghĩa vụ thanh toán.
             </span>
           </div>
@@ -309,14 +357,18 @@ export function ApiInvoiceDetailPage(): React.ReactElement {
       {/* Invoice scoped histories */}
       <ReceiptHistoryBlock
         invoiceId={detail.invoiceId}
+        reloadTrigger={reloadTrigger}
         onAuthError={handleAuthError}
+        onForbiddenError={handleForbiddenError}
         onDataNotFound={handleHistoryNotFound}
         showInvoiceLink={false}
       />
 
       <AllocationHistoryBlock
         invoiceId={detail.invoiceId}
+        reloadTrigger={reloadTrigger}
         onAuthError={handleAuthError}
+        onForbiddenError={handleForbiddenError}
         onDataNotFound={handleHistoryNotFound}
         showInvoiceLink={false}
       />

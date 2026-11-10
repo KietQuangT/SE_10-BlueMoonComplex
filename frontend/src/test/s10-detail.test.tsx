@@ -1,4 +1,4 @@
-import { render, screen, cleanup, waitFor } from '@testing-library/react';
+import { act, render, screen, cleanup, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ApiInvoiceDetailPage } from '../screens/resident/ApiInvoiceDetailPage';
@@ -221,4 +221,97 @@ describe('S10 ApiInvoiceDetailPage (M-33)', () => {
 
     expect(residentApi.fetchResidentInvoiceDetail).not.toHaveBeenCalled();
   });
+
+  it.each(['42.5', 'Infinity', '0x10', '-5', '0', '1e2', '900719925474099299999999999'])(
+    'rejects non-positive decimal integer id "%s" without calling API',
+    async (badId) => {
+      render(
+        <MemoryRouter initialEntries={[`/resident/invoices/${badId}`]}>
+          <Routes>
+            <Route path="/resident/invoices/:id" element={<ApiInvoiceDetailPage />} />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Mã hóa đơn không hợp lệ')).toBeInTheDocument();
+      });
+
+      expect(residentApi.fetchResidentInvoiceDetail).not.toHaveBeenCalled();
+    },
+  );
+
+  it('formats cancelledAt as Asia/Ho_Chi_Minh date avoiding UTC date shift', async () => {
+    // 2026-11-05T18:30:00Z is 01:30 AM on 2026-11-06 in Asia/Ho_Chi_Minh
+    const cancelledDetail: residentApi.ResidentInvoiceDetail = {
+      ...mockDetail,
+      invoiceStatus: 'CANCELLED',
+      paymentStatus: 'CANCELLED',
+      cancelledAt: '2026-11-05T18:30:00Z',
+      settled: '0',
+      remaining: '0',
+    };
+    vi.spyOn(residentApi, 'fetchResidentInvoiceDetail').mockResolvedValueOnce(cancelledDetail);
+
+    render(
+      <MemoryRouter initialEntries={['/resident/invoices/42']}>
+        <Routes>
+          <Route path="/resident/invoices/:id" element={<ApiInvoiceDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/vào ngày 06\/11\/2026/)).toBeInTheDocument();
+    });
+  });
+
+  it('provides top-level Tải lại button to refresh detail and history', async () => {
+    render(
+      <MemoryRouter initialEntries={['/resident/invoices/42']}>
+        <Routes>
+          <Route path="/resident/invoices/:id" element={<ApiInvoiceDetailPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Tải lại chi tiết hóa đơn' })).toBeInTheDocument();
+    });
+
+    const reloadBtn = screen.getByRole('button', { name: 'Tải lại chi tiết hóa đơn' });
+    await act(async () => {
+      reloadBtn.click();
+    });
+
+    await waitFor(() => {
+      expect(residentApi.fetchResidentInvoiceDetail).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it.each(['receipts', 'allocations'] as const)(
+    'clears detail and shows forbidden state when %s history returns 403',
+    async (block) => {
+      const receipt = vi.spyOn(residentApi, 'fetchResidentReceipts').mockResolvedValue(mockReceipts);
+      const allocation = vi.spyOn(residentApi, 'fetchResidentCreditAllocations').mockResolvedValue(mockAllocations);
+      (block === 'receipts' ? receipt : allocation).mockRejectedValue(
+        new ApiHttpError({ status: 403, title: 'Forbidden' }),
+      );
+
+      render(
+        <MemoryRouter initialEntries={['/resident/invoices/42']}>
+          <Routes>
+            <Route path="/resident/invoices/:id" element={<ApiInvoiceDetailPage />} />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Không có quyền truy cập')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText('Các khoản phí thành phần')).not.toBeInTheDocument();
+      expect(screen.queryByText('Tổng hóa đơn')).not.toBeInTheDocument();
+    },
+  );
 });
