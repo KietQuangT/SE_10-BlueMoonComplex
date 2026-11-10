@@ -6,15 +6,17 @@ Repo là monorepo: API Spring Boot, giao diện React, MySQL và tài liệu ngh
 
 ## Trạng thái hiện tại
 
-S01–S11 backend đã có triển khai. S08 (kỳ thu/tự nguyện), S09 (thu tiền/gạch nợ), S10 (API + UI hóa đơn cư dân) và S11 backend (xuất báo cáo XLSX thu phí/cư trú) đã được đánh dấu hoàn thành trong `TASKS.md`; giới hạn kiểm chứng được ghi trong `VALIDATION.md`. S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) và backend S10 qua PR [#32](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/32). UI export báo cáo là task riêng, bắt đầu sau khi API S11 được bàn giao.
+S01–S11 backend đã có triển khai. S08 (kỳ thu/tự nguyện), S09 (thu tiền/gạch nợ), S10 (API + UI hóa đơn cư dân) và S11 backend (xuất báo cáo XLSX thu phí/cư trú) đã được đánh dấu hoàn thành trong `TASKS.md`; giới hạn kiểm chứng được ghi trong `VALIDATION.md`. S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) và backend S10 qua PR [#32](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/32). Giao diện export S11 đã được triển khai trên nhánh `hhoangsonnw/feat-s11-ui`; task chờ review PR trước khi nghiệm thu.
 
 S10 bổ sung API tra cứu và chi tiết hóa đơn/lịch sử gạch nợ cho cư dân (`/api/v1/resident/invoices`), kiểm tra quyền theo hộ ở server (chặn IDOR/truy cập chéo hộ), snapshot hóa đơn và ledger với cô lập giao dịch `REPEATABLE_READ`, phân trang và lọc theo trạng thái. UI cư dân dùng API thật để xem, lọc, phân trang và mở chi tiết/lịch sử; giao diện chỉ đọc và Demo mode dùng dữ liệu riêng. Backend S10 được duyệt G2 ngày 09/11/2026; walkthrough UI hoàn tất ngày 10/11/2026.
 
 Các giới hạn còn lại: chưa xác nhận viewport đúng 360px, zoom 200%, theme tối/reduced motion và trạng thái ledger hiếm (credit, receipt bị hủy, allocation bị đảo); chưa đo 10.000 bản ghi/EXPLAIN (chuyển sang S14); chưa chạy test snapshot khi bỏ `REPEATABLE_READ`; test `MOVED_OUT` chưa chứng minh account thuộc nhân khẩu do schema chưa nối account–nhân khẩu. Các giới hạn này không chặn S10 UI theo quyết định của Sơn. Xem [docs/VALIDATION.md](docs/VALIDATION.md).
 
-S11 backend cung cấp ba endpoint tải XLSX cho Kế toán và Ban quản trị: công nợ theo kỳ, tiền mặt thu theo khoảng ngày và danh sách cư trú hiện tại. Các file được dựng theo mẫu đã duyệt, giới hạn 50.000 dòng và chỉ chứa các trường cần thiết; quyền cư trú bị từ chối với vai trò `ACCOUNTANT` và `RESIDENT`.
+S11 backend cung cấp ba endpoint tải XLSX cho Kế toán và Ban quản trị: công nợ theo kỳ, tiền mặt thu theo khoảng ngày và danh sách cư trú hiện tại. Các file được dựng theo mẫu đã duyệt, giới hạn 50.000 dòng và chỉ chứa các trường cần thiết; quyền cư trú bị từ chối với vai trò `ACCOUNTANT` và `RESIDENT`. UI `/reports` cho ADMIN/ACCOUNTANT kết nối cả ba endpoint, kiểm tra bộ lọc và xử lý trạng thái tải/lỗi.
 
-Các task tiếp theo (UI export S11, S12 gói dữ liệu cơ quan, S13 backup/restore, S14 hồi quy/hiệu năng, S15 đóng gói/bàn giao) tiếp tục được theo dõi trong [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md). Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
+Danh sách tài khoản ADMIN dùng `GET /api/v1/accounts?page=0&size=100`, chỉ ADMIN được truy cập. API phân trang, không trả dữ liệu mật khẩu; M-10 tải dữ liệu thật và giữ tìm kiếm/lọc/phân trang hiện có. Bổ sung này đang chờ review cùng nhánh S11-UI.
+
+Các task tiếp theo (S12 gói dữ liệu cơ quan, S13 backup/restore, S14 hồi quy/hiệu năng, S15 đóng gói/bàn giao) và trạng thái review S11-UI tiếp tục được theo dõi trong [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md). Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Công nghệ
 

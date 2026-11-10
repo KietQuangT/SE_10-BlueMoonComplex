@@ -359,7 +359,15 @@ Còn mở: chưa có browser E2E nối UI→API thật; chưa kiểm mobile/zoom
 ### S11-UI: Giao diện tải ba báo cáo S11 (chưa tick; chờ duyệt PR/tích hợp)
 ```text
 Task: S11-UI, frontend; phụ thuộc backend S11 đã duyệt.
-Commit cục bộ trên `hhoangsonnw/feat-s11-ui` (chưa push/PR). Kiểm tra trên commit trước khi đổi nhãn (`ceb4133`): `npm ci`, `npx tsc -b`, `npm test`, `npm run build`; 38 file / 232 test đạt, TypeScript và Vite build đạt. `impeccable detect` và `git diff --check` không có lỗi. Commit hiện tại chỉ đổi nhãn/tên file test và tài liệu; chưa chạy lại test sau đổi tên.
+Triển khai trên `hhoangsonnw/feat-s11-ui`. `npm test -- --run`: 39 file / 234 test đạt; `npm run build` đạt. `impeccable detect` và `git diff --check` không có lỗi. Orca Browser đã kiểm tra ADMIN (3 khối báo cáo, tải XLSX), ACCOUNTANT (2 khối tài chính) và RESIDENT (không có quyền truy cập); xem chi tiết tại `docs/VALIDATION.md`.
 Đầu ra: trang `/reports` cho ADMIN/ACCOUNTANT, tích hợp ba API export S11, xác thực bộ lọc và xử lý download/error.
-Còn mở: duyệt/tích hợp PR; chưa walkthrough trình duyệt thật hoặc đo tệp 50.000 dòng (S14).
+Còn mở: duyệt/tích hợp PR; chưa đo tệp 50.000 dòng (S14).
+```
+
+### Bổ sung danh sách tài khoản ADMIN (S02 follow-up; chưa nghiệm thu)
+```text
+Đầu ra: GET /api/v1/accounts có phân trang, chỉ ADMIN; M-10 tải danh sách thật, có trạng thái tải/lỗi và làm mới sau thao tác.
+Bằng chứng: backend 355 test + 174 integration MySQL 8.4 cô lập; frontend 234 test và build đạt. Chi tiết và giới hạn xem docs/VALIDATION.md.
+Browser ADMIN: danh sách tải lại thành công, lọc vai trò Kế toán đúng; đã xem desktop và giả lập iPhone 14. Chưa thực hiện thao tác ghi trên dữ liệu đang chạy.
+Còn mở: review và PR. Chưa tick thêm task.
 ```
