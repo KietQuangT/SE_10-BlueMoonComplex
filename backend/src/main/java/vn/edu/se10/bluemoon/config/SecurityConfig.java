@@ -50,6 +50,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/me", "/api/v1/auth/logout").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/accounts", "/api/v1/accounts/*/disable", "/api/v1/accounts/*/enable", "/api/v1/accounts/*/unlock").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/v1/residency-declarations/mine").hasRole("RESIDENT")
+                .requestMatchers(HttpMethod.GET,
+                    "/api/v1/resident/invoices",
+                    "/api/v1/resident/invoices/*",
+                    "/api/v1/resident/receipts",
+                    "/api/v1/resident/credit-allocations",
+                    "/api/v1/resident/billing-summary").hasRole("RESIDENT")
                 .requestMatchers(HttpMethod.POST, "/api/v1/residency-declarations", "/api/v1/residency-declarations/*/cancel").hasRole("RESIDENT")
                 .requestMatchers(HttpMethod.GET, "/api/v1/residency-declarations", "/api/v1/residents/suggest").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/residency-declarations/*/approve", "/api/v1/residency-declarations/*/reject", "/api/v1/residents/*/return").hasRole("ADMIN")
