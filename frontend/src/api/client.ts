@@ -22,7 +22,7 @@ export function clearCsrfMemory(): void {
   csrfState = null;
 }
 
-async function parseProblem(res: Response): Promise<ProblemDetailError> {
+export async function parseProblem(res: Response): Promise<ProblemDetailError> {
   const requestId = res.headers.get('X-Request-Id') || undefined;
   let payload: Record<string, unknown> = {};
   try {
