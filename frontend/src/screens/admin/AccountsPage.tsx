@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { fetchAccountPage } from '../../api/client';
 import { Link } from 'react-router-dom';
 import { useAppState } from '../../state/AppStateContext';
 import { roleDisplayName } from '../../lib/format';
@@ -11,9 +12,51 @@ import { ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
 import { Icon } from '../../components/Icon';
 import type { AccountRecord } from '../../types/domain';
 
-/** M-10 — Danh sách tài khoản (S02/S04: danh sách chưa có API; Vô hiệu hóa, Mở khóa mô phỏng). */
+/** M-10 — Danh sách tài khoản và quản lý trạng thái. */
 export function AccountsPage(): React.ReactElement {
-  const { user, accounts, manageAccount, mode, forcedUiState, setForcedUiState } = useAppState();
+  const { user, accounts: demoAccounts, households, manageAccount, mode, forcedUiState, setForcedUiState, handleCallFailure } = useAppState();
+  const actor = `${mode}:${user?.username ?? ''}:${user?.role ?? ''}`;
+  const [loaded, setLoaded] = useState<{ actor: string; items: AccountRecord[] }>({ actor: '', items: [] });
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    if (mode !== 'api' || user?.role !== 'ADMIN') return;
+    const controller = new AbortController();
+    let active = true;
+    setLoading(true);
+    setLoadError(null);
+    setLoaded({ actor: '', items: [] });
+    void (async () => {
+      try {
+        const items: AccountRecord[] = [];
+        let page = 0;
+        let totalPages = 1;
+        while (page < totalPages) {
+          const result = await fetchAccountPage(page, controller.signal);
+          if (!active) return;
+          items.push(...result.content.map((account) => ({ ...account, email: account.email ?? '', householdCode: null })));
+          totalPages = result.totalPages;
+          page += 1;
+        }
+        if (active) setLoaded({ actor, items });
+      } catch (error) {
+        if (active) setLoadError(handleCallFailure(error));
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; controller.abort(); };
+    // Account identity and explicit reload determine the request lifecycle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actor, reload]);
+
+  const accounts = useMemo(() => mode === 'demo' ? demoAccounts :
+    (loaded.actor === actor ? loaded.items.map((account) => ({ ...account,
+      householdCode: households.find((h) => h.id === account.householdId)?.householdCode ??
+        (account.householdId == null ? null : `#${account.householdId}`),
+    })) : []), [mode, demoAccounts, loaded, actor, households]);
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [query, setQuery] = useState('');
@@ -57,6 +100,7 @@ export function AccountsPage(): React.ReactElement {
       setFailure(res.error ?? 'Có lỗi xảy ra, vui lòng thử lại.');
       return;
     }
+    if (mode === 'api') setReload((value) => value + 1);
     setNotice(
       action === 'disable'
         ? `Đã vô hiệu hóa ${account.fullName}. Mọi phiên đăng nhập của người này bị hủy.`
@@ -82,8 +126,8 @@ export function AccountsPage(): React.ReactElement {
     />
   );
 
-  if (forcedUiState === 'loading') return <>{header}<SkeletonRows rows={6} /></>;
-  if (forcedUiState === 'error') return <>{header}<ErrorRetryPanel onRetry={() => setForcedUiState('normal')} /></>;
+  if (forcedUiState === 'loading' || (mode === 'api' && (loading || (loaded.actor !== actor && !loadError)))) return <>{header}<SkeletonRows rows={6} /></>;
+  if (forcedUiState === 'error' || (mode === 'api' && loadError)) return <>{header}<ErrorRetryPanel message={loadError ?? undefined} onRetry={() => { setForcedUiState('normal'); setReload((value) => value + 1); }} /></>;
 
   return (
     <>
@@ -111,12 +155,7 @@ export function AccountsPage(): React.ReactElement {
           </button>
         </div>
       ) : null}
-      {mode === 'api' ? (
-        <p className="field-hint">
-          Chưa có API liệt kê tài khoản: bảng dưới chỉ hiện các tài khoản bạn vừa cấp trong phiên làm việc này.
-          Vô hiệu, kích hoạt lại và mở khóa dùng API thật.
-        </p>
-      ) : null}
+
 
       <section className="surface-box">
         <div className="box-toolbar">
@@ -138,6 +177,7 @@ export function AccountsPage(): React.ReactElement {
                 <option value="ADMIN">Ban quản trị</option>
                 <option value="ACCOUNTANT">Kế toán</option>
                 <option value="RESIDENT">Cư dân</option>
+                <option value="AUTHORITY">Cơ quan chức năng</option>
               </select>
             </label>
             <label className="inline-field">

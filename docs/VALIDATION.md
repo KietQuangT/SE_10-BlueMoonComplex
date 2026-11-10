@@ -271,3 +271,9 @@ Không đổi backend/schema/hợp đồng API, không chạy Maven/MySQL, khôn
 | `-Pintegration verify` chạy lại trên SHA `9be2bf4` | BUILD SUCCESS trên MySQL 8.4.13 tạm, mới tạo ở cổng `3319`, không gắn volume; Surefire 353 + Failsafe 173 = 526 test, 0 failure/error/skipped; 1m39s. Container được dừng/xóa tự động sau chạy. Bằng chứng `_agents_workspace/S11/implementation/verify-integration-summary.md`; report chi tiết trong `backend/target/{surefire,failsafe}-reports/` của worktree implementation. |
 
 S11 đã được tick trong `docs/sprint-1/TASKS.md` sau khi đủ bằng chứng: `verify` 353 pass, MySQL integration 173 pass, review Argon không có lỗi chặn, và Sơn xác nhận đã kiểm tra/duyệt cả ba workbook final. Chưa push hoặc tạo PR.
+
+### Danh sách tài khoản ADMIN — bổ sung API (10/11/2026)
+- Nhánh `hhoangsonnw/feat-s11-ui`. `GET /api/v1/accounts?page=0&size=100` chỉ ADMIN, tối đa 100 bản ghi/trang; không trả mật khẩu/hash. Không thay schema.
+- Backend: JDK 21 trong Docker, `./mvnw -B -ntp -Pintegration verify` với MySQL 8.4.13 riêng trên cổng 3323 dùng tmpfs: 355 test thường và 174 integration đạt, 0 lỗi/bỏ qua. Container kiểm thử đã dừng; không dùng DB đang chạy của ứng dụng.
+- Frontend: `npm test -- --run`: 39 file / 234 test đạt; `npm run build` đạt. `impeccable detect` không báo vấn đề cho `AccountsPage.tsx`.
+- Orca Browser với phiên ADMIN và backend mới: M-10 hiển thị danh sách sau tải lại; lọc vai trò Kế toán cho đúng kết quả; kiểm tra bố cục desktop và giả lập iPhone 14. Chưa thực hiện thao tác thay đổi trạng thái trên dữ liệu đang chạy. UI tải lần lượt tất cả trang để giữ bộ lọc phía client; số tài khoản lớn cần theo dõi hiệu năng.
