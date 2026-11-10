@@ -22,8 +22,32 @@ public class XlsxReportWriter {
     private static final DateTimeFormatter LOCAL_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss XXX").withZone(VIETNAM_ZONE);
     private static final DateTimeFormatter UTC_TIME_FORMATTER = DateTimeFormatter.ISO_INSTANT;
 
+    @FunctionalInterface
+    interface WorkbookConsumer {
+        void accept(SXSSFWorkbook workbook) throws IOException;
+    }
+
+    protected SXSSFWorkbook createWorkbookInstance() {
+        return new SXSSFWorkbook(100);
+    }
+
+    private byte[] createWorkbook(WorkbookConsumer consumer) {
+        try (SXSSFWorkbook workbook = createWorkbookInstance()) {
+            try {
+                consumer.accept(workbook);
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                workbook.write(out);
+                return out.toByteArray();
+            } finally {
+                workbook.dispose();
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Lỗi ghi dữ liệu báo cáo XLSX", e);
+        }
+    }
+
     public byte[] writeFeeCollectionReport(FeeCollectionReportData data) {
-        try (SXSSFWorkbook workbook = new SXSSFWorkbook(100)) {
+        return createWorkbook(workbook -> {
             CellStyle headerStyle = createHeaderStyle(workbook);
             CellStyle boldStyle = createBoldStyle(workbook);
 
@@ -83,15 +107,11 @@ public class XlsxReportWriter {
 
             hoaDon.createFreezePane(0, 1);
             hoaDon.setAutoFilter(new CellRangeAddress(0, Math.max(0, data.rows().size()), 0, hdCols.length - 1));
-
-            return serialize(workbook);
-        } catch (IOException e) {
-            throw new IllegalStateException("Lỗi ghi dữ liệu báo cáo XLSX", e);
-        }
+        });
     }
 
     public byte[] writeCashReceiptsReport(CashReceiptReportData data) {
-        try (SXSSFWorkbook workbook = new SXSSFWorkbook(100)) {
+        return createWorkbook(workbook -> {
             CellStyle headerStyle = createHeaderStyle(workbook);
             CellStyle boldStyle = createBoldStyle(workbook);
 
@@ -148,15 +168,11 @@ public class XlsxReportWriter {
 
             phieuThu.createFreezePane(0, 1);
             phieuThu.setAutoFilter(new CellRangeAddress(0, Math.max(0, data.rows().size()), 0, ptCols.length - 1));
-
-            return serialize(workbook);
-        } catch (IOException e) {
-            throw new IllegalStateException("Lỗi ghi dữ liệu báo cáo XLSX", e);
-        }
+        });
     }
 
     public byte[] writeResidencyReport(ResidencyReportData data) {
-        try (SXSSFWorkbook workbook = new SXSSFWorkbook(100)) {
+        return createWorkbook(workbook -> {
             CellStyle headerStyle = createHeaderStyle(workbook);
             CellStyle boldStyle = createBoldStyle(workbook);
 
@@ -193,11 +209,7 @@ public class XlsxReportWriter {
 
             cuTru.createFreezePane(0, 10);
             cuTru.setAutoFilter(new CellRangeAddress(9, Math.max(9, 9 + data.rows().size()), 0, ctCols.length - 1));
-
-            return serialize(workbook);
-        } catch (IOException e) {
-            throw new IllegalStateException("Lỗi ghi dữ liệu báo cáo XLSX", e);
-        }
+        });
     }
 
     private static void writeMetadataRow(Sheet sheet, int rowIdx, String label, String value, CellStyle labelStyle) {
@@ -235,15 +247,5 @@ public class XlsxReportWriter {
         font.setBold(true);
         style.setFont(font);
         return style;
-    }
-
-    private static byte[] serialize(SXSSFWorkbook workbook) throws IOException {
-        try {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            workbook.write(out);
-            return out.toByteArray();
-        } finally {
-            workbook.dispose();
-        }
     }
 }

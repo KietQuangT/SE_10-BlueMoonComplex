@@ -1,6 +1,7 @@
 package vn.edu.se10.bluemoon.reporting;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -9,10 +10,12 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -220,6 +223,34 @@ class XlsxReportWriterTest {
         byte[] bytes = writer.writeFeeCollectionReport(data);
         assertNotNull(bytes);
         assertTrue(bytes.length > 0);
+    }
+
+    @Test
+    void earlyExceptionDuringPopulation_cleansUpWorkbookViaDispose() {
+        AtomicBoolean disposed = new AtomicBoolean(false);
+        XlsxReportWriter testWriter = new XlsxReportWriter() {
+            @Override
+            protected SXSSFWorkbook createWorkbookInstance() {
+                return new SXSSFWorkbook(100) {
+                    @Override
+                    public boolean dispose() {
+                        disposed.set(true);
+                        return super.dispose();
+                    }
+                };
+            }
+        };
+
+        var metadata = new ReportMetadata("FEE_COLLECTION_V1", "1.0", testInstant, "Thu theo kỳ hóa đơn");
+        FeeCollectionReportRow faultyRow = mock(FeeCollectionReportRow.class);
+        when(faultyRow.invoiceId()).thenReturn(999L);
+        when(faultyRow.householdCode()).thenThrow(new RuntimeException("Simulated error during population"));
+
+        var totals = new FeeCollectionReportTotals(1, new BigDecimal("100000"), BigDecimal.ZERO, new BigDecimal("100000"), null);
+        var data = new FeeCollectionReportData(metadata, "2026-10", totals, List.of(faultyRow));
+
+        assertThrows(RuntimeException.class, () -> testWriter.writeFeeCollectionReport(data));
+        assertTrue(disposed.get(), "SXSSFWorkbook.dispose() must be called when an exception occurs during population!");
     }
 
     @Test
