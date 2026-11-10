@@ -1,6 +1,8 @@
 import { ApiHttpError } from './client';
 
 const BY_CODE: Record<string, string> = {
+  INVALID_REPORT_FILTER: 'Bộ lọc chưa hợp lệ. Kiểm tra kỳ thu hoặc khoảng ngày rồi thử lại.',
+  REPORT_TOO_LARGE: 'Báo cáo vượt giới hạn 50.000 dòng.',
   PASSWORD_CHANGE_REQUIRED: 'Bạn cần đổi mật khẩu trước khi tiếp tục. Mở hồ sơ để đổi mật khẩu.',
   BILLING_INPUT_CHANGED: 'Dữ liệu tính phí đã thay đổi. Kế toán cần rút và trình lại kỳ thu.',
   STALE_VERSION: 'Dữ liệu đã thay đổi. Tải lại rồi kiểm tra trước khi thử lại.',

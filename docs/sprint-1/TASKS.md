@@ -22,6 +22,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 | ☐ | S13 | M | Tuấn; Sơn hỗ trợ | Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4 | F02; dữ liệu mẫu S09 | Job backup có lịch/retention được chốt; restore vào DB thử riêng rồi đối chiếu; không xóa DB gốc. |
 | ☐ | S14 | L | Cả nhóm; Tuấn điều phối | Hồi quy/quyền/hiệu năng nền; WBS 2.4.1.4 | S02–S13 hoàn tất; có thể chuẩn bị trước | E2E hộ→kỳ→thu→báo cáo; ca sai/IDOR/duplicate; 10k và thời gian có cấu hình đo; sửa và test lại. |
 | ☐ | S15 | S | Cả nhóm; Kiệt tổng hợp | Đóng gói/bàn giao v1; WBS 2.4.1.4 | S14 | Cài từ máy sạch, dữ liệu giả, hướng dẫn, kết quả test và lỗi còn lại có PO chấp nhận; không còn blocker. |
+| ☐ | S11-UI | M | Sơn; Quân/Tuấn hỗ trợ kiểm tra | UI tải ba báo cáo S11; WBS 2.4.1.3 | S11 backend | Dùng đúng API/template đã duyệt; UI theo quyền server; lọc hợp lệ, tải file và lỗi dễ hiểu; test theo G1. |
 
 S08 và S09 được Sơn yêu cầu đánh dấu hoàn thành; các giới hạn còn ghi trong `docs/VALIDATION.md`. S10 backend được Sơn duyệt G2 ngày 09/11/2026; S10 UI hoàn tất theo bằng chứng ngày 10/11/2026. Phép đo 10.000 bản ghi/EXPLAIN chuyển sang S14.
 
@@ -45,6 +46,7 @@ S08 và S09 được Sơn yêu cầu đánh dấu hoàn thành; các giới hạ
 - [ ] S13 — Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4
 - [ ] S14 — Hồi quy/quyền/hiệu năng nền; WBS 2.4.1.4
 - [ ] S15 — Đóng gói/bàn giao v1; WBS 2.4.1.4
+- [ ] S11-UI — Giao diện tải ba báo cáo S11; WBS 2.4.1.3
 
 ## Bằng chứng task
 Khi hoàn tất, thêm: mã task; commit/PR; lệnh và kết quả test; đầu ra giao cho ai; assumption đã xác nhận; lỗi còn lại.
@@ -352,4 +354,12 @@ Contract: `_agents_workspace/S09/01_contract.md` và `02_ui_contract.md`; quyế
 QA Orca/Agy trên đúng worktree (09/11/2026): `cd backend && ./mvnw -B -ntp verify` — 227 test pass; `-Pintegration verify` với MySQL 8.4 cô lập cổng 3308 — 146 integration pass; frontend `npm test -- --run` — 28 file/134 test pass; `npm run build` — TypeScript/Vite pass. Không reset DB/volume.
 Đối chiếu coverage: thu thiếu/thừa, FIFO + đảo, concurrency/idempotency, quyền/privacy reason (`ReceiptAmountsTest`, `CreditAllocationAmountsTest`, `PaymentFlowIT`, `PaymentConcurrencyIT`, `PaymentApiTest`, `PaymentSchemaIT`); UI preview, retry cùng UUID/payload, đổi actor, ADMIN read-only, RESIDENT denial (`s09-page.test.tsx`, `s09-payments.test.ts`, `s09-csrf-actor.test.ts`, `s09-routes.test.tsx`).
 Còn mở: chưa có browser E2E nối UI→API thật; chưa kiểm mobile/zoom/keyboard/screen reader; chưa CI remote. Chưa tick trước khi PR được review và CI đạt.
+```
+
+### S11-UI: Giao diện tải ba báo cáo S11 (chưa tick; chờ duyệt PR/tích hợp)
+```text
+Task: S11-UI, frontend; phụ thuộc backend S11 đã duyệt.
+Commit cục bộ trên `hhoangsonnw/feat-s11-ui` (chưa push/PR). Kiểm tra trên commit trước khi đổi nhãn (`ceb4133`): `npm ci`, `npx tsc -b`, `npm test`, `npm run build`; 38 file / 232 test đạt, TypeScript và Vite build đạt. `impeccable detect` và `git diff --check` không có lỗi. Commit hiện tại chỉ đổi nhãn/tên file test và tài liệu; chưa chạy lại test sau đổi tên.
+Đầu ra: trang `/reports` cho ADMIN/ACCOUNTANT, tích hợp ba API export S11, xác thực bộ lọc và xử lý download/error.
+Còn mở: duyệt/tích hợp PR; chưa walkthrough trình duyệt thật hoặc đo tệp 50.000 dòng (S14).
 ```

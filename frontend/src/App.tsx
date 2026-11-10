@@ -25,6 +25,7 @@ import { VoluntaryAdminPage } from './screens/admin/VoluntaryAdminPage';
 import { BillingPeriodsPage } from './screens/admin/BillingPeriodsPage';
 import { ResidencyReportPage } from './screens/admin/ResidencyReportPage';
 import { ReportPackagesPage } from './screens/admin/ReportPackagesPage';
+import { ReportDownloadsPage } from './screens/reporting/ReportDownloadsPage';
 
 // Accountant Screens
 import { CollectionsPage } from './screens/accountant/CollectionsPage';
@@ -132,18 +133,29 @@ export function App(): React.ReactElement {
             <Route path="/admin/voluntary" element={mode === 'api' ? <ApiVoluntaryPage /> : <VoluntaryAdminPage />} />
             <Route path="/admin/billing-periods" element={mode === 'api' ? <ApiBillingPage /> : <BillingPeriodsPage />} />
             <Route path="/admin/collections" element={mode === 'api' ? <ApiCollectionsPage key={user?.username} /> : <CollectionsPage readOnly />} />
-            <Route path="/admin/reports/residency" element={<ResidencyReportPage />} />
+            <Route
+              path="/admin/reports/residency"
+              element={mode === 'api' ? <Navigate to="/reports" replace /> : <ResidencyReportPage />}
+            />
             <Route path="/admin/reports/packages" element={<ReportPackagesPage />} />
           </Route>
 
           <Route element={<RequireRole roles={['ACCOUNTANT', 'ADMIN']} />}><Route path="/accountant/fee-rates" element={<FeeRatesPage />} /></Route>
+
+          {/* S11-UI: Shared Reports Route for ADMIN and ACCOUNTANT */}
+          <Route element={<RequireRole roles={['ADMIN', 'ACCOUNTANT']} />}>
+            <Route path="/reports" element={<ReportDownloadsPage />} />
+          </Route>
 
           {/* ACCOUNTANT Routes */}
           <Route element={<RequireRole roles={['ACCOUNTANT']} />}>
             <Route path="/accountant/billing-periods" element={mode === 'api' ? <ApiBillingPage /> : <div className="wayfinding-page">Kỳ thu chưa khả dụng trong chế độ Demo.</div>} />
             <Route path="/accountant/voluntary" element={mode === 'api' ? <ApiVoluntaryPage /> : <div className="wayfinding-page">Đóng góp chưa khả dụng trong chế độ Demo.</div>} />
             <Route path="/accountant/collections" element={mode === 'api' ? <ApiCollectionsPage key={user?.username} /> : <CollectionsPage />} />
-            <Route path="/accountant/collection-rate" element={<CollectionRatePage />} />
+            <Route
+              path="/accountant/collection-rate"
+              element={mode === 'api' ? <Navigate to="/reports" replace /> : <CollectionRatePage />}
+            />
           </Route>
 
           {/* RESIDENT Routes */}
