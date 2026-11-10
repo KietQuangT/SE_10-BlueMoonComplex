@@ -17,7 +17,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 | ☑ | S08 | L | Quân + Tuấn | Kỳ thu/tự nguyện; WBS 2.3.1.2–3 | S07; S05 để ghép cuối | Không trùng kỳ/hộ/loại; tự nguyện không cộng nợ; giao dữ liệu thật cho thu tiền và đối chiếu độc lập. |
 | ☑ | S09 | L | Quân + Sơn | Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1 | S05,S08 | Thu đúng số tiền, nợ giảm đúng, transaction/audit; duplicate/concurrent không thu hai lần; chốt thu thiếu/thừa/sửa/hủy. |
 | ☑ | S10 | M | Kiệt + Quân | API và UI hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2 | S08; S09 để ghép cuối | Backend giới hạn theo hộ; UI API mode có danh sách/lọc/phân trang, chi tiết và lịch sử; Demo tách riêng; chỉ đọc; các kiểm tra hoãn được ghi ở VALIDATION. |
-| ☐ | S11 | M | Tuấn + Quân + Kiệt | Export thu phí/cư trú; WBS 2.4.1.3 | S06,S09 | Excel mở được và tổng khớp; mẫu/cột/tỷ lệ đã duyệt; không export dữ liệu thừa; dùng dữ liệu thật từ DB. |
+| ☑ | S11 | M | Tuấn + Quân + Kiệt | Export thu phí/cư trú; WBS 2.4.1.3 | S06,S09 | Excel mở được và tổng khớp; mẫu/cột/tỷ lệ đã duyệt; không export dữ liệu thừa; dùng dữ liệu thật từ DB. |
 | ☐ | S12 | M | Tuấn + Sơn | Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023 | S11 | Chỉ gói/trường BQT phê duyệt; cơ quan không truy DB thô; có test deny trường/hộ ngoài phạm vi. |
 | ☐ | S13 | M | Tuấn; Sơn hỗ trợ | Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4 | F02; dữ liệu mẫu S09 | Job backup có lịch/retention được chốt; restore vào DB thử riêng rồi đối chiếu; không xóa DB gốc. |
 | ☐ | S14 | L | Cả nhóm; Tuấn điều phối | Hồi quy/quyền/hiệu năng nền; WBS 2.4.1.4 | S02–S13 hoàn tất; có thể chuẩn bị trước | E2E hộ→kỳ→thu→báo cáo; ca sai/IDOR/duplicate; 10k và thời gian có cấu hình đo; sửa và test lại. |
@@ -40,7 +40,7 @@ S08 và S09 được Sơn yêu cầu đánh dấu hoàn thành; các giới hạ
 - [x] S08 — Kỳ thu/tự nguyện; WBS 2.3.1.2–3
 - [x] S09 — Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1
 - [x] S10 — API và UI hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2 (NFR chuyển S14; kiểm tra hoãn xem `docs/VALIDATION.md`)
-- [ ] S11 — Export thu phí/cư trú; WBS 2.4.1.3
+- [x] S11 — Export thu phí/cư trú; WBS 2.4.1.3
 - [ ] S12 — Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023
 - [ ] S13 — Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4
 - [ ] S14 — Hồi quy/quyền/hiệu năng nền; WBS 2.4.1.4
