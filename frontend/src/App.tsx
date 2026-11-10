@@ -35,6 +35,8 @@ import { CollectionRatePage } from './screens/accountant/CollectionRatePage';
 // Resident Screens
 import { InvoicesPage } from './screens/resident/InvoicesPage';
 import { InvoiceDetailPage } from './screens/resident/InvoiceDetailPage';
+import { ApiInvoicesPage } from './screens/resident/ApiInvoicesPage';
+import { ApiInvoiceDetailPage } from './screens/resident/ApiInvoiceDetailPage';
 import { MyHouseholdPage } from './screens/resident/MyHouseholdPage';
 import { AbsencePage } from './screens/resident/AbsencePage';
 import { ResidentVoluntaryPage } from './screens/resident/ResidentVoluntaryPage';
@@ -101,6 +103,7 @@ function RequireRole({ roles }: { roles: RoleCode[] }): React.ReactElement {
 
 export function App(): React.ReactElement {
   const { mode, user } = useAppState();
+  const residentRouteKey = `${mode}:${user?.username ?? ''}:${user?.householdId ?? ''}`;
   return (
     <BrowserRouter>
       <Routes>
@@ -145,8 +148,14 @@ export function App(): React.ReactElement {
 
           {/* RESIDENT Routes */}
           <Route element={<RequireRole roles={['RESIDENT']} />}>
-            <Route path="/resident/invoices" element={<InvoicesPage />} />
-            <Route path="/resident/invoices/:id" element={<InvoiceDetailPage />} />
+            <Route
+              path="/resident/invoices"
+              element={mode === 'api' ? <ApiInvoicesPage key={residentRouteKey} /> : <InvoicesPage />}
+            />
+            <Route
+              path="/resident/invoices/:id"
+              element={mode === 'api' ? <ApiInvoiceDetailPage key={residentRouteKey} /> : <InvoiceDetailPage />}
+            />
             <Route path="/resident/household" element={<MyHouseholdPage />} />
             <Route path="/resident/absence" element={<AbsencePage />} />
             <Route path="/resident/voluntary" element={mode === 'api' ? <ApiVoluntaryPage /> : <ResidentVoluntaryPage />} />

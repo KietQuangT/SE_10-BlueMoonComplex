@@ -6,11 +6,11 @@ Repo là monorepo: API Spring Boot, giao diện React, MySQL và tài liệu ngh
 
 ## Trạng thái hiện tại
 
-S01–S10 đã có triển khai trong mã nguồn backend. S08 (kỳ thu/tự nguyện) và S09 (thu tiền/gạch nợ) đã được đánh dấu hoàn thành theo yêu cầu của Sơn trong `TASKS.md`, với các giới hạn còn lưu trong `VALIDATION.md`. S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) vào `origin/main`.
+S01–S10 đã có triển khai trong mã nguồn backend. S08 (kỳ thu/tự nguyện), S09 (thu tiền/gạch nợ) và S10 (API + UI hóa đơn cư dân) đã được đánh dấu hoàn thành trong `TASKS.md`; giới hạn kiểm chứng còn lại được ghi trong `VALIDATION.md`. S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) và backend S10 qua PR [#32](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/32).
 
-S10 bổ sung API tra cứu và chi tiết hóa đơn/lịch sử gạch nợ cho cư dân (`/api/v1/resident/invoices`), kiểm tra quyền theo hộ ở server (chặn IDOR/truy cập chéo hộ), snapshot hóa đơn và ledger với cô lập giao dịch `REPEATABLE_READ`, hỗ trợ phân trang và lọc theo trạng thái thanh toán. Backend S10 đã được Sơn duyệt G2 ngày 09/11/2026.
+S10 bổ sung API tra cứu và chi tiết hóa đơn/lịch sử gạch nợ cho cư dân (`/api/v1/resident/invoices`), kiểm tra quyền theo hộ ở server (chặn IDOR/truy cập chéo hộ), snapshot hóa đơn và ledger với cô lập giao dịch `REPEATABLE_READ`, phân trang và lọc theo trạng thái. UI cư dân dùng API thật để xem, lọc, phân trang và mở chi tiết/lịch sử; giao diện chỉ đọc và Demo mode dùng dữ liệu riêng. Backend S10 được duyệt G2 ngày 09/11/2026; walkthrough UI hoàn tất ngày 10/11/2026.
 
-Các giới hạn hiện tại: UI cư dân cho S10 là lượt riêng (chưa ghép giao diện cư dân); chưa có browser E2E walkthrough với backend thật; phép đo hiệu năng 10.000 bản ghi và kiểm tra EXPLAIN được chuyển sang S14; test snapshot chưa chạy thử loại bỏ `REPEATABLE_READ` để đo độ nhạy; test `MOVED_OUT` tạo nhân khẩu chuyển đi trong hộ nhưng chưa chứng minh account thuộc nhân khẩu do schema chưa nối account–nhân khẩu. Xem chi tiết bằng chứng và giới hạn trong [docs/VALIDATION.md](docs/VALIDATION.md).
+Các giới hạn còn lại: chưa xác nhận viewport đúng 360px, zoom 200%, theme tối/reduced motion và trạng thái ledger hiếm (credit, receipt bị hủy, allocation bị đảo); chưa đo 10.000 bản ghi/EXPLAIN (chuyển sang S14); chưa chạy test snapshot khi bỏ `REPEATABLE_READ`; test `MOVED_OUT` chưa chứng minh account thuộc nhân khẩu do schema chưa nối account–nhân khẩu. Các giới hạn này không chặn S10 UI theo quyết định của Sơn. Xem [docs/VALIDATION.md](docs/VALIDATION.md).
 
 Các task tiếp theo (S11 export báo cáo, S12 gói dữ liệu cơ quan, S13 backup/restore, S14 hồi quy/hiệu năng, S15 đóng gói/bàn giao) tiếp tục được theo dõi trong [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md). Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
 
@@ -32,7 +32,7 @@ Các task tiếp theo (S11 export báo cáo, S12 gói dữ liệu cơ quan, S13 
 - **Hộ và cư trú:** quản lý hộ/nhân khẩu, lịch sử biến động, chuyển đi, khai báo tạm vắng, duyệt/từ chối và ghi nhận cư dân đã quay lại.
 - **Phí và hóa đơn:** quản lý đơn giá theo kỳ, xem trước phí, tạo kỳ thu và snapshot các dòng phí khi phát hành.
 - **Thu bắt buộc S09:** nhiều receipt cho một hóa đơn; thu thừa trở thành credit hộ; phân bổ credit FIFO; hủy receipt và đảo phân bổ lưu lịch sử; idempotency bằng UUID và audit nghiệp vụ trong transaction; Kế toán thao tác, ADMIN chỉ đọc.
-- **Hóa đơn cư dân S10 (backend):** tra cứu danh sách hóa đơn theo hộ (`/api/v1/resident/invoices`), xem chi tiết hóa đơn kèm lịch sử gạch nợ/biên lai; xác thực quyền sở hữu hộ ở server (chặn IDOR/truy cập chéo hộ); giao dịch `REPEATABLE_READ` bảo đảm tính nhất quán giữa snapshot hóa đơn và ledger thanh toán; phân trang và lọc theo trạng thái thanh toán (`ALL`, `OUTSTANDING`, `UNPAID`, `PARTIALLY_PAID`, `PAID`, `CANCELLED`). Giao diện UI cư dân thực hiện ở lượt riêng.
+- **Hóa đơn cư dân S10:** API và UI cho danh sách/chi tiết hóa đơn theo hộ đăng nhập, dòng phí snapshot, đã thu/còn nợ và lịch sử; lọc tháng/trạng thái, phân trang; server chặn truy cập chéo hộ. UI chỉ đọc, Demo mode độc lập.
 - **Frontend:** có các màn hình v1; một số luồng dùng API thật, một số luồng vẫn là Demo. Chế độ Demo giữ bộ dữ liệu riêng, không ghi vào backend.
 
 Backend kiểm tra quyền và phạm vi hộ ở server. Các thay đổi dữ liệu dùng transaction và audit nghiệp vụ; schema thay đổi qua migration Flyway mới. Không có tài khoản mặc định; ADMIN đầu tiên được tạo bằng profile bootstrap tương tác.
@@ -246,8 +246,9 @@ Integration tests có thể ghi fixture và áp migration. Chỉ trỏ chúng t�
 
 - **Backend verify:** 283 test pass (JDK 21).
 - **Backend integration (MySQL 8.4 test cô lập):** 158 test pass (bao gồm `ResidentInvoiceSnapshotIT` và `IdentitySessionIT`).
-- **Frontend tests:** 28 file, 134 test pass; TypeScript/Vite build pass.
-- **Giới hạn đã ghi nhận:** Chưa có browser E2E walkthrough với backend thật; UI cư dân cho S10 là lượt riêng (màn hình cư dân chưa nối API thật); phép đo hiệu năng 10.000 bản ghi/EXPLAIN chuyển sang S14; xem chi tiết trong [docs/VALIDATION.md](docs/VALIDATION.md).
+- **Frontend tests:** 33 file, 185 test pass; TypeScript/Vite build pass.
+- **S10 UI:** walkthrough API thật bằng Orca Browser xác nhận danh sách, lọc `PARTIALLY_PAID`, chi tiết và receipt; 393×852 CSS px không cuộn ngang.
+- **Giới hạn đã ghi nhận:** viewport 360px, zoom 200%, theme tối/reduced motion, ledger hiếm và phép đo 10.000 bản ghi/EXPLAIN (S14) còn hoãn; xem [docs/VALIDATION.md](docs/VALIDATION.md).
 
 ## Cấu trúc repo
 

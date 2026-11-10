@@ -1,0 +1,114 @@
+/* Scoped styles for S10 Resident Billing & Invoice screens */
+
+.s10-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: flex-end;
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  background-color: var(--surface-subtle);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.s10-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 140px;
+}
+
+.s10-filter-group label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-ink-muted);
+}
+
+.s10-filter-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-top: auto;
+}
+
+.s10-filter-actions .btn {
+  min-height: 44px;
+}
+
+.s10-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.s10-notice-banner {
+  margin-bottom: var(--space-4);
+}
+
+.s10-card-list {
+  display: none;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.s10-card-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--surface-panel);
+}
+
+.s10-card-item:last-child {
+  border-bottom: 0;
+}
+
+.s10-history-section {
+  margin-top: var(--space-6);
+}
+
+.s10-section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.s10-history-note {
+  font-size: var(--font-size-sm);
+  color: var(--color-ink-muted);
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .s10-desktop-table {
+    display: none;
+  }
+
+  .s10-card-list {
+    display: block;
+  }
+
+  .s10-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .s10-filter-group {
+    width: 100%;
+  }
+
+  .s10-filter-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
