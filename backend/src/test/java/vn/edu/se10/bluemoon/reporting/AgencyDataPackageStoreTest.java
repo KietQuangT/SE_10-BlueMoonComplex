@@ -104,4 +104,58 @@ class AgencyDataPackageStoreTest {
         int deleted = store.deleteExpiredAudits(now, List.of("AGENCY_PACKAGE_CREATED"), 1000);
         assertEquals(5, deleted);
     }
+
+    @Test
+    void findPackageIdsForContentDeletion_locksWithForUpdate() {
+        when(jdbc.queryForList(anyString(), anyMap(), eq(Long.class))).thenReturn(List.of(1L, 2L));
+        List<Long> result = store.findPackageIdsForContentDeletion(now, 100);
+        assertEquals(List.of(1L, 2L), result);
+
+        org.mockito.ArgumentCaptor<String> sqlCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(jdbc).queryForList(sqlCaptor.capture(), anyMap(), eq(Long.class));
+        String sql = sqlCaptor.getValue();
+        assertTrue(sql.contains("FOR UPDATE"));
+        assertTrue(sql.contains("ORDER BY id ASC"));
+        assertTrue(sql.contains("content_delete_after <= :now"));
+    }
+
+    @Test
+    void findPackageIdsForMetadataDeletion_locksWithForUpdateAndChecks5Years() {
+        when(jdbc.queryForList(anyString(), anyMap(), eq(Long.class))).thenReturn(List.of(1L, 2L));
+        List<Long> result = store.findPackageIdsForMetadataDeletion(now, 100);
+        assertEquals(List.of(1L, 2L), result);
+
+        org.mockito.ArgumentCaptor<String> sqlCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(jdbc).queryForList(sqlCaptor.capture(), anyMap(), eq(Long.class));
+        String sql = sqlCaptor.getValue();
+        assertTrue(sql.contains("FOR UPDATE"));
+        assertTrue(sql.contains("ORDER BY id ASC"));
+        assertTrue(sql.contains("DATE_ADD(created_at, INTERVAL 5 YEAR) <= :now"));
+    }
+
+    @Test
+    void findPackages_checksDateAdd5Years() {
+        when(jdbc.query(anyString(), any(org.springframework.jdbc.core.namedparam.SqlParameterSource.class), any(RowMapper.class)))
+            .thenReturn(List.of());
+        store.findPackages("DRAFT", now, 0, 20);
+
+        org.mockito.ArgumentCaptor<String> sqlCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(jdbc).query(sqlCaptor.capture(), any(org.springframework.jdbc.core.namedparam.SqlParameterSource.class), any(RowMapper.class));
+        String sql = sqlCaptor.getValue();
+        assertTrue(sql.contains("DATE_ADD(created_at, INTERVAL 5 YEAR) > :now"));
+        assertTrue(sql.contains("ORDER BY created_at DESC, id DESC"));
+    }
+
+    @Test
+    void countPackages_checksDateAdd5Years() {
+        when(jdbc.queryForObject(anyString(), any(org.springframework.jdbc.core.namedparam.SqlParameterSource.class), eq(Long.class)))
+            .thenReturn(10L);
+        long count = store.countPackages("DRAFT", now);
+        assertEquals(10L, count);
+
+        org.mockito.ArgumentCaptor<String> sqlCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(jdbc).queryForObject(sqlCaptor.capture(), any(org.springframework.jdbc.core.namedparam.SqlParameterSource.class), eq(Long.class));
+        String sql = sqlCaptor.getValue();
+        assertTrue(sql.contains("DATE_ADD(created_at, INTERVAL 5 YEAR) > :now"));
+    }
 }

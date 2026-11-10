@@ -193,10 +193,10 @@ public class AgencyDataPackageStore {
         }
     }
 
-    public List<AgencyPackageRecord> findPackages(String status, Instant notExpiredCutoff, int offset, int limit) {
-        StringBuilder sql = new StringBuilder("SELECT * FROM agency_data_packages WHERE created_at > :notExpiredCutoff");
+    public List<AgencyPackageRecord> findPackages(String status, Instant now, int offset, int limit) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM agency_data_packages WHERE DATE_ADD(created_at, INTERVAL 5 YEAR) > :now");
         MapSqlParameterSource params = new MapSqlParameterSource()
-            .addValue("notExpiredCutoff", Timestamp.from(notExpiredCutoff))
+            .addValue("now", Timestamp.from(now))
             .addValue("limit", limit)
             .addValue("offset", offset);
 
@@ -208,10 +208,10 @@ public class AgencyDataPackageStore {
         return jdbc.query(sql.toString(), params, ROW_MAPPER);
     }
 
-    public long countPackages(String status, Instant notExpiredCutoff) {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM agency_data_packages WHERE created_at > :notExpiredCutoff");
+    public long countPackages(String status, Instant now) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM agency_data_packages WHERE DATE_ADD(created_at, INTERVAL 5 YEAR) > :now");
         MapSqlParameterSource params = new MapSqlParameterSource()
-            .addValue("notExpiredCutoff", Timestamp.from(notExpiredCutoff));
+            .addValue("now", Timestamp.from(now));
 
         if (status != null && !status.isBlank()) {
             sql.append(" AND status = :status");
@@ -296,6 +296,7 @@ public class AgencyDataPackageStore {
             WHERE content_deleted_at IS NULL AND content_delete_after <= :now
             ORDER BY id ASC
             LIMIT :limit
+            FOR UPDATE
             """;
         return jdbc.queryForList(sql, Map.of("now", Timestamp.from(now), "limit", limit), Long.class);
     }
@@ -316,14 +317,15 @@ public class AgencyDataPackageStore {
         jdbc.update(sql, Map.of("packageIds", packageIds, "deletedAt", Timestamp.from(deletedAt)));
     }
 
-    public List<Long> findPackageIdsForMetadataDeletion(Instant cutoff, int limit) {
+    public List<Long> findPackageIdsForMetadataDeletion(Instant now, int limit) {
         String sql = """
             SELECT id FROM agency_data_packages
-            WHERE created_at <= :cutoff
+            WHERE DATE_ADD(created_at, INTERVAL 5 YEAR) <= :now
             ORDER BY id ASC
             LIMIT :limit
+            FOR UPDATE
             """;
-        return jdbc.queryForList(sql, Map.of("cutoff", Timestamp.from(cutoff), "limit", limit), Long.class);
+        return jdbc.queryForList(sql, Map.of("now", Timestamp.from(now), "limit", limit), Long.class);
     }
 
     public int deletePackagesMetadata(List<Long> packageIds) {
@@ -336,18 +338,18 @@ public class AgencyDataPackageStore {
         return jdbc.update("DELETE FROM agency_data_packages WHERE id IN (:packageIds)", params);
     }
 
-    public int deleteExpiredAudits(Instant cutoff, List<String> actions, int limit) {
+    public int deleteExpiredAudits(Instant now, List<String> actions, int limit) {
         if (actions == null || actions.isEmpty()) {
             return 0;
         }
         String sql = """
             DELETE FROM audit_log
-            WHERE action IN (:actions) AND occurred_at <= :cutoff
+            WHERE action IN (:actions) AND DATE_ADD(occurred_at, INTERVAL 5 YEAR) <= :now
             LIMIT :limit
             """;
         return jdbc.update(sql, Map.of(
             "actions", actions,
-            "cutoff", Timestamp.from(cutoff),
+            "now", Timestamp.from(now),
             "limit", limit
         ));
     }

@@ -103,23 +103,178 @@ class AgencyDataPackageApiTest {
             .andExpect(status().isUnauthorized());
         mvc.perform(post("/api/v1/agency-data-packages").with(csrf()))
             .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/v1/agency-data-packages/1"))
+            .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/v1/agency-data-packages/1/preview"))
+            .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/agency-data-packages/1/approve").with(csrf()))
+            .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/agency-data-packages/1/reject").with(csrf()))
+            .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/agency-data-packages/1/revoke").with(csrf()))
+            .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/v1/agency-data-packages/1/content.xlsx"))
+            .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/agency-data-packages/1/handoff").with(csrf()))
+            .andExpect(status().isUnauthorized());
     }
 
     @Test
     void nonAdmin_returns403() throws Exception {
-        mvc.perform(get("/api/v1/agency-data-packages").with(authentication(residentAuth(5L))))
+        var resident = authentication(residentAuth(5L));
+        var accountant = authentication(accountantAuth(6L));
+
+        // Resident forbidden on all 9 routes
+        mvc.perform(get("/api/v1/agency-data-packages").with(resident))
             .andExpect(status().isForbidden());
-        mvc.perform(get("/api/v1/agency-data-packages").with(authentication(accountantAuth(6L))))
+        mvc.perform(post("/api/v1/agency-data-packages").with(resident).with(csrf()))
+            .andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/agency-data-packages/1").with(resident))
+            .andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/agency-data-packages/1/preview").with(resident))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/agency-data-packages/1/approve").with(resident).with(csrf()))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/agency-data-packages/1/reject").with(resident).with(csrf()))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/agency-data-packages/1/revoke").with(resident).with(csrf()))
+            .andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/agency-data-packages/1/content.xlsx").with(resident))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/agency-data-packages/1/handoff").with(resident).with(csrf()))
+            .andExpect(status().isForbidden());
+
+        // Accountant forbidden on all 9 routes
+        mvc.perform(get("/api/v1/agency-data-packages").with(accountant))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/agency-data-packages").with(accountant).with(csrf()))
+            .andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/agency-data-packages/1").with(accountant))
+            .andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/agency-data-packages/1/preview").with(accountant))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/agency-data-packages/1/approve").with(accountant).with(csrf()))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/agency-data-packages/1/reject").with(accountant).with(csrf()))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/agency-data-packages/1/revoke").with(accountant).with(csrf()))
+            .andExpect(status().isForbidden());
+        mvc.perform(get("/api/v1/agency-data-packages/1/content.xlsx").with(accountant))
+            .andExpect(status().isForbidden());
+        mvc.perform(post("/api/v1/agency-data-packages/1/handoff").with(accountant).with(csrf()))
             .andExpect(status().isForbidden());
     }
 
     @Test
     void writeWithoutCsrf_returns403() throws Exception {
+        String actionBody = "{\"expectedVersion\":1,\"contentSha256\":\"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\"}";
+
         mvc.perform(post("/api/v1/agency-data-packages")
             .with(authentication(adminAuth(1L)))
             .contentType(MediaType.APPLICATION_JSON)
             .content("{\"householdIds\":[1],\"recipientAgencyCode\":\"CONG_AN_Q1\",\"requestReference\":\"REF\",\"licenceReference\":\"LIC\"}"))
             .andExpect(status().isForbidden());
+
+        mvc.perform(post("/api/v1/agency-data-packages/1/approve")
+            .with(authentication(adminAuth(1L)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(actionBody))
+            .andExpect(status().isForbidden());
+
+        mvc.perform(post("/api/v1/agency-data-packages/1/reject")
+            .with(authentication(adminAuth(1L)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(actionBody))
+            .andExpect(status().isForbidden());
+
+        mvc.perform(post("/api/v1/agency-data-packages/1/revoke")
+            .with(authentication(adminAuth(1L)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(actionBody))
+            .andExpect(status().isForbidden());
+
+        mvc.perform(post("/api/v1/agency-data-packages/1/handoff")
+            .with(authentication(adminAuth(1L)))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(actionBody))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void postRoutes_withUnexpectedQueryParams_return400() throws Exception {
+        String actionBody = "{\"expectedVersion\":1,\"contentSha256\":\"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\"}";
+
+        mvc.perform(post("/api/v1/agency-data-packages?extra=1")
+            .with(authentication(adminAuth(1L)))
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"householdIds\":[1],\"recipientAgencyCode\":\"CONG_AN_Q1\",\"requestReference\":\"REF\",\"licenceReference\":\"LIC\"}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INVALID_PACKAGE_FILTER"));
+
+        mvc.perform(post("/api/v1/agency-data-packages/1/approve?actor=2")
+            .with(authentication(adminAuth(1L)))
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(actionBody))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INVALID_PACKAGE_FILTER"));
+
+        mvc.perform(post("/api/v1/agency-data-packages/1/reject?reason=bad")
+            .with(authentication(adminAuth(1L)))
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(actionBody))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INVALID_PACKAGE_FILTER"));
+
+        mvc.perform(post("/api/v1/agency-data-packages/1/revoke?force=true")
+            .with(authentication(adminAuth(1L)))
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(actionBody))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INVALID_PACKAGE_FILTER"));
+
+        mvc.perform(post("/api/v1/agency-data-packages/1/handoff?to=agency")
+            .with(authentication(adminAuth(1L)))
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(actionBody))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INVALID_PACKAGE_FILTER"));
+    }
+
+    @Test
+    void getRoutes_duplicateQueryParams_returns400() throws Exception {
+        mvc.perform(get("/api/v1/agency-data-packages?page=0&page=1")
+            .with(authentication(adminAuth(1L))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INVALID_PACKAGE_FILTER"));
+    }
+
+    @Test
+    void create_householdIdOverflowsLong_returns400() throws Exception {
+        String body = "{\"householdIds\":[999999999999999999999999999999999999999999999999],\"recipientAgencyCode\":\"CONG_AN_Q1\",\"requestReference\":\"REF\",\"licenceReference\":\"LIC\"}";
+        mvc.perform(post("/api/v1/agency-data-packages")
+            .with(authentication(adminAuth(1L)))
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("PACKAGE_SCOPE_INVALID"));
+    }
+
+    @Test
+    void approve_versionOverflowsLong_returns400() throws Exception {
+        String body = "{\"expectedVersion\":999999999999999999999999999999999999999999999999,\"contentSha256\":\"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\"}";
+        mvc.perform(post("/api/v1/agency-data-packages/1/approve")
+            .with(authentication(adminAuth(1L)))
+            .with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value("INVALID_PACKAGE_REQUEST"));
     }
 
     @Test

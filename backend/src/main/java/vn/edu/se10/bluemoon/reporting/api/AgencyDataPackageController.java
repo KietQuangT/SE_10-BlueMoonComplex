@@ -1,7 +1,10 @@
 package vn.edu.se10.bluemoon.reporting.api;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -45,10 +48,12 @@ public class AgencyDataPackageController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PackageDetail create(@RequestBody(required = false) String rawBody,
+    public PackageDetail create(HttpServletRequest request,
+                                @RequestBody(required = false) String rawBody,
                                 @AuthenticationPrincipal AuthenticatedUser actor) {
-        CreatePackageRequest request = parseCreateRequest(rawBody);
-        return service.createPackage(request, actor != null ? actor.userId() : null);
+        validateQueryParams(request, Set.of());
+        CreatePackageRequest createRequest = parseCreateRequest(rawBody);
+        return service.createPackage(createRequest, actor != null ? actor.userId() : null);
     }
 
     @GetMapping
@@ -81,26 +86,32 @@ public class AgencyDataPackageController {
 
     @PostMapping("/{id}/approve")
     public PackageDetail approve(@PathVariable long id,
+                                 HttpServletRequest request,
                                  @RequestBody(required = false) String rawBody,
                                  @AuthenticationPrincipal AuthenticatedUser actor) {
-        PackageActionRequest request = parseActionRequest(rawBody);
-        return service.approvePackage(id, request, actor != null ? actor.userId() : null);
+        validateQueryParams(request, Set.of());
+        PackageActionRequest actionRequest = parseActionRequest(rawBody);
+        return service.approvePackage(id, actionRequest, actor != null ? actor.userId() : null);
     }
 
     @PostMapping("/{id}/reject")
     public PackageDetail reject(@PathVariable long id,
+                                HttpServletRequest request,
                                 @RequestBody(required = false) String rawBody,
                                 @AuthenticationPrincipal AuthenticatedUser actor) {
-        PackageActionRequest request = parseActionRequest(rawBody);
-        return service.rejectPackage(id, request, actor != null ? actor.userId() : null);
+        validateQueryParams(request, Set.of());
+        PackageActionRequest actionRequest = parseActionRequest(rawBody);
+        return service.rejectPackage(id, actionRequest, actor != null ? actor.userId() : null);
     }
 
     @PostMapping("/{id}/revoke")
     public PackageDetail revoke(@PathVariable long id,
+                                HttpServletRequest request,
                                 @RequestBody(required = false) String rawBody,
                                 @AuthenticationPrincipal AuthenticatedUser actor) {
-        PackageActionRequest request = parseActionRequest(rawBody);
-        return service.revokePackage(id, request, actor != null ? actor.userId() : null);
+        validateQueryParams(request, Set.of());
+        PackageActionRequest actionRequest = parseActionRequest(rawBody);
+        return service.revokePackage(id, actionRequest, actor != null ? actor.userId() : null);
     }
 
     @GetMapping("/{id}/content.xlsx")
@@ -119,10 +130,12 @@ public class AgencyDataPackageController {
 
     @PostMapping("/{id}/handoff")
     public PackageDetail handoff(@PathVariable long id,
+                                 HttpServletRequest request,
                                  @RequestBody(required = false) String rawBody,
                                  @AuthenticationPrincipal AuthenticatedUser actor) {
-        PackageActionRequest request = parseActionRequest(rawBody);
-        return service.handoffPackage(id, request, actor != null ? actor.userId() : null);
+        validateQueryParams(request, Set.of());
+        PackageActionRequest actionRequest = parseActionRequest(rawBody);
+        return service.handoffPackage(id, actionRequest, actor != null ? actor.userId() : null);
     }
 
     private CreatePackageRequest parseCreateRequest(String body) {
@@ -153,7 +166,7 @@ public class AgencyDataPackageController {
         }
         List<Long> householdIds = new ArrayList<>();
         for (JsonNode elem : hhNode) {
-            if (!elem.isIntegralNumber()) {
+            if (!elem.isIntegralNumber() || !elem.canConvertToLong()) {
                 throw new BadRequestException("PACKAGE_SCOPE_INVALID");
             }
             householdIds.add(elem.asLong());
@@ -191,7 +204,7 @@ public class AgencyDataPackageController {
         }
         JsonNode versionNode = node.get("expectedVersion");
         JsonNode shaNode = node.get("contentSha256");
-        if (!versionNode.isIntegralNumber() || !shaNode.isTextual()) {
+        if (!versionNode.isIntegralNumber() || !versionNode.canConvertToLong() || !shaNode.isTextual()) {
             throw new BadRequestException("INVALID_PACKAGE_REQUEST");
         }
         long expectedVersion = versionNode.asLong();
@@ -203,13 +216,20 @@ public class AgencyDataPackageController {
     }
 
     private void validateQueryParams(HttpServletRequest request, Set<String> allowedKeys) {
-        Map<String, String[]> params = request.getParameterMap();
-        for (String key : params.keySet()) {
-            if (!allowedKeys.contains(key)) {
-                throw new BadRequestException("INVALID_PACKAGE_FILTER");
+        String queryString = request.getQueryString();
+        if (queryString == null || queryString.isBlank()) {
+            return;
+        }
+        String[] pairs = queryString.split("&");
+        Set<String> seen = new HashSet<>();
+        for (String pair : pairs) {
+            if (pair.isEmpty()) {
+                continue;
             }
-            String[] vals = params.get(key);
-            if (vals == null || vals.length != 1) {
+            int idx = pair.indexOf('=');
+            String rawKey = idx >= 0 ? pair.substring(0, idx) : pair;
+            String key = URLDecoder.decode(rawKey, StandardCharsets.UTF_8);
+            if (!allowedKeys.contains(key) || !seen.add(key)) {
                 throw new BadRequestException("INVALID_PACKAGE_FILTER");
             }
         }
