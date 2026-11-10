@@ -29,7 +29,10 @@ import './s10.css';
 
 export function ApiInvoicesPage(): React.ReactElement {
   const navigate = useNavigate();
-  const { handleCallFailure } = useAppState();
+  const { handleCallFailure, user } = useAppState();
+  const userKey = `${user?.username ?? ''}:${user?.householdId ?? ''}`;
+  const userKeyRef = useRef(userKey);
+  userKeyRef.current = userKey;
 
   const [reloadTrigger, setReloadTrigger] = useState(0);
   const [authError, setAuthError] = useState(false);
@@ -52,11 +55,24 @@ export function ApiInvoicesPage(): React.ReactElement {
   const [appliedStatus, setAppliedStatus] = useState<InvoiceFilterStatus>('ALL');
   const [invoicePage, setInvoicePage] = useState(0);
 
+  const isMountedRef = useRef(true);
   const summaryGenRef = useRef(0);
   const invoiceGenRef = useRef(0);
+  const isBlockedRef = useRef(false);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      summaryGenRef.current++;
+      invoiceGenRef.current++;
+    };
+  }, []);
 
   const handleAuthError = useCallback(
     (err: unknown) => {
+      if (!isMountedRef.current) return;
+      isBlockedRef.current = true;
       setAuthError(true);
       setSummary(null);
       setInvoicesData(null);
@@ -69,41 +85,54 @@ export function ApiInvoicesPage(): React.ReactElement {
     [handleCallFailure, navigate],
   );
 
+  const handleForbiddenError = useCallback(
+    (err: unknown) => {
+      if (!isMountedRef.current) return;
+      isBlockedRef.current = true;
+      setSummary(null);
+      setInvoicesData(null);
+      if (err instanceof ApiHttpError && err.problem.code === 'PASSWORD_CHANGE_REQUIRED') {
+        navigate('/profile?tab=password');
+        return;
+      }
+      setForbiddenError(messageForError(err));
+    },
+    [navigate],
+  );
+
   const loadSummary = useCallback(async () => {
     const gen = ++summaryGenRef.current;
+    const keyAtStart = userKeyRef.current;
     setSummaryLoading(true);
     setSummaryError(null);
     try {
       const res = await fetchResidentBillingSummary();
-      if (summaryGenRef.current !== gen) return;
+      if (!isMountedRef.current || userKeyRef.current !== keyAtStart || summaryGenRef.current !== gen || isBlockedRef.current) return;
       setSummary(res);
       setSummaryError(null);
     } catch (err: unknown) {
-      if (summaryGenRef.current !== gen) return;
+      if (!isMountedRef.current || userKeyRef.current !== keyAtStart || summaryGenRef.current !== gen) return;
       if (err instanceof ApiHttpError) {
         if (err.problem.status === 401) {
           handleAuthError(err);
           return;
         }
         if (err.problem.status === 403) {
-          if (err.problem.code === 'PASSWORD_CHANGE_REQUIRED') {
-            navigate('/profile?tab=password');
-            return;
-          }
-          setForbiddenError(messageForError(err));
+          handleForbiddenError(err);
           return;
         }
       }
       setSummaryError(messageForError(err));
     } finally {
-      if (summaryGenRef.current === gen) {
+      if (isMountedRef.current && userKeyRef.current === keyAtStart && summaryGenRef.current === gen) {
         setSummaryLoading(false);
       }
     }
-  }, [handleAuthError, navigate]);
+  }, [handleAuthError, handleForbiddenError]);
 
   const loadInvoices = useCallback(async () => {
     const gen = ++invoiceGenRef.current;
+    const keyAtStart = userKeyRef.current;
     setInvoicesLoading(true);
     setInvoicesError(null);
     try {
@@ -113,32 +142,28 @@ export function ApiInvoicesPage(): React.ReactElement {
         page: invoicePage,
         size: 20,
       });
-      if (invoiceGenRef.current !== gen) return;
+      if (!isMountedRef.current || userKeyRef.current !== keyAtStart || invoiceGenRef.current !== gen || isBlockedRef.current) return;
       setInvoicesData(res);
       setInvoicesError(null);
     } catch (err: unknown) {
-      if (invoiceGenRef.current !== gen) return;
+      if (!isMountedRef.current || userKeyRef.current !== keyAtStart || invoiceGenRef.current !== gen) return;
       if (err instanceof ApiHttpError) {
         if (err.problem.status === 401) {
           handleAuthError(err);
           return;
         }
         if (err.problem.status === 403) {
-          if (err.problem.code === 'PASSWORD_CHANGE_REQUIRED') {
-            navigate('/profile?tab=password');
-            return;
-          }
-          setForbiddenError(messageForError(err));
+          handleForbiddenError(err);
           return;
         }
       }
       setInvoicesError(messageForError(err));
     } finally {
-      if (invoiceGenRef.current === gen) {
+      if (isMountedRef.current && userKeyRef.current === keyAtStart && invoiceGenRef.current === gen) {
         setInvoicesLoading(false);
       }
     }
-  }, [appliedPeriod, appliedStatus, invoicePage, handleAuthError, navigate]);
+  }, [appliedPeriod, appliedStatus, invoicePage, handleAuthError, handleForbiddenError]);
 
   useEffect(() => {
     if (!authError && !forbiddenError) {
@@ -167,6 +192,9 @@ export function ApiInvoicesPage(): React.ReactElement {
   };
 
   const handleReloadAll = () => {
+    isBlockedRef.current = false;
+    setForbiddenError(null);
+    setAuthError(false);
     setReloadTrigger((prev) => prev + 1);
   };
 
@@ -430,12 +458,14 @@ export function ApiInvoicesPage(): React.ReactElement {
       <ReceiptHistoryBlock
         reloadTrigger={reloadTrigger}
         onAuthError={handleAuthError}
+        onForbiddenError={handleForbiddenError}
         showInvoiceLink={true}
       />
 
       <AllocationHistoryBlock
         reloadTrigger={reloadTrigger}
         onAuthError={handleAuthError}
+        onForbiddenError={handleForbiddenError}
         showInvoiceLink={true}
       />
     </>
