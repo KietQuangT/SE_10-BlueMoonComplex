@@ -1,6 +1,6 @@
 import { act, render, screen, cleanup, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { ApiInvoiceDetailPage } from '../screens/resident/ApiInvoiceDetailPage';
 import * as residentApi from '../api/residentBilling';
 import { ApiHttpError } from '../api/client';
@@ -286,6 +286,8 @@ describe('S10 ApiInvoiceDetailPage (M-33)', () => {
 
     await waitFor(() => {
       expect(residentApi.fetchResidentInvoiceDetail).toHaveBeenCalledTimes(2);
+      expect(residentApi.fetchResidentReceipts).toHaveBeenCalledTimes(2);
+      expect(residentApi.fetchResidentCreditAllocations).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -314,4 +316,25 @@ describe('S10 ApiInvoiceDetailPage (M-33)', () => {
       expect(screen.queryByText('Tổng hóa đơn')).not.toBeInTheDocument();
     },
   );
+  it('clears old detail and history while a different invoice ID loads', async () => {
+    let resolveNew!: (value: residentApi.ResidentInvoiceDetail) => void;
+    const pending = new Promise<residentApi.ResidentInvoiceDetail>((resolve) => { resolveNew = resolve; });
+    vi.spyOn(residentApi, 'fetchResidentInvoiceDetail').mockResolvedValueOnce(mockDetail).mockReturnValueOnce(pending);
+    function ChangeInvoice() {
+      const navigate = useNavigate();
+      return <button onClick={() => navigate('/resident/invoices/43')}>Đổi hóa đơn</button>;
+    }
+    render(<MemoryRouter initialEntries={['/resident/invoices/42']}><ChangeInvoice /><Routes>
+      <Route path="/resident/invoices/:id" element={<ApiInvoiceDetailPage />} />
+    </Routes></MemoryRouter>);
+    await screen.findByText('Các khoản phí thành phần');
+    await screen.findAllByText('#501');
+    await act(async () => { screen.getByText('Đổi hóa đơn').click(); });
+    expect(screen.queryByText('Các khoản phí thành phần')).not.toBeInTheDocument();
+    expect(screen.queryByText('#501')).not.toBeInTheDocument();
+    await act(async () => { resolveNew({ ...mockDetail, invoiceId: 43, apartmentCode: 'NEW-43' }); });
+    expect((await screen.findAllByText(/NEW-43/)).length).toBeGreaterThan(0);
+    await waitFor(() => expect(residentApi.fetchResidentReceipts).toHaveBeenCalledWith(expect.objectContaining({ invoiceId: 43 })));
+  });
+
 });
