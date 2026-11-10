@@ -2,17 +2,19 @@
 
 BlueMoon Complex là ứng dụng web quản lý vận hành chung cư trong đồ án SE_10. Phiên bản hiện tại tập trung vào tài khoản và phân quyền, hộ gia đình và nhân khẩu, cư trú, đơn giá, hóa đơn, thu tiền và công nợ. Các vai trò chính là Ban quản trị (`ADMIN`), Kế toán (`ACCOUNTANT`) và Cư dân (`RESIDENT`).
 
-Repo là monorepo: API Spring Boot, giao diện React, MySQL và tài liệu nghiệp vụ nằm trong cùng một dự án. Trạng thái chính thức từng hạng mục nằm ở [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md); README mô tả phạm vi hiện có trong mã nguồn, không thay thế checklist.
+Repo là monorepo: API Spring Boot, giao diện React, MySQL và tài liệu nghiệp vụ nằm trong cùng một dự án. Trạng thái chính thức từng hạng mục nằm ở [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md); README mô tả phạm vi hiện có trong mã nguồn, không thay thế checklists.
 
-## Trạng thái hiện tại
-
-S01–S10 đã có triển khai trong mã nguồn backend. S08 (kỳ thu/tự nguyện), S09 (thu tiền/gạch nợ) và S10 (API + UI hóa đơn cư dân) đã được đánh dấu hoàn thành trong `TASKS.md`; giới hạn kiểm chứng còn lại được ghi trong `VALIDATION.md`. S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) và backend S10 qua PR [#32](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/32).
+S01–S11 backend đã có triển khai. S08 (kỳ thu/tự nguyện), S09 (thu tiền/gạch nợ), S10 (API + UI hóa đơn cư dân) và S11 backend (xuất báo cáo XLSX thu phí/cư trú) đã được đánh dấu hoàn thành trong `TASKS.md`; giới hạn kiểm chứng được ghi trong `VALIDATION.md`. S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) và backend S10 qua PR [#32](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/32). Giao diện export S11 đã được triển khai trên nhánh `hhoangsonnw/feat-s11-ui`; task chờ review PR trước khi nghiệm thu.
 
 S10 bổ sung API tra cứu và chi tiết hóa đơn/lịch sử gạch nợ cho cư dân (`/api/v1/resident/invoices`), kiểm tra quyền theo hộ ở server (chặn IDOR/truy cập chéo hộ), snapshot hóa đơn và ledger với cô lập giao dịch `REPEATABLE_READ`, phân trang và lọc theo trạng thái. UI cư dân dùng API thật để xem, lọc, phân trang và mở chi tiết/lịch sử; giao diện chỉ đọc và Demo mode dùng dữ liệu riêng. Backend S10 được duyệt G2 ngày 09/11/2026; walkthrough UI hoàn tất ngày 10/11/2026.
 
 Các giới hạn còn lại: chưa xác nhận viewport đúng 360px, zoom 200%, theme tối/reduced motion và trạng thái ledger hiếm (credit, receipt bị hủy, allocation bị đảo); chưa đo 10.000 bản ghi/EXPLAIN (chuyển sang S14); chưa chạy test snapshot khi bỏ `REPEATABLE_READ`; test `MOVED_OUT` chưa chứng minh account thuộc nhân khẩu do schema chưa nối account–nhân khẩu. Các giới hạn này không chặn S10 UI theo quyết định của Sơn. Xem [docs/VALIDATION.md](docs/VALIDATION.md).
 
-Các task tiếp theo (S11 export báo cáo, S12 gói dữ liệu cơ quan, S13 backup/restore, S14 hồi quy/hiệu năng, S15 đóng gói/bàn giao) tiếp tục được theo dõi trong [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md). Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
+S11 backend cung cấp ba endpoint tải XLSX cho Kế toán và Ban quản trị: công nợ theo kỳ, tiền mặt thu theo khoảng ngày và danh sách cư trú hiện tại. Các file được dựng theo mẫu đã duyệt, giới hạn 50.000 dòng và chỉ chứa các trường cần thiết; quyền cư trú bị từ chối với vai trò `ACCOUNTANT` và `RESIDENT`. UI `/reports` cho ADMIN/ACCOUNTANT kết nối cả ba endpoint, kiểm tra bộ lọc và xử lý trạng thái tải/lỗi.
+
+Danh sách tài khoản ADMIN dùng `GET /api/v1/accounts?page=0&size=100`, chỉ ADMIN được truy cập. API phân trang, không trả dữ liệu mật khẩu; M-10 tải dữ liệu thật và giữ tìm kiếm/lọc/phân trang hiện có. Bổ sung này đang chờ review cùng nhánh S11-UI.
+
+Các task tiếp theo (S12 gói dữ liệu cơ quan, S13 backup/restore, S14 hồi quy/hiệu năng, S15 đóng gói/bàn giao) và trạng thái review S11-UI tiếp tục được theo dõi trong [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md). Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Công nghệ
 
@@ -33,6 +35,7 @@ Các task tiếp theo (S11 export báo cáo, S12 gói dữ liệu cơ quan, S13 
 - **Phí và hóa đơn:** quản lý đơn giá theo kỳ, xem trước phí, tạo kỳ thu và snapshot các dòng phí khi phát hành.
 - **Thu bắt buộc S09:** nhiều receipt cho một hóa đơn; thu thừa trở thành credit hộ; phân bổ credit FIFO; hủy receipt và đảo phân bổ lưu lịch sử; idempotency bằng UUID và audit nghiệp vụ trong transaction; Kế toán thao tác, ADMIN chỉ đọc.
 - **Hóa đơn cư dân S10:** API và UI cho danh sách/chi tiết hóa đơn theo hộ đăng nhập, dòng phí snapshot, đã thu/còn nợ và lịch sử; lọc tháng/trạng thái, phân trang; server chặn truy cập chéo hộ. UI chỉ đọc, Demo mode độc lập.
+- **Báo cáo S11:** API tải XLSX công nợ theo kỳ (`/api/v1/reports/fee-collection.xlsx?period=YYYY-MM`), tiền mặt thu theo ngày (`/api/v1/reports/cash-receipts.xlsx?from=YYYY-MM-DD&to=YYYY-MM-DD`) và cư trú hiện tại (`/api/v1/reports/residency.xlsx`). Tối đa 50.000 dòng mỗi file; chỉ `ADMIN` được tải báo cáo cư trú, `ACCOUNTANT` chỉ được tải hai báo cáo tài chính.
 - **Frontend:** có các màn hình v1; một số luồng dùng API thật, một số luồng vẫn là Demo. Chế độ Demo giữ bộ dữ liệu riêng, không ghi vào backend.
 
 Backend kiểm tra quyền và phạm vi hộ ở server. Các thay đổi dữ liệu dùng transaction và audit nghiệp vụ; schema thay đổi qua migration Flyway mới. Không có tài khoản mặc định; ADMIN đầu tiên được tạo bằng profile bootstrap tương tác.
@@ -61,13 +64,6 @@ scripts/dev-all.sh
 
 Script thực hiện lần lượt:
 
-- **Tài khoản và phiên:** đăng nhập/đăng xuất, đổi mật khẩu, cấp và quản lý account; kiểm tra vai trò và trạng thái account ở server.
-- **Hộ và cư trú:** quản lý hộ/nhân khẩu, chuyển đi, khai báo tạm vắng, duyệt/từ chối và ghi nhận đã quay lại.
-- **Phí và hóa đơn:** đơn giá có hiệu lực theo kỳ, xem trước phí, tạo kỳ thu và lưu snapshot hóa đơn.
-- **Thu tiền S09:** thu một phần/toàn bộ hoặc thừa; phần dư thành credit. ACCOUNTANT phân bổ credit FIFO, hủy receipt hoặc đảo phân bổ. ADMIN chỉ xem. Giao dịch dùng UUID idempotency và ghi audit cùng transaction.
-- **Hóa đơn cư dân S10:** danh sách và chi tiết hóa đơn theo hộ đăng nhập, gồm các dòng phí snapshot, số đã thanh toán/còn nợ và lịch sử thu tiền mặt/bù trừ. UI có bộ lọc tháng/trạng thái, phân trang, tải lại và thử lại khi lỗi; chỉ đọc, không gửi giao dịch thanh toán.
-- **Frontend:** API mode dùng backend thật ở các màn đã nối; Demo mode tiếp tục dùng dữ liệu mẫu riêng. Kế toán dùng `/accountant/collections`; Admin dùng `/admin/collections`; Cư dân xem hóa đơn tại `/resident/invoices`.
-
 1. Chuyển working directory về thư mục gốc và yêu cầu có `.env`.
 2. Kiểm tra các cổng `3306` (MySQL), `8080` (backend) và `5173` (Vite). Nếu có cổng bận, script in tiến trình/container liên quan rồi dừng; nó không tự tắt tiến trình.
 3. Chạy `docker compose up --build -d`, khởi động MySQL 8.4 và backend Spring Boot; Compose đợi MySQL healthy trước khi chạy backend.
@@ -92,46 +88,6 @@ Chạy công cụ kiểm tra/dọn cổng có hỏi xác nhận:
 scripts/free-dev-ports.sh
 ```
 
-   ~~~bash
-   scripts/dev-all.sh
-   ~~~
-
-   Script dựng DB/backend, đợi health check rồi chạy Vite tại `http://localhost:5173`. Nhấn `Ctrl+C` dừng frontend; dừng DB/backend bằng `docker compose stop`.
-
-   Hoặc chạy riêng backend:
-
-   ~~~bash
-   scripts/dev.sh
-   ~~~
-
-   Sau đó mở terminal khác để chạy frontend: `cd frontend && npm ci && npm run dev`. Dev server proxy `/api` và `/actuator` tới backend cục bộ.
-
-Không có account mặc định. Để tạo ADMIN đầu tiên trên DB mới:
-
-1. Đảm bảo MySQL Compose đang chạy. `.env` được Compose đọc, nhưng Maven/Java chạy trên máy host **không tự nạp `.env`**. Cấu hình biến DB cho terminal theo thông tin trong `.env`:
-
-   ~~~bash
-   export DB_HOST=127.0.0.1
-   export DB_PORT=3306
-   export DB_NAME=bluemoon
-   export DB_USER=bluemoon
-   printf 'Nhập DB_PASSWORD: '
-   read -rs DB_PASSWORD
-   printf '\n'
-   export DB_PASSWORD
-   ~~~
-
-   Cách nhập này không ghi mật khẩu vào lịch sử shell.
-
-2. Đóng gói backend và chạy profile bootstrap trong terminal tương tác thật (không chạy qua pipe hoặc redirect):
-
-   ~~~bash
-   cd backend
-   ./mvnw -B -ntp package
-   java -jar target/bluemoon-backend-0.1.0-SNAPSHOT.jar --spring.profiles.active=bootstrap
-   ~~~
-
-3. Nhập username, họ tên, email và mật khẩu hai lần tại console. Không có mật khẩu mặc định. Nếu DB đã có ADMIN (kể cả tài khoản inactive), bootstrap sẽ không tạo tài khoản khác.
 Công cụ liệt kê listener trên các cổng dev. Với container, nhập `y` để gọi `docker stop`; với process thường, nhập `y` để gửi `SIGTERM`. Nhập `N` hoặc nhấn Enter để giữ process/container. Sau khi cổng trống, chạy lại `scripts/dev-all.sh`.
 
 ### Script chạy database và backend
@@ -288,6 +244,13 @@ npm run build
 ```
 
 Integration tests có thể ghi fixture và áp migration. Chỉ trỏ chúng tới database cô lập dành cho kiểm thử, không dùng database chung hoặc dữ liệu cư dân thật. Ghi lệnh, kết quả và giới hạn kiểm thử vào [docs/VALIDATION.md](docs/VALIDATION.md).
+
+### Bằng chứng kiểm thử S11 backend
+
+- `./mvnw -B -ntp verify`: 353 test pass, 0 failure/error/skip.
+- `./mvnw -B -ntp -Pintegration verify`: 353 Surefire + 173 Failsafe = 526 test pass trên MySQL 8.4 test cô lập; container tạm được xóa sau lượt chạy.
+- Review rủi ro độc lập: không có lỗi chặn; ba workbook synthetic đã được mở và duyệt trong Excel.
+- UI tải báo cáo chưa nằm trong nhánh backend này; sẽ được làm ở task riêng.
 
 ### Bằng chứng kiểm thử S09 và S10 gần nhất
 
