@@ -12,8 +12,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import vn.edu.se10.bluemoon.common.audit.AuditService;
 import vn.edu.se10.bluemoon.common.error.BadRequestException;
 import vn.edu.se10.bluemoon.common.error.ConflictException;
@@ -40,6 +43,7 @@ public class AgencyDataPackageService {
     private final AgencyDataPackageWriter writer;
     private final AuditService auditService;
     private final Clock clock;
+    private final TransactionTemplate transactionTemplate;
 
     public AgencyDataPackageService(
         AgencyDataPackageStore store,
@@ -47,10 +51,26 @@ public class AgencyDataPackageService {
         AuditService auditService,
         Clock clock
     ) {
+        this(store, writer, auditService, clock, null);
+    }
+
+    public AgencyDataPackageService(
+        AgencyDataPackageStore store,
+        AgencyDataPackageWriter writer,
+        AuditService auditService,
+        Clock clock,
+        PlatformTransactionManager transactionManager
+    ) {
         this.store = store;
         this.writer = writer;
         this.auditService = auditService;
         this.clock = clock;
+        if (transactionManager != null) {
+            this.transactionTemplate = new TransactionTemplate(transactionManager);
+            this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        } else {
+            this.transactionTemplate = null;
+        }
     }
 
     @Transactional(isolation = Isolation.REPEATABLE_READ)
@@ -147,16 +167,18 @@ public class AgencyDataPackageService {
     @Transactional(readOnly = true)
     public PackageSummaryPage listPackages(String status, int page, int size, Long actorId) {
         Instant now = clock.instant();
-        Instant notExpiredCutoff = now.atZone(ZoneOffset.UTC).minusYears(5).toInstant();
-        int offset = page * size;
-        List<AgencyPackageRecord> records = store.findPackages(status, notExpiredCutoff, offset, size);
-        long total = store.countPackages(status, notExpiredCutoff);
-
-        List<PackageSummary> summaries = records.stream()
-            .map(r -> toSummary(r, actorId, now))
-            .toList();
-
+        long total = store.countPackages(status, now);
         int totalPages = total == 0 ? 0 : (int) Math.ceil((double) total / size);
+
+        List<PackageSummary> summaries;
+        long offset = (long) page * size;
+        if (offset < 0 || offset >= total) {
+            summaries = Collections.emptyList();
+        } else {
+            summaries = store.findPackages(status, now, (int) offset, size).stream()
+                .map(r -> toSummary(r, actorId, now))
+                .toList();
+        }
         return new PackageSummaryPage(summaries, page, size, total, totalPages);
     }
 
@@ -178,15 +200,22 @@ public class AgencyDataPackageService {
         byte[] bytes = store.findPackageContentBytes(id)
             .orElseThrow(() -> new ConflictException("PACKAGE_CONTENT_UNAVAILABLE"));
 
+        String actualSha = AgencyDataPackageWriter.computeSha256(bytes);
+        if (!actualSha.equals(pkg.contentSha256())) {
+            throw new IllegalStateException("Nội dung gói bị sai lệch mã hash SHA-256");
+        }
+
         List<AgencyPackageRow> rows = writer.parseWorkbookRows(bytes);
         long totalElements = rows.size();
         int totalPages = totalElements == 0 ? 0 : (int) Math.ceil((double) totalElements / size);
-        int fromIndex = page * size;
+        long fromIndex = (long) page * size;
         List<AgencyPackageRow> content;
-        if (fromIndex >= totalElements) {
+        if (fromIndex < 0 || fromIndex >= totalElements) {
             content = Collections.emptyList();
         } else {
-            content = rows.subList(fromIndex, Math.min(fromIndex + size, (int) totalElements));
+            int start = (int) fromIndex;
+            int end = (int) Math.min(fromIndex + size, totalElements);
+            content = rows.subList(start, end);
         }
 
         return new PackagePreviewResponse(
@@ -206,9 +235,9 @@ public class AgencyDataPackageService {
         if (actorId == null) {
             throw new ForbiddenException("Chưa xác thực");
         }
-        Instant now = clock.instant();
         AgencyPackageRecord pkg = store.findPackageForUpdate(id)
             .orElseThrow(() -> new NotFoundException("PACKAGE_NOT_FOUND"));
+        Instant now = clock.instant();
 
         checkMetadataExpiry(pkg, now);
 
@@ -222,6 +251,9 @@ public class AgencyDataPackageService {
             throw new ConflictException("PACKAGE_VERSION_CONFLICT");
         }
         if (now.isAfter(pkg.contentDeleteAfter()) || now.equals(pkg.contentDeleteAfter()) || pkg.contentDeletedAt() != null) {
+            throw new ConflictException("PACKAGE_CONTENT_UNAVAILABLE");
+        }
+        if (store.findPackageContentBytes(id).isEmpty()) {
             throw new ConflictException("PACKAGE_CONTENT_UNAVAILABLE");
         }
 
@@ -249,14 +281,17 @@ public class AgencyDataPackageService {
         if (actorId == null) {
             throw new ForbiddenException("Chưa xác thực");
         }
-        Instant now = clock.instant();
         AgencyPackageRecord pkg = store.findPackageForUpdate(id)
             .orElseThrow(() -> new NotFoundException("PACKAGE_NOT_FOUND"));
+        Instant now = clock.instant();
 
         checkMetadataExpiry(pkg, now);
 
         if (!"DRAFT".equals(pkg.status())) {
             throw new ConflictException("PACKAGE_STATE_CONFLICT");
+        }
+        if (now.isAfter(pkg.contentDeleteAfter()) || now.equals(pkg.contentDeleteAfter()) || pkg.contentDeletedAt() != null) {
+            throw new ConflictException("PACKAGE_CONTENT_UNAVAILABLE");
         }
         if (!pkg.version().equals(request.expectedVersion()) || !pkg.contentSha256().equals(request.contentSha256())) {
             throw new ConflictException("PACKAGE_VERSION_CONFLICT");
@@ -283,9 +318,9 @@ public class AgencyDataPackageService {
         if (actorId == null) {
             throw new ForbiddenException("Chưa xác thực");
         }
-        Instant now = clock.instant();
         AgencyPackageRecord pkg = store.findPackageForUpdate(id)
             .orElseThrow(() -> new NotFoundException("PACKAGE_NOT_FOUND"));
+        Instant now = clock.instant();
 
         checkMetadataExpiry(pkg, now);
 
@@ -317,9 +352,9 @@ public class AgencyDataPackageService {
         if (actorId == null) {
             throw new ForbiddenException("Chưa xác thực");
         }
-        Instant now = clock.instant();
         AgencyPackageRecord pkg = store.findPackageForUpdate(id)
             .orElseThrow(() -> new NotFoundException("PACKAGE_NOT_FOUND"));
+        Instant now = clock.instant();
 
         checkMetadataExpiry(pkg, now);
 
@@ -359,9 +394,9 @@ public class AgencyDataPackageService {
         if (actorId == null) {
             throw new ForbiddenException("Chưa xác thực");
         }
-        Instant now = clock.instant();
         AgencyPackageRecord pkg = store.findPackageForUpdate(id)
             .orElseThrow(() -> new NotFoundException("PACKAGE_NOT_FOUND"));
+        Instant now = clock.instant();
 
         checkMetadataExpiry(pkg, now);
 
@@ -397,36 +432,44 @@ public class AgencyDataPackageService {
         return toDetail(updated, householdIds, actorId, now);
     }
 
-    @Transactional
     public void executeRetentionCleanup() {
         while (true) {
-            Instant now = clock.instant();
-            Instant metadataCutoff = now.atZone(ZoneOffset.UTC).minusYears(5).toInstant();
-            Instant auditCutoff = metadataCutoff;
-
-            List<Long> contentBatch = store.findPackageIdsForContentDeletion(now, 100);
-            int contentCount = 0;
-            if (!contentBatch.isEmpty()) {
-                contentCount = store.deletePackageContents(contentBatch);
-                store.markContentsDeleted(contentBatch, now);
+            boolean hasMore;
+            if (transactionTemplate != null) {
+                Boolean res = transactionTemplate.execute(status -> executeCleanupBatch());
+                hasMore = res != null && res;
+            } else {
+                hasMore = executeCleanupBatch();
             }
-
-            List<Long> metaBatch = store.findPackageIdsForMetadataDeletion(metadataCutoff, 100);
-            int metadataCount = 0;
-            if (!metaBatch.isEmpty()) {
-                metadataCount = store.deletePackagesMetadata(metaBatch);
-            }
-
-            int auditCount = store.deleteExpiredAudits(auditCutoff, S12_AUDIT_ACTIONS, 1000);
-
-            if (contentCount > 0 || metadataCount > 0 || auditCount > 0) {
-                auditService.recordPackageRetentionCleanup(UUID.randomUUID(), now, contentCount, metadataCount, auditCount);
-            }
-
-            if (contentBatch.size() < 100 && metaBatch.size() < 100 && auditCount < 1000) {
+            if (!hasMore) {
                 break;
             }
         }
+    }
+
+    public boolean executeCleanupBatch() {
+        Instant now = clock.instant();
+
+        List<Long> contentBatch = store.findPackageIdsForContentDeletion(now, 100);
+        int contentCount = 0;
+        if (!contentBatch.isEmpty()) {
+            contentCount = store.deletePackageContents(contentBatch);
+            store.markContentsDeleted(contentBatch, now);
+        }
+
+        List<Long> metaBatch = store.findPackageIdsForMetadataDeletion(now, 100);
+        int metadataCount = 0;
+        if (!metaBatch.isEmpty()) {
+            metadataCount = store.deletePackagesMetadata(metaBatch);
+        }
+
+        int auditCount = store.deleteExpiredAudits(now, S12_AUDIT_ACTIONS, 1000);
+
+        if (contentCount > 0 || metadataCount > 0 || auditCount > 0) {
+            auditService.recordPackageRetentionCleanup(UUID.randomUUID(), now, contentCount, metadataCount, auditCount);
+        }
+
+        return contentBatch.size() == 100 || metaBatch.size() == 100 || auditCount == 1000;
     }
 
     private AgencyPackageRecord findPackageWithExpiryCheck(Long id, Instant now) {
@@ -484,7 +527,17 @@ public class AgencyDataPackageService {
     }
 
     public static boolean canReject(AgencyPackageRecord pkg) {
-        return "DRAFT".equals(pkg.status());
+        return "DRAFT".equals(pkg.status()) && pkg.contentDeletedAt() == null;
+    }
+
+    public static boolean canReject(AgencyPackageRecord pkg, Instant now) {
+        if (!"DRAFT".equals(pkg.status())) {
+            return false;
+        }
+        if (pkg.contentDeletedAt() != null) {
+            return false;
+        }
+        return now.isBefore(pkg.contentDeleteAfter());
     }
 
     public static boolean canDownload(AgencyPackageRecord pkg, Instant now) {
@@ -542,7 +595,7 @@ public class AgencyDataPackageService {
             pkg.handedOffAt(),
             pkg.revokedAt(),
             canApprove(pkg, actorId, now),
-            canReject(pkg),
+            canReject(pkg, now),
             canDownload(pkg, now),
             canRevoke(pkg),
             canHandoff(pkg, now)
@@ -568,7 +621,7 @@ public class AgencyDataPackageService {
             pkg.handedOffAt(),
             pkg.revokedAt(),
             canApprove(pkg, actorId, now),
-            canReject(pkg),
+            canReject(pkg, now),
             canDownload(pkg, now),
             canRevoke(pkg),
             canHandoff(pkg, now),

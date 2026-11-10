@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -162,6 +163,7 @@ class AgencyDataPackageServiceTest {
         );
         when(store.findPackageById(100L)).thenReturn(Optional.of(approved));
         when(store.findHouseholdIdsByPackageId(100L)).thenReturn(List.of(10L));
+        when(store.findPackageContentBytes(100L)).thenReturn(Optional.of(new byte[10]));
 
         PackageActionRequest req = new PackageActionRequest(1L, "hash123");
         PackageDetail res = service.approvePackage(100L, req, 2L); // actor is 2L
@@ -408,5 +410,159 @@ class AgencyDataPackageServiceTest {
         service.executeRetentionCleanup();
 
         verify(auditService, never()).recordPackageRetentionCleanup(any(), any(), anyLong(), anyLong(), anyLong());
+    }
+
+    @Test
+    void listPackages_largePageNumber_returnsEmptyListWithoutOverflow() {
+        when(store.countPackages(isNull(), any(Instant.class))).thenReturn(5L);
+
+        PackageSummaryPage result = service.listPackages(null, 100_000_000, 20, 1L);
+
+        assertNotNull(result);
+        assertTrue(result.content().isEmpty());
+        assertEquals(5L, result.totalElements());
+        assertEquals(1, result.totalPages());
+        verify(store, never()).findPackages(any(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void previewPackage_largePageNumber_returnsEmptyListWithoutException() {
+        byte[] fakeBytes = new byte[10];
+        String expectedHash = AgencyDataPackageWriter.computeSha256(fakeBytes);
+        AgencyPackageRecord pkg = new AgencyPackageRecord(
+            100L, "DRAFT", 1L, "AGENCY_RESIDENCY_V1", "1.0",
+            "AGENCY", "REF", "LIC", 1L, baseTime,
+            null, null, null, null, null, null, null, null,
+            null, baseTime.plus(30, ChronoUnit.DAYS), null,
+            expectedHash, 2L, 2L, 2L, 0L
+        );
+        when(store.findPackageById(100L)).thenReturn(Optional.of(pkg));
+        when(store.findPackageContentBytes(100L)).thenReturn(Optional.of(fakeBytes));
+        List<AgencyPackageRow> rows = List.of(
+            new AgencyPackageRow("H01", "A101", "User A", "RESIDING"),
+            new AgencyPackageRow("H02", "A102", "User B", "RESIDING")
+        );
+        when(writer.parseWorkbookRows(fakeBytes)).thenReturn(rows);
+
+        PackagePreviewResponse res = service.previewPackage(100L, 100_000_000, 20, 1L);
+
+        assertNotNull(res);
+        assertTrue(res.content().isEmpty());
+        assertEquals(2L, res.totalElements());
+        assertEquals(1, res.totalPages());
+    }
+
+    @Test
+    void metadataExpiry_leapYearCreation_boundaries() {
+        // Created on leap day: 2024-02-29T10:00:00Z
+        Instant leapCreated = Instant.parse("2024-02-29T10:00:00Z");
+        AgencyPackageRecord pkg = new AgencyPackageRecord(
+            200L, "DRAFT", 1L, "AGENCY_RESIDENCY_V1", "1.0",
+            "AGENCY", "REF", "LIC", 1L, leapCreated,
+            null, null, null, null, null, null, null, null,
+            null, leapCreated.plus(30, ChronoUnit.DAYS), null,
+            "hash123", 1L, 1L, 1L, 0L
+        );
+        when(store.findPackageById(200L)).thenReturn(Optional.of(pkg));
+        when(store.findHouseholdIdsByPackageId(200L)).thenReturn(List.of(1L));
+
+        // 5 calendar years later is 2029-02-28T10:00:00Z (2029 is not leap)
+        // 1 second before 5 years: valid
+        Clock clockBefore = Clock.fixed(Instant.parse("2029-02-28T09:59:59Z"), ZoneOffset.UTC);
+        AgencyDataPackageService serviceBefore = new AgencyDataPackageService(store, writer, auditService, clockBefore);
+        assertNotNull(serviceBefore.getPackageDetail(200L, 1L));
+
+        // Exactly at 5 years: expired -> 404
+        Clock clockAt = Clock.fixed(Instant.parse("2029-02-28T10:00:00Z"), ZoneOffset.UTC);
+        AgencyDataPackageService serviceAt = new AgencyDataPackageService(store, writer, auditService, clockAt);
+        assertThrows(NotFoundException.class, () -> serviceAt.getPackageDetail(200L, 1L));
+    }
+
+    @Test
+    void metadataExpiry_nonLeapCreation_evaluatedOnLeapYear_boundaries() {
+        // Created on 2023-02-28T12:00:00Z
+        Instant nonLeapCreated = Instant.parse("2023-02-28T12:00:00Z");
+        AgencyPackageRecord pkg = new AgencyPackageRecord(
+            300L, "DRAFT", 1L, "AGENCY_RESIDENCY_V1", "1.0",
+            "AGENCY", "REF", "LIC", 1L, nonLeapCreated,
+            null, null, null, null, null, null, null, null,
+            null, nonLeapCreated.plus(30, ChronoUnit.DAYS), null,
+            "hash123", 1L, 1L, 1L, 0L
+        );
+        when(store.findPackageById(300L)).thenReturn(Optional.of(pkg));
+
+        // 5 calendar years later is 2028-02-28T12:00:00Z
+        // Evaluated on 2028-02-29T08:00:00Z (leap day): already expired!
+        Clock clockLeapDay = Clock.fixed(Instant.parse("2028-02-29T08:00:00Z"), ZoneOffset.UTC);
+        AgencyDataPackageService serviceLeap = new AgencyDataPackageService(store, writer, auditService, clockLeapDay);
+        assertThrows(NotFoundException.class, () -> serviceLeap.getPackageDetail(300L, 1L));
+    }
+
+    @Test
+    void executeRetentionCleanup_multipleBatchesWithTransactionManager() {
+        org.springframework.transaction.PlatformTransactionManager txManager = mock(org.springframework.transaction.PlatformTransactionManager.class);
+        org.springframework.transaction.TransactionStatus txStatus = mock(org.springframework.transaction.TransactionStatus.class);
+        when(txManager.getTransaction(any())).thenReturn(txStatus);
+
+        AgencyDataPackageService serviceWithTx = new AgencyDataPackageService(store, writer, auditService, clock, txManager);
+
+        List<Long> fullBatch = new java.util.ArrayList<>();
+        for (long i = 1; i <= 100; i++) {
+            fullBatch.add(i);
+        }
+        when(store.findPackageIdsForContentDeletion(any(Instant.class), eq(100)))
+            .thenReturn(fullBatch)
+            .thenReturn(Collections.emptyList());
+        when(store.deletePackageContents(fullBatch)).thenReturn(100);
+
+        when(store.findPackageIdsForMetadataDeletion(any(Instant.class), eq(100)))
+            .thenReturn(Collections.emptyList());
+        when(store.deleteExpiredAudits(any(Instant.class), anyList(), eq(1000)))
+            .thenReturn(0);
+
+        serviceWithTx.executeRetentionCleanup();
+
+        verify(store).deletePackageContents(eq(fullBatch));
+        verify(store).markContentsDeleted(eq(fullBatch), eq(baseTime));
+        verify(txManager, atLeast(2)).commit(any());
+        verify(auditService).recordPackageRetentionCleanup(any(), eq(baseTime), eq(100L), eq(0L), eq(0L));
+    }
+
+    @Test
+    void approvePackage_contentMissingInDb_throwsConflict() {
+        AgencyPackageRecord pkg = new AgencyPackageRecord(
+            100L, "DRAFT", 1L, "AGENCY_RESIDENCY_V1", "1.0",
+            "AGENCY", "REF", "LIC", 1L, baseTime,
+            null, null, null, null, null, null, null, null,
+            null, baseTime.plus(30, ChronoUnit.DAYS), null,
+            "hash123", 1L, 1L, 1L, 0L
+        );
+        when(store.findPackageForUpdate(100L)).thenReturn(Optional.of(pkg));
+        when(store.findPackageContentBytes(100L)).thenReturn(Optional.empty());
+
+        PackageActionRequest req = new PackageActionRequest(1L, "hash123");
+        assertThrows(ConflictException.class, () -> service.approvePackage(100L, req, 2L));
+    }
+
+    @Test
+    void canReject_checks30DayContentWindow() {
+        AgencyPackageRecord pkg = new AgencyPackageRecord(
+            100L, "DRAFT", 1L, "AGENCY_RESIDENCY_V1", "1.0",
+            "AGENCY", "REF", "LIC", 1L, baseTime,
+            null, null, null, null, null, null, null, null,
+            null, baseTime.plus(30, ChronoUnit.DAYS), null,
+            "hash123", 1L, 1L, 1L, 0L
+        );
+        assertTrue(AgencyDataPackageService.canReject(pkg, baseTime.plus(29, ChronoUnit.DAYS)));
+        assertFalse(AgencyDataPackageService.canReject(pkg, baseTime.plus(31, ChronoUnit.DAYS)));
+
+        AgencyPackageRecord deletedPkg = new AgencyPackageRecord(
+            100L, "DRAFT", 1L, "AGENCY_RESIDENCY_V1", "1.0",
+            "AGENCY", "REF", "LIC", 1L, baseTime,
+            null, null, null, null, null, null, null, null,
+            null, baseTime.plus(30, ChronoUnit.DAYS), baseTime.plus(10, ChronoUnit.DAYS),
+            "hash123", 1L, 1L, 1L, 0L
+        );
+        assertFalse(AgencyDataPackageService.canReject(deletedPkg, baseTime.plus(5, ChronoUnit.DAYS)));
     }
 }
