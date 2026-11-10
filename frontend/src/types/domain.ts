@@ -77,7 +77,7 @@ export interface AccountRecord {
   fullName: string;
   username: string;
   email: string;
-  role: 'ADMIN' | 'ACCOUNTANT' | 'RESIDENT';
+  role: RoleCode;
   householdCode: string | null;
   householdId: number | null;
   status: 'ACTIVE' | 'INACTIVE';

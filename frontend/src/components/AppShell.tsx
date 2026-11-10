@@ -70,7 +70,7 @@ function useNavGroups(role: RoleCode): NavGroup[] {
         {
           heading: 'Báo cáo',
           items: [
-            { to: '/admin/reports/residency', label: 'Báo cáo lưu trú', icon: 'file-spreadsheet' },
+            { to: '/reports', label: 'Báo cáo', icon: 'file-spreadsheet' },
             { to: '/admin/reports/packages', label: 'Gói cho cơ quan', icon: 'package-check' },
           ],
         },
@@ -90,8 +90,8 @@ function useNavGroups(role: RoleCode): NavGroup[] {
           heading: 'Báo cáo',
           items: [
             {
-              to: '/accountant/collection-rate',
-              label: 'Báo cáo tỷ lệ thu',
+              to: '/reports',
+              label: 'Báo cáo',
               icon: 'file-spreadsheet',
             },
           ],
