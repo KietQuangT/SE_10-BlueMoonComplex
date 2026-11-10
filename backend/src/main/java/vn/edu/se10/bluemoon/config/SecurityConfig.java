@@ -50,6 +50,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/me", "/api/v1/auth/logout").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/v1/accounts", "/api/v1/accounts/*/disable", "/api/v1/accounts/*/enable", "/api/v1/accounts/*/unlock").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/v1/residency-declarations/mine").hasRole("RESIDENT")
+                .requestMatchers(HttpMethod.GET, "/api/v1/reports/fee-collection.xlsx", "/api/v1/reports/cash-receipts.xlsx").hasAnyRole("ADMIN", "ACCOUNTANT")
+                .requestMatchers(HttpMethod.GET, "/api/v1/reports/residency.xlsx").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET,
                     "/api/v1/resident/invoices",
                     "/api/v1/resident/invoices/*",
