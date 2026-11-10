@@ -82,6 +82,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/voluntary-campaigns", "/api/v1/voluntary-campaigns/*/publish", "/api/v1/voluntary-campaigns/*/close").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/voluntary-campaigns/*").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/voluntary-campaigns/*/contributions", "/api/v1/voluntary-contributions/*/void").hasRole("ACCOUNTANT")
+                .requestMatchers(HttpMethod.GET, "/api/v1/reports/fee-collection.xlsx", "/api/v1/reports/cash-receipts.xlsx").hasAnyRole("ADMIN", "ACCOUNTANT")
+                .requestMatchers(HttpMethod.GET, "/api/v1/reports/residency.xlsx").hasRole("ADMIN")
                 .anyRequest().denyAll())
             .securityContext(context -> context.securityContextRepository(contextRepository))
             .exceptionHandling(errors -> errors
