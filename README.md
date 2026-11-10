@@ -2,9 +2,7 @@
 
 BlueMoon Complex là ứng dụng web quản lý vận hành chung cư trong đồ án SE_10. Phiên bản hiện tại tập trung vào tài khoản và phân quyền, hộ gia đình và nhân khẩu, cư trú, đơn giá, hóa đơn, thu tiền và công nợ. Các vai trò chính là Ban quản trị (`ADMIN`), Kế toán (`ACCOUNTANT`) và Cư dân (`RESIDENT`).
 
-Repo là monorepo: API Spring Boot, giao diện React, MySQL và tài liệu nghiệp vụ nằm trong cùng một dự án. Trạng thái chính thức từng hạng mục nằm ở [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md); README mô tả phạm vi hiện có trong mã nguồn, không thay thế checklist.
-
-## Trạng thái hiện tại
+Repo là monorepo: API Spring Boot, giao diện React, MySQL và tài liệu nghiệp vụ nằm trong cùng một dự án. Trạng thái chính thức từng hạng mục nằm ở [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md); README mô tả phạm vi hiện có trong mã nguồn, không thay thế checklists.
 
 S01–S11 backend đã có triển khai. S08 (kỳ thu/tự nguyện), S09 (thu tiền/gạch nợ), S10 (API + UI hóa đơn cư dân) và S11 backend (xuất báo cáo XLSX thu phí/cư trú) đã được đánh dấu hoàn thành trong `TASKS.md`; giới hạn kiểm chứng được ghi trong `VALIDATION.md`. S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) và backend S10 qua PR [#32](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/32). Giao diện export S11 đã được triển khai trên nhánh `hhoangsonnw/feat-s11-ui`; task chờ review PR trước khi nghiệm thu.
 
