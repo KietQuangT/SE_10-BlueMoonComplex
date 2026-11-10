@@ -267,9 +267,9 @@ describe('S10 session expiration, auth guards & privacy traps', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  it.each(['receipts', 'allocations'] as const)(
-    'ignores a late 401 from %s history after unmount',
-    async (block) => {
+  it.each([['receipts', 401], ['receipts', 403], ['allocations', 401], ['allocations', 403]] as const)(
+    'ignores a late %s history error %s after unmount',
+    async (block, status) => {
       let rejectHistory!: (reason: unknown) => void;
       const pendingHistory = new Promise<residentApi.PageResponse<any>>((_, reject) => { rejectHistory = reject; });
       const empty = { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 };
@@ -285,8 +285,48 @@ describe('S10 session expiration, auth guards & privacy traps', () => {
       const view = render(<BrowserRouter><ApiInvoicesPage /></BrowserRouter>);
       view.unmount();
 
-      await act(async () => { rejectHistory(new ApiHttpError({ status: 401, title: 'Unauthorized' })); });
+      await act(async () => { rejectHistory(new ApiHttpError({ status, code: 'PASSWORD_CHANGE_REQUIRED', title: 'Unauthorized' })); });
       expect(mockHandleCallFailure).not.toHaveBeenCalled();
+      expect(mockNavigate).not.toHaveBeenCalled();
     },
   );
+  it.each(['receipts', 'allocations'] as const)(
+    'redirects on PASSWORD_CHANGE_REQUIRED from %s history', async (block) => {
+      const empty = { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 };
+      vi.spyOn(residentApi, 'fetchResidentBillingSummary').mockResolvedValue({
+        totalOutstanding: '430000', outstandingInvoiceCount: 2,
+        nearestDueDate: null, nearestDuePeriod: null, creditBalance: '70000',
+      });
+      vi.spyOn(residentApi, 'fetchResidentInvoices').mockResolvedValue(empty);
+      const receipt = vi.spyOn(residentApi, 'fetchResidentReceipts').mockResolvedValue(empty);
+      const allocation = vi.spyOn(residentApi, 'fetchResidentCreditAllocations').mockResolvedValue(empty);
+      (block === 'receipts' ? receipt : allocation).mockRejectedValue(
+        new ApiHttpError({ status: 403, code: 'PASSWORD_CHANGE_REQUIRED', title: 'Forbidden' }),
+      );
+      render(<BrowserRouter><ApiInvoicesPage /></BrowserRouter>);
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/profile?tab=password'));
+      expect(screen.queryByText('430.000 đ')).not.toBeInTheDocument();
+    },
+  );
+
+  it.each([401, 403])('ignores a late %s from the prior session after keyed remount', async (status) => {
+    let rejectOld!: (reason: unknown) => void;
+    const pending = new Promise<residentApi.ResidentBillingSummary>((_, reject) => { rejectOld = reject; });
+    const empty = { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 };
+    vi.spyOn(residentApi, 'fetchResidentBillingSummary').mockReturnValueOnce(pending).mockResolvedValue({
+      totalOutstanding: '120000', outstandingInvoiceCount: 1,
+      nearestDueDate: null, nearestDuePeriod: null, creditBalance: '0',
+    });
+    vi.spyOn(residentApi, 'fetchResidentInvoices').mockResolvedValue(empty);
+    vi.spyOn(residentApi, 'fetchResidentReceipts').mockResolvedValue(empty);
+    vi.spyOn(residentApi, 'fetchResidentCreditAllocations').mockResolvedValue(empty);
+    const view = render(<BrowserRouter><ApiInvoicesPage key="old-user:10" /></BrowserRouter>);
+    view.rerender(<BrowserRouter><ApiInvoicesPage key="new-user:11" /></BrowserRouter>);
+    await screen.findByText('120.000 đ');
+    await act(async () => { rejectOld(new ApiHttpError({ status, code: 'PASSWORD_CHANGE_REQUIRED', title: 'Forbidden' })); });
+    expect(mockHandleCallFailure).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(screen.getByText('120.000 đ')).toBeInTheDocument();
+  });
+
 });
