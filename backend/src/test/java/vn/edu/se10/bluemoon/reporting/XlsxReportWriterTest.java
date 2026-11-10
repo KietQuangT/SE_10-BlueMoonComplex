@@ -57,6 +57,9 @@ class XlsxReportWriterTest {
 
             // Check TongHop metadata
             Sheet tongHop = wb.getSheetAt(0);
+            for (int c = 0; c < XlsxReportWriter.FEE_COLLECTION_TONG_HOP_WIDTHS.length; c++) {
+                assertEquals(XlsxReportWriter.FEE_COLLECTION_TONG_HOP_WIDTHS[c] * 256, tongHop.getColumnWidth(c));
+            }
             assertEquals("Mã mẫu", getCell(tongHop, 0, 0));
             assertEquals("FEE_COLLECTION_V1", getCell(tongHop, 0, 1));
             assertEquals("Phiên bản", getCell(tongHop, 1, 0));
@@ -73,6 +76,10 @@ class XlsxReportWriterTest {
 
             // Check HoaDon headers
             Sheet hoaDon = wb.getSheetAt(1);
+            assertTrue(hoaDon.getRow(0).getCell(0).getCellStyle().getWrapText());
+            for (int c = 0; c < XlsxReportWriter.FEE_COLLECTION_HOA_DON_WIDTHS.length; c++) {
+                assertEquals(XlsxReportWriter.FEE_COLLECTION_HOA_DON_WIDTHS[c] * 256, hoaDon.getColumnWidth(c));
+            }
             assertEquals("Mã hóa đơn", getCell(hoaDon, 0, 0));
             assertEquals("Mã hộ", getCell(hoaDon, 0, 1));
             assertEquals("Căn hộ", getCell(hoaDon, 0, 2));
@@ -137,6 +144,9 @@ class XlsxReportWriterTest {
             assertEquals("PhieuThu", wb.getSheetName(1));
 
             Sheet tongHop = wb.getSheetAt(0);
+            for (int c = 0; c < XlsxReportWriter.CASH_RECEIPTS_TONG_HOP_WIDTHS.length; c++) {
+                assertEquals(XlsxReportWriter.CASH_RECEIPTS_TONG_HOP_WIDTHS[c] * 256, tongHop.getColumnWidth(c));
+            }
             assertEquals("CASH_RECEIPTS_V1", getCell(tongHop, 0, 1));
             assertEquals("2026-10-01", getCell(tongHop, 8, 0));
             assertEquals("2026-10-31", getCell(tongHop, 8, 1));
@@ -144,6 +154,10 @@ class XlsxReportWriterTest {
             assertEquals("600000", getCell(tongHop, 8, 4));
 
             Sheet phieuThu = wb.getSheetAt(1);
+            assertTrue(phieuThu.getRow(0).getCell(0).getCellStyle().getWrapText());
+            for (int c = 0; c < XlsxReportWriter.CASH_RECEIPTS_PHIEU_THU_WIDTHS.length; c++) {
+                assertEquals(XlsxReportWriter.CASH_RECEIPTS_PHIEU_THU_WIDTHS[c] * 256, phieuThu.getColumnWidth(c));
+            }
             assertEquals("Mã receipt", getCell(phieuThu, 0, 0));
             assertEquals("Kỳ hóa đơn nguồn", getCell(phieuThu, 0, 1));
             assertEquals("Mã hộ", getCell(phieuThu, 0, 2));
@@ -186,6 +200,10 @@ class XlsxReportWriterTest {
             assertEquals("2", getCell(sheet, 7, 1));
 
             // Table headers
+            assertTrue(sheet.getRow(9).getCell(0).getCellStyle().getWrapText());
+            for (int c = 0; c < XlsxReportWriter.RESIDENCY_CU_TRU_WIDTHS.length; c++) {
+                assertEquals(XlsxReportWriter.RESIDENCY_CU_TRU_WIDTHS[c] * 256, sheet.getColumnWidth(c));
+            }
             assertEquals("Mã hộ", getCell(sheet, 9, 0));
             assertEquals("Căn hộ", getCell(sheet, 9, 1));
             assertEquals("Họ tên", getCell(sheet, 9, 2));

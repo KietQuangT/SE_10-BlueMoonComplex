@@ -22,6 +22,12 @@ public class XlsxReportWriter {
     private static final DateTimeFormatter LOCAL_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss XXX").withZone(VIETNAM_ZONE);
     private static final DateTimeFormatter UTC_TIME_FORMATTER = DateTimeFormatter.ISO_INSTANT;
 
+    public static final int[] FEE_COLLECTION_TONG_HOP_WIDTHS = {36, 32, 20, 22, 22, 22, 14};
+    public static final int[] FEE_COLLECTION_HOA_DON_WIDTHS = {16, 16, 14, 16, 22, 22, 22, 26};
+    public static final int[] CASH_RECEIPTS_TONG_HOP_WIDTHS = {36, 32, 28, 20, 24};
+    public static final int[] CASH_RECEIPTS_PHIEU_THU_WIDTHS = {16, 20, 16, 14, 24, 22, 26, 28};
+    public static final int[] RESIDENCY_CU_TRU_WIDTHS = {36, 32, 32, 18};
+
     @FunctionalInterface
     interface WorkbookConsumer {
         void accept(SXSSFWorkbook workbook) throws IOException;
@@ -53,6 +59,7 @@ public class XlsxReportWriter {
 
             // 1. Sheet TongHop
             SXSSFSheet tongHop = workbook.createSheet("TongHop");
+            setColumnWidths(tongHop, FEE_COLLECTION_TONG_HOP_WIDTHS);
             writeMetadataRow(tongHop, 0, "Mã mẫu", data.metadata().templateId(), boldStyle);
             writeMetadataRow(tongHop, 1, "Phiên bản", data.metadata().version(), boldStyle);
             writeMetadataRow(tongHop, 2, "Phạm vi", data.metadata().scopeDescription(), boldStyle);
@@ -86,6 +93,7 @@ public class XlsxReportWriter {
 
             // 2. Sheet HoaDon
             SXSSFSheet hoaDon = workbook.createSheet("HoaDon");
+            setColumnWidths(hoaDon, FEE_COLLECTION_HOA_DON_WIDTHS);
             Row hdHeader = hoaDon.createRow(0);
             String[] hdCols = {"Mã hóa đơn", "Mã hộ", "Căn hộ", "Hạn nộp", "Phải thu", "Đã thanh toán", "Còn nợ", "Trạng thái thanh toán"};
             for (int i = 0; i < hdCols.length; i++) {
@@ -117,6 +125,7 @@ public class XlsxReportWriter {
 
             // 1. Sheet TongHop
             SXSSFSheet tongHop = workbook.createSheet("TongHop");
+            setColumnWidths(tongHop, CASH_RECEIPTS_TONG_HOP_WIDTHS);
             writeMetadataRow(tongHop, 0, "Mã mẫu", data.metadata().templateId(), boldStyle);
             writeMetadataRow(tongHop, 1, "Phiên bản", data.metadata().version(), boldStyle);
             writeMetadataRow(tongHop, 2, "Phạm vi", data.metadata().scopeDescription(), boldStyle);
@@ -147,6 +156,7 @@ public class XlsxReportWriter {
 
             // 2. Sheet PhieuThu
             SXSSFSheet phieuThu = workbook.createSheet("PhieuThu");
+            setColumnWidths(phieuThu, CASH_RECEIPTS_PHIEU_THU_WIDTHS);
             Row ptHeader = phieuThu.createRow(0);
             String[] ptCols = {"Mã receipt", "Kỳ hóa đơn nguồn", "Mã hộ", "Căn hộ", "Ngày thực thu paidOn", "Tiền nhận", "Phần áp dụng trực tiếp", "Credit phát sinh ban đầu"};
             for (int i = 0; i < ptCols.length; i++) {
@@ -178,6 +188,7 @@ public class XlsxReportWriter {
 
             // Sheet CuTru
             SXSSFSheet cuTru = workbook.createSheet("CuTru");
+            setColumnWidths(cuTru, RESIDENCY_CU_TRU_WIDTHS);
             writeMetadataRow(cuTru, 0, "Mã mẫu", data.metadata().templateId(), boldStyle);
             writeMetadataRow(cuTru, 1, "Phiên bản", data.metadata().version(), boldStyle);
             writeMetadataRow(cuTru, 2, "Phạm vi", data.metadata().scopeDescription(), boldStyle);
@@ -233,11 +244,18 @@ public class XlsxReportWriter {
         cell.setCellValue(value != null ? value : "");
     }
 
+    private static void setColumnWidths(Sheet sheet, int[] widthsInChars) {
+        for (int i = 0; i < widthsInChars.length; i++) {
+            sheet.setColumnWidth(i, widthsInChars[i] * 256);
+        }
+    }
+
     private static CellStyle createHeaderStyle(SXSSFWorkbook workbook) {
         CellStyle style = workbook.createCellStyle();
         Font font = workbook.createFont();
         font.setBold(true);
         style.setFont(font);
+        style.setWrapText(true);
         return style;
     }
 
