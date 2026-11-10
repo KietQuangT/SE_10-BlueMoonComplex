@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -54,6 +55,7 @@ public class AgencyDataPackageService {
         this(store, writer, auditService, clock, null);
     }
 
+    @Autowired
     public AgencyDataPackageService(
         AgencyDataPackageStore store,
         AgencyDataPackageWriter writer,
