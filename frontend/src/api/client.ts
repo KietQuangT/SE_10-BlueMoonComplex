@@ -22,7 +22,7 @@ export function clearCsrfMemory(): void {
   csrfState = null;
 }
 
-async function parseProblem(res: Response): Promise<ProblemDetailError> {
+export async function parseProblem(res: Response): Promise<ProblemDetailError> {
   const requestId = res.headers.get('X-Request-Id') || undefined;
   let payload: Record<string, unknown> = {};
   try {
@@ -220,4 +220,14 @@ export async function manageAccountApi(
   action: 'disable' | 'enable' | 'unlock',
 ): Promise<void> {
   await sendAuthenticatedWrite<void>(`/api/v1/accounts/${id}/${action}`, 'POST');
+}
+
+/** Trang tài khoản chỉ dành cho ADMIN. */
+export async function fetchAccountPage(page: number, signal?: AbortSignal): Promise<{
+  content: Array<{ id: number; username: string; fullName: string; email: string | null; role: import('../types/domain').RoleCode; householdId: number | null; status: 'ACTIVE' | 'INACTIVE'; locked: boolean }>;
+  page: number; totalPages: number; totalElements: number;
+}> {
+  const res = await fetch(`/api/v1/accounts?page=${page}&size=100`, { credentials: 'include', headers: { Accept: 'application/json' }, signal });
+  if (!res.ok) throw new ApiHttpError(await parseProblem(res));
+  return res.json();
 }
