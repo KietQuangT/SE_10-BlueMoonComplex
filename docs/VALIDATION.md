@@ -258,3 +258,16 @@ Không đổi backend/schema/hợp đồng API, không chạy Maven/MySQL, khôn
 - Chọn trạng thái `PARTIALLY_PAID` rồi áp dụng tạo GET `/api/v1/resident/invoices?page=0&size=20&paymentStatus=PARTIALLY_PAID`; hóa đơn tương ứng vẫn hiện. Bộ lọc được trả về `ALL`. Snapshot UI không hiển thị tên người thu hoặc nội dung lý do. Endpoint cư dân chạy qua Vite proxy tới backend local.
 - Kiểm tra mobile bằng Orca device emulation `iPhone 15`: viewport **393×852 CSS px**, DPR 3, `document.documentElement.scrollWidth=393`; không có cuộn ngang ở viewport này. Orca không có preset 360px nên chưa xác nhận đúng 360px.
 - **Hoãn theo Sơn:** kiểm tra đúng viewport 360px; bàn phím/focus, zoom 200%, theme tối và reduced motion; UI fixture có credit, receipt VOIDED và allocation REVERSED. Tài khoản hiện có không chứa các trạng thái ledger đó; không sửa dữ liệu giao dịch để tạo chúng. Đo 10.000 bản ghi/EXPLAIN tiếp tục thuộc S14. Các mục này không chặn việc tick S10 chức năng UI; cần xử lý trong lượt UX/QA tiếp theo.
+
+## S11: Export thu phí và cư trú — bằng chứng G2 (10/11/2026)
+
+| Kiểm tra | Kết quả |
+|---|---|
+| Final `hhoangsonnw/feat-s11`, SHA `9be2bf4aaf0f551181007a2782484fac5474530f`; `cd backend && JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home ./mvnw -B -ntp verify` | BUILD SUCCESS; 353 test, 0 failure, 0 error, 0 skipped; 17.672 s. Log đầy đủ kèm SHA ở `_agents_workspace/S11/implementation/verify.log`. |
+| QA độc lập, SHA `75e4c8122e165486b9a27c51d57d99dd9b9301a9` | 351 test pass; bổ sung kiểm workbook thực đủ 50.000 dòng cho cả 3 template và các MySQL snapshot IT. Log QA tại `_agents_workspace/S11/agy_qa.md`. |
+| Review rủi ro độc lập Argon High, cùng final SHA `9be2bf4` | Đạt, 0 lỗi chặn; scope check review không phát hiện file bị đổi. Báo cáo `_agents_workspace/S11/agy_review_final.md`; receipt yêu cầu và hiệu lực đều là `gemini-4-argon-high`. |
+| Sinh và kiểm workbook synthetic sau final verify | Có đủ `thu-theo-ky-2026-10.xlsx`, `tien-mat-2026-10-01-2026-10-31.xlsx`, `cu-tru-hien-tai-20261110.xlsx` trong `backend/target/synthetic_reports/`. Sơn xác nhận đã mở, kiểm tra và duyệt cả ba workbook sau cập nhật độ rộng và wrap (10/11/2026). |
+| Lần đầu `-Pintegration verify` trên SHA `9be2bf4`, cổng `3318` | BUILD FAILURE sau 39.966 s; Failsafe báo 173 errors do `Access denied for user 'bluemoon'@'172.17.0.1'`. Cổng `3318` đang trỏ tới container QA S10; mật khẩu `.env` của DB dev không dùng được cho container đó. Không sửa volume/container cũ. |
+| `-Pintegration verify` chạy lại trên SHA `9be2bf4` | BUILD SUCCESS trên MySQL 8.4.13 tạm, mới tạo ở cổng `3319`, không gắn volume; Surefire 353 + Failsafe 173 = 526 test, 0 failure/error/skipped; 1m39s. Container được dừng/xóa tự động sau chạy. Bằng chứng `_agents_workspace/S11/implementation/verify-integration-summary.md`; report chi tiết trong `backend/target/{surefire,failsafe}-reports/` của worktree implementation. |
+
+S11 đã được tick trong `docs/sprint-1/TASKS.md` sau khi đủ bằng chứng: `verify` 353 pass, MySQL integration 173 pass, review Argon không có lỗi chặn, và Sơn xác nhận đã kiểm tra/duyệt cả ba workbook final. Chưa push hoặc tạo PR.
