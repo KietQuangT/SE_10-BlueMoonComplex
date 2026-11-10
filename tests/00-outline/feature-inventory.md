@@ -1,15 +1,15 @@
 # Danh mục chức năng BlueMoon (outline cho tester)
 
-Nguồn đối chiếu: mã nguồn tại `origin/main` (2de4efc, sau PR #17) và `docs/`. Mọi mục đều có nguồn trong ngoặc. Khi tài liệu và mã khác nhau, ghi vào mục "Điểm bất thường" (cuối file), không tự chọn.
+Nguồn đối chiếu: `origin/main` (`d58516a`, đã gồm PR #28 S09) và `docs/`. Bộ manual cases S09 được ghi tại `tests/cases/s09-payments.md` trên nhánh `hhoangsonnw/s-09-test` và chưa chạy. Mọi mục đều có nguồn trong ngoặc. Khi tài liệu và mã khác nhau, ghi vào mục "Điểm bất thường" (cuối file), không tự chọn.
 
 ## 0. Quy ước dùng trong outline
 - **Vai trò thật ở backend:** `ADMIN`, `ACCOUNTANT`, `RESIDENT`, và `ANON` (chưa đăng nhập). Vai trò `AUTHORITY` chỉ có ở dữ liệu demo frontend (`frontend/src/data/mockData.ts:48`), không có trong backend (`V2__identity_audit.sql:21-23`).
 - **Chế độ dữ liệu frontend:** `api` (gọi backend thật, mặc định sau đăng nhập) và `demo` (dữ liệu mẫu trong bộ nhớ; chỉ hiện khi `SHOW_DEV_TOOLS` = DEV hoặc `VITE_ENABLE_DEMO=true`, `frontend/src/lib/devTools.ts:6-7`).
-- **Mã ID:** `AUTH-`, `ACC-`, `HH-`, `RES-`, `DEC-`, `FEE-`, `RBAC-`, `ROUTE-`, `UI-`, `SYS-`.
-- **Mã lỗi:** trả theo ProblemDetail có thuộc tính `code`; `401` cho chưa xác thực, `403` cho sai quyền (`SecurityConfig.java:70-71`).
+- **Mã ID:** `AUTH-`, `ACC-`, `HH-`, `RES-`, `DEC-`, `FEE-`, `PAY-`, `RBAC-`, `ROUTE-`, `UI-`, `SYS-`.
+- **Mã lỗi:** trả theo ProblemDetail có thuộc tính `code`; `401` cho chưa xác thực, `403` cho sai quyền (`SecurityConfig.java`).
 
 ## 1. Ma trận phân quyền backend (RBAC)
-Nguồn: `backend/src/main/java/vn/edu/se10/bluemoon/config/SecurityConfig.java:44-67` (thứ tự matcher quan trọng; cuối cùng là `anyRequest().denyAll()`, dòng 67).
+Nguồn: `backend/src/main/java/vn/edu/se10/bluemoon/config/SecurityConfig.java` (thứ tự matcher quan trọng; cuối cùng là `anyRequest().denyAll()`).
 
 | Endpoint | ANON | RESIDENT | ACCOUNTANT | ADMIN | Ghi chú |
 |---|---|---|---|---|---|
@@ -38,6 +38,8 @@ Nguồn: `backend/src/main/java/vn/edu/se10/bluemoon/config/SecurityConfig.java:
 | `POST /api/v1/residency-declarations/{id}/approve`, `/reject` | 401 | 403 | 403 | ✔ | ADMIN |
 | `GET /api/v1/fee-types`, `GET /api/v1/fee-rates`, `GET /api/v1/fee-preview` | 401 | 403 | ✔ | ✔ | ADMIN và ACCOUNTANT đều chỉ đọc |
 | `POST /api/v1/fee-rates`, `PATCH /api/v1/fee-rates/{id}`, `DELETE /api/v1/fee-rates/{id}` | 401 | 403 | ✔ | 403 | ACCOUNTANT ghi, ADMIN không ghi |
+| `GET /api/v1/payment-invoices`, `/api/v1/invoices/{id}/receipts`, `/api/v1/invoices/{id}/payment-summary`, `/api/v1/households/{id}/credit-balance`, `/api/v1/households/{id}/credit-allocations` | 401 | 403 | ✔ | ✔ | ADMIN và ACCOUNTANT đọc công nợ, biên lai, số dư và phân bổ |
+| `POST /api/v1/invoices/{id}/receipts`, `/api/v1/receipts/{id}/void`, `/api/v1/households/{id}/credit-allocations`, `/api/v1/credit-allocations/{id}/reverse` | 401* | 403 | ✔ | 403 | Chỉ ACCOUNTANT ghi; *POST ANON thiếu/sai CSRF trả 403 trước kiểm tra xác thực |
 | Mọi route khác | 401 | 403 | 403 | 403 | `denyAll` |
 
 Quy tắc chung (`MustChangePasswordFilter`, đăng ký tại `SecurityConfig.java:44`): tài khoản có `must_change_password = true` bị `403 PASSWORD_CHANGE_REQUIRED` ở mọi route ngoài danh sách cho phép (`/auth/me`, `/auth/csrf`, `/auth/login`, `/auth/logout`, `/auth/change-password`, health, system/info). Nguồn: `docs/DECISIONS.md` D14, D19; `docs/ARCHITECTURE.md` mục Auth.
@@ -62,21 +64,24 @@ Nguồn: `frontend/src/App.tsx:104-154`; menu: `frontend/src/components/AppShell
 | `/admin/households/:id/residents/new` | ADMIN | (từ trang hộ) | API qua context (`createResidentApi`) |
 | `/admin/move-outs` | ADMIN | Chuyển đi và lưu trữ | API qua context (`moveOutApi`) |
 | `/admin/absence-approvals` | ADMIN | Duyệt tạm vắng | API ở chế độ api (`ApiAbsenceApprovalsPage.tsx`) |
-| `/admin/voluntary` | ADMIN | Đóng góp tự nguyện | DEMO |
-| `/admin/billing-periods` | ADMIN | Tạo kỳ thu | DEMO (chưa có backend, S08) |
+| `/admin/voluntary` | ADMIN | Đóng góp tự nguyện | API ở chế độ api; DEMO giữ nguyên |
+| `/admin/billing-periods` | ADMIN | Tạo kỳ thu | API ở chế độ api; DEMO giữ nguyên |
+| `/admin/collections` | ADMIN | Tra cứu thu tiền | API ở chế độ api, chỉ đọc; DEMO giữ nguyên |
 | `/admin/reports/residency` | ADMIN | Báo cáo lưu trú | DEMO (chưa có backend, S11) |
 | `/admin/reports/packages` | ADMIN | Gói cho cơ quan | DEMO (chưa có backend, S12) |
-| `/accountant/collections` | ACCOUNTANT | Thu tiền mặt | DEMO (chưa có backend, S09) |
-| `/accountant/fee-rates` | ACCOUNTANT | Đơn giá phí | DEMO trên `main`; bản API nằm ở nhánh `hhoangsonnw/feat-s07-ui` (chưa merge). Trên nhánh đó ADMIN cũng vào được, chỉ xem |
+| `/accountant/collections` | ACCOUNTANT | Thu tiền mặt | API ở chế độ api; DEMO giữ nguyên |
+| `/accountant/fee-rates` | ACCOUNTANT, ADMIN | Đơn giá phí (ACCOUNTANT; ADMIN không có mục menu) | API |
+| `/accountant/billing-periods` | ACCOUNTANT | Kỳ thu bắt buộc | API ở chế độ api; DEMO không khả dụng |
+| `/accountant/voluntary` | ACCOUNTANT | Đóng góp tự nguyện | API ở chế độ api; DEMO không khả dụng |
 | `/accountant/collection-rate` | ACCOUNTANT | Báo cáo tỷ lệ thu | DEMO (chưa có backend, S11) |
 | `/resident/invoices` | RESIDENT | Hóa đơn | DEMO (chưa có backend, S10) |
 | `/resident/invoices/:id` | RESIDENT | (từ danh sách hóa đơn) | DEMO |
 | `/resident/household` | RESIDENT | Hộ gia đình của tôi | API ở chế độ api (context `fetchMyResidents`) |
 | `/resident/absence` | RESIDENT | Khai báo tạm vắng | API ở chế độ api (`ApiAbsencePage.tsx`) |
-| `/resident/voluntary` | RESIDENT | Đóng góp tự nguyện | DEMO (chưa có backend, S08) |
+| `/resident/voluntary` | RESIDENT | Đóng góp tự nguyện | API ở chế độ api; DEMO giữ nguyên |
 | `/authority/reports` | AUTHORITY | Báo cáo đã duyệt | DEMO; không có vai trò AUTHORITY ở backend, không đăng nhập thật được |
 
-Menu theo vai trò (`AppShell.tsx`): ADMIN thấy 9 mục (tài khoản, tạo tài khoản, hộ, chuyển đi, duyệt tạm vắng, đóng góp, tạo kỳ thu, báo cáo lưu trú, gói cho cơ quan); ACCOUNTANT thấy 3 mục (thu tiền mặt, đơn giá phí, báo cáo tỷ lệ thu); RESIDENT thấy hóa đơn, hộ của tôi, khai báo, đóng góp; AUTHORITY thấy báo cáo đã duyệt.
+Menu theo vai trò (`AppShell.tsx`): ADMIN có mục tra cứu thu tiền; ACCOUNTANT có thu tiền mặt, đơn giá phí, kỳ thu bắt buộc, đóng góp tự nguyện và báo cáo tỷ lệ thu; RESIDENT thấy hóa đơn, hộ của tôi, khai báo và đóng góp; AUTHORITY thấy báo cáo đã duyệt. Tất cả route theo vai trò vẫn được bảo vệ ở frontend và backend.
 
 Kiểm quyền route: vai trò không được phép vào route thì thấy trang 403 (`RequireRole`, `App.tsx:89`). Ẩn menu không thay thế kiểm tra server.
 
@@ -128,8 +133,8 @@ Kiểm quyền route: vai trò không được phép vào route thì thấy tran
 - **DEC-08 Quay lại.** ADMIN, `POST /residents/{id}/return`: nhân khẩu từ `TEMPORARILY_ABSENT` về `RESIDING`; ghi dòng lịch sử `RETURN`, ngày là hôm nay do server đặt (không nhận từ client). Nhân khẩu không tạm vắng trả 409 `RESIDENT_NOT_ABSENT`.
 - **DEC-09 Trạng thái tạm vắng trên giao diện.** Cư dân thấy trạng thái và lý do; ADMIN thấy hàng chờ và gợi ý tên. Trang `/resident/absence` và `/admin/absence-approvals` ở chế độ api. Nguồn: D24.
 
-### 3.6. Đơn giá phí (FEE) — chỉ có trên nhánh `hhoangsonnw/feat-s07`
-Trên `main`, các endpoint này đã có ở backend nhưng màn M-20 còn là demo. Test API được; test màn M-20 chỉ trên nhánh UI.
+### 3.6. Đơn giá phí (FEE)
+Backend và màn M-20 có API trên local `main`; ACCOUNTANT thao tác, ADMIN chỉ đọc. D25 là hợp đồng nghiệp vụ hiện hành.
 - **FEE-01 Danh mục loại phí.** `GET /fee-types` (ADMIN, ACCOUNTANT): hai loại cố định `MANAGEMENT_FEE` (Phí quản lý, tính theo m², đơn vị `m²/tháng`) và `WASTE_FEE` (Phí rác sinh hoạt, cố định mỗi hộ mỗi tháng, đơn vị `hộ/tháng`). Không có API tạo, sửa, xóa loại phí. Nguồn: D25; `V8__fee_rates.sql`.
 - **FEE-02 Danh sách đơn giá.** `GET /fee-rates?feeTypeId=&page=&size=` (ADMIN, ACCOUNTANT): sắp `effectiveFrom` giảm dần rồi `id` giảm dần; `size` từ 1 đến 100; sai trả `400 INVALID_FILTER`; `feeTypeId` lạ trả trang rỗng 200. Mỗi dòng có `editable`.
 - **FEE-03 Thêm đơn giá.** ACCOUNTANT, `POST /fee-rates` `{feeTypeId, unitPrice, effectiveFrom}`: `effectiveFrom` là ngày 1, không trước tháng hiện tại (giờ Việt Nam); trùng loại và tháng trả 409 `FEE_RATE_DUPLICATE_MONTH`; `unitPrice` > 0, tối đa 2 chữ số thập phân, tối đa 10 chữ số phần nguyên (400 nếu vượt). Nguồn: D25.
@@ -137,19 +142,30 @@ Trên `main`, các endpoint này đã có ở backend nhưng màn M-20 còn là 
 - **FEE-05 Xóa đơn giá.** ACCOUNTANT, `DELETE /fee-rates/{id}` (204): cùng quy tắc đóng băng như FEE-04.
 - **FEE-06 Xem trước thành tiền.** ADMIN, ACCOUNTANT, `GET /fee-preview?householdId=&period=YYYY-MM`: chỉ tính, không lưu. Phí quản lý = diện tích × đơn giá; phí rác = đơn giá; làm tròn VND nguyên HALF_UP theo từng dòng; tổng là tổng các dòng đã làm tròn. Thiếu đơn giá cho bất kỳ loại nào trong tháng đó trả 409 `FEE_RATE_UNAVAILABLE` (không coi là 0). `period` sai trả 400 `INVALID_PERIOD`. Thiếu tham số trả 400 (không trả 500). Nguồn: D25.
 - **FEE-07 Quyền đơn giá.** RESIDENT gọi bất kỳ route đơn giá nào: 403. ADMIN ghi đơn giá: 403. Ma trận đổi do Sơn quyết định (D25), chưa có văn bản của Quân và Tuấn.
-- **FEE-08 Màn M-20 (nhánh UI).** ACCOUNTANT thêm, sửa, xóa dòng `editable`; ADMIN chỉ xem; chọn tháng (`type="month"`), mặc định tháng sau; giá hiển thị `7.000,50 đ`; thông báo lỗi tiếng Việt theo bảng mã. Nguồn: `docs/ui-wireframe-guide/05-man-hinh-ke-toan.md`, hợp đồng UI S07.
+- **FEE-08 Màn M-20.** ACCOUNTANT thêm, sửa, xóa dòng `editable`; ADMIN chỉ xem qua route được bảo vệ, không có mục menu ADMIN; chọn tháng (`type="month"`), mặc định tháng sau; giá hiển thị `7.000,50 đ`; thông báo lỗi tiếng Việt theo bảng mã. Nguồn: `docs/ui-wireframe-guide/05-man-hinh-ke-toan.md`, hợp đồng UI S07.
 
-### 3.7. Nền tảng và thông tin hệ thống (SYS)
+### 3.7. Thu tiền bắt buộc và công nợ (PAY)
+- **PAY-01 Danh sách hóa đơn và tra cứu công nợ.** ADMIN, ACCOUNTANT: `GET /api/v1/payment-invoices` lọc theo mã hộ/căn hộ, kỳ, trạng thái và phân trang. Mặc định UI hiển thị hóa đơn `ISSUED` còn nợ ở mọi kỳ; có thể lọc `PAID` để ghi nhận tiền nộp thêm. Chi tiết dùng `GET /api/v1/invoices/{id}`, `GET /api/v1/invoices/{id}/payment-summary`, `GET /api/v1/invoices/{id}/receipts`, `GET /api/v1/households/{id}/credit-balance` và `GET /api/v1/households/{id}/credit-allocations`.
+- **PAY-02 Ghi nhận biên lai.** ACCOUNTANT, `POST /api/v1/invoices/{id}/receipts`: một biên lai gắn đúng một hóa đơn; nhiều lần thu được phép; số tiền VND nguyên dương. Tiền áp dụng không vượt dư nợ, phần vượt (kể cả hóa đơn đã trả hết) thành credit của hộ. `paidOn` không trước ngày phát hành và không sau hôm nay; ngày lùi cần lý do. Biên lai và audit cùng transaction, `receipt_count` tăng.
+- **PAY-03 Credit hộ và FIFO.** ACCOUNTANT phân bổ credit bằng `POST /api/v1/households/{id}/credit-allocations` chỉ vào hóa đơn `ISSUED` của cùng hộ. Khi cần nhiều nguồn, lấy từ biên lai cũ nhất trước. Phân bổ không vượt số dư credit hoặc dư nợ hóa đơn.
+- **PAY-04 Hủy biên lai và đảo phân bổ.** Biên lai sai được hủy với lý do qua `POST /api/v1/receipts/{id}/void`; không sửa/xóa trực tiếp. Không được hủy khi credit từ biên lai còn dùng trong phân bổ đang hoạt động; phải đảo các phân bổ trước. ACCOUNTANT đảo phân bổ kèm lý do qua `POST /api/v1/credit-allocations/{id}/reverse`; dư nợ hóa đơn tăng lại, credit hộ được hoàn, `receipt_count` không giảm. Hoàn tiền mặt thực tế nằm ngoài S09.
+- **PAY-05 Idempotency, transaction và audit.** Mỗi lệnh thay đổi dùng UUID idempotency duy nhất toàn hệ thống. Cùng actor + key + payload replay kết quả trước; khác actor hoặc payload với cùng key trả xung đột. Khóa kỳ, cập nhật số liệu, lưu lệnh và audit phải nguyên tử; cạnh tranh không được thu hoặc phân bổ trùng/vượt số dư. Nguồn: D27, D26; `PaymentService.java`; `V10__mandatory_payments.sql`.
+- **PAY-06 Phân quyền và riêng tư.** ADMIN chỉ đọc; ACCOUNTANT đọc/ghi; RESIDENT không có API thu tiền. CSRF áp dụng mọi POST. Lý do tự do được giữ ở DB nhưng API và UI chỉ trả cờ `hasLateReason`, `hasVoidReason`, `hasReverseReason`; không trả nội dung reason hoặc PII.
+- **PAY-07 UI thu tiền.** `/accountant/collections` chạy API thật trong api mode và giữ Demo mode; ACCOUNTANT có thu, phân bổ, hủy, đảo. `/admin/collections` chạy API thật trong api mode và chỉ đọc; Demo mode được giữ. Giao diện lọc công nợ, xem lịch sử thu/phân bổ và hiển thị reason dưới nhãn “Có lý do”.
+- **PAY-08 Gửi lại khi kết quả chưa rõ.** UI giữ UUID và payload trong `sessionStorage` theo username/tab; retry dùng lại nguyên lệnh để đối soát. Tài khoản khác không được xem hoặc gửi lại lệnh đang chờ; khi actor thay đổi, UI xóa state giao dịch trước.
+- **PAY-09 Bộ ca manual.** [tests/cases/s09-payments.md](../cases/s09-payments.md) có 47 ca thuộc 13 nhóm: dữ liệu thu/ngày, idempotency, FIFO/cách ly hộ, đảo/hủy, transaction/audit/count, race, RBAC/CSRF, quyền riêng tư, API/Demo UI, ADMIN read-only, retry/đổi actor và browser walkthrough. Tất cả trạng thái hiện là **Not run**; tài liệu không phải bằng chứng các ca đã thực thi. Nguồn: D27–D28, `docs/VALIDATION.md` mục S09, `PaymentController.java`, `PaymentService.java`, `ApiCollectionsPage.tsx`, `tests/README.md`.
+
+### 3.8. Nền tảng và thông tin hệ thống (SYS)
 - **SYS-01 Health.** `GET /actuator/health` trả trạng thái; không lộ chi tiết nhạy cảm. Nguồn: AGENTS.md mục bảo mật.
 - **SYS-02 Thông tin hệ thống.** `GET /api/v1/system/info` trả metadata hằng số, public. Kiểm không có dữ liệu nhạy cảm.
 - **SYS-03 Request ID.** Mọi response có request ID trong header; lỗi có thể truy vết bằng request ID; log không chứa body, cookie, Authorization, CCCD, email, SĐT (AGENTS.md).
 - **SYS-04 Mặc định từ chối.** Route không khai báo trả 401/403 (`denyAll`).
 - **SYS-05 Trang lỗi.** Route không tồn tại và `/error/:code` hiện trang lỗi chung.
 
-### 3.8. Giao diện chung (UI)
+### 3.9. Giao diện chung (UI)
 - **UI-01 Chủ đề sáng/tối.** Chuyển được; lưu khóa `bm-theme`.
 - **UI-02 Vai trò và menu.** Menu đúng theo mục 2. Trang đầu sau đăng nhập theo `defaultHomeByRole` (`frontend/src/lib/format.ts:102`): ADMIN → `/admin/households`; ACCOUNTANT → `/accountant/collections`; RESIDENT → `/resident/invoices`; AUTHORITY → trang báo cáo đã duyệt.
-- **UI-03 Hết hạn phiên giữa chừng.** Gọi API trả 401: giao diện đưa về đăng nhập; nội dung nháp không lưu vào storage (trừ nháp M-20 chỉ giữ trong bộ nhớ trang).
+- **UI-03 Hết hạn phiên giữa chừng.** Gọi API trả 401: giao diện đưa về đăng nhập. Form nháp thông thường không lưu vào storage; ngoại lệ S09 giữ lệnh có kết quả chưa rõ trong `sessionStorage` theo username để retry cùng UUID/payload sau khi xác thực lại. M-20 chỉ giữ nháp trong bộ nhớ trang.
 - **UI-04 Chế độ demo.** Chỉ hiện khi `SHOW_DEV_TOOLS` (DEV hoặc `VITE_ENABLE_DEMO=true`). Bản build thật không có công cụ demo.
 - **UI-05 Responsive.** Bố cục hẹp (360px): bảng chuyển dạng thẻ; nút không lệch hàng. Kiểm trên Chrome, không chỉ đo bằng test tự động.
 - **UI-06 Thông báo lỗi.** Tiếng Việt, nêu việc gì đã xảy ra và cách xử lý; lỗi 5xx hiện mã request ID.
@@ -163,12 +179,14 @@ Trên `main`, các endpoint này đã có ở backend nhưng màn M-20 còn là 
 - D23: quy tắc mật khẩu mới.
 - D24: khai báo tạm vắng (S06).
 - D25: đơn giá phí (S07). Chưa có văn bản xác nhận của Quân và Tuấn.
+- D26: kỳ thu bắt buộc và khoản tự nguyện (S08).
+- D27–D28: thu tiền bắt buộc, credit FIFO, idempotency, RBAC, quyền riêng tư và UI S09.
 
 ## 5. Điểm bất thường cần tester chú ý
 1. **AUTHORITY chưa có ở backend.** Route `/authority/reports` và menu tương ứng chỉ chạy được với dữ liệu demo. Không có tài khoản thật để kiểm.
-2. **Nhiều màn còn demo.** Danh sách ở mục 2 (cột trạng thái). Không kiểm được nghiệp vụ thật của các màn này cho đến khi có backend.
+2. **Một số màn vẫn Demo hoặc chưa có API.** Xem từng route ở mục 2; S09 collections và các màn S08 kỳ thu/đóng góp có API ở api mode, đồng thời một số màn vẫn giữ Demo mode.
 3. **Danh sách tài khoản chưa có API liệt kê.** Chỉ thấy tài khoản tạo trong phiên hiện tại.
-4. **Đơn giá phí trên `main` chưa có màn API.** M-20 vẫn là demo; ADMIN chưa có mục menu đơn giá trên `main`.
+4. **S07 đơn giá phí cho ADMIN không có mục menu riêng.** ADMIN vẫn được phép mở `/accountant/fee-rates` trực tiếp để đọc; ACCOUNTANT được ghi. Kiểm quyền server, không chỉ dựa vào menu.
 5. **Báo cáo chưa có số liệu thật.** Báo cáo lưu trú, gói cơ quan, tỷ lệ thu chỉ có dữ liệu demo.
 6. **Khóa đăng nhập với ADMIN.** ADMIN không bị khóa tự động (D17); đây là rủi ro bảo mật đã ghi nhận.
 7. **Số liệu kiểm thử trong README** là tại thời điểm ghi nhận; không dùng để xác nhận hành vi hiện tại.
@@ -177,7 +195,8 @@ Trên `main`, các endpoint này đã có ở backend nhưng màn M-20 còn là 
 QR/VNeID, ticket, khách thăm, mượn đồ, tạm trú, thông báo qua hộp thư, email thật, thanh toán trực tuyến, Redis, Kafka, JWT (AGENTS.md:10,18,25; REQUIREMENTS.md mục V2).
 
 ## 7. Nguồn đã đối chiếu
-- Backend: `backend/src/main/java/vn/edu/se10/bluemoon/` — controller ở `identity/api`, `residency/api`, `billing/api`, `systeminfo/api`; `config/SecurityConfig.java`; `billing/api/FeeRateController.java`, `FeePreviewController.java`, `FeeTypeController.java`.
-- Migration: `backend/src/main/resources/db/migration/V1`–`V8`.
-- Frontend: `frontend/src/App.tsx`, `frontend/src/components/AppShell.tsx`, `frontend/src/api/*.ts`, `frontend/src/state/AppStateContext.tsx`, `frontend/src/data/mockData.ts`, `frontend/src/lib/devTools.ts`.
+- Backend: `backend/src/main/java/vn/edu/se10/bluemoon/` — controller ở `identity/api`, `residency/api`, `billing/api`, `payment/api`, `systeminfo/api`; `config/SecurityConfig.java`; `payment/application/PaymentService.java`.
+- Migration: `backend/src/main/resources/db/migration/V1`–`V10`.
+- Frontend: `frontend/src/App.tsx`, `frontend/src/components/AppShell.tsx`, `frontend/src/api/*.ts`, `frontend/src/api/payments.ts`, `frontend/src/screens/s09/ApiCollectionsPage.tsx`, `frontend/src/state/AppStateContext.tsx`, `frontend/src/data/mockData.ts`, `frontend/src/lib/devTools.ts`.
+- Kiểm thử S09: `tests/cases/s09-payments.md` (47 ca manual, hiện chưa chạy).
 - Tài liệu: `docs/DECISIONS.md`, `docs/REQUIREMENTS.md`, `docs/ARCHITECTURE.md`, `docs/sprint-1/TASKS.md`, `docs/ui-wireframe-guide/`.
