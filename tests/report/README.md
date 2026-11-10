@@ -39,3 +39,13 @@ QA mới nhất nằm trong [docs/VALIDATION.md](../../docs/VALIDATION.md), khô
 - Backend verify: 227 test pass; MySQL 8.4 cô lập, integration: 146 test pass.
 - Frontend: 134 test pass; TypeScript/Vite build pass.
 - Chưa kiểm E2E UI→API trên browser thật, CI remote hoặc hiệu năng 10.000 hồ sơ.
+
+## QA S10 (Feature 10: Hóa đơn & Lịch sử đóng phí cư dân) ngày 10/11/2026
+
+Báo cáo chi tiết và kết quả thực thi tại [resident-invoices.md](resident-invoices.md):
+
+- Phạm vi: 38 ca kiểm thử đặc tả từ `RIN-01.1` đến `RIN-09.5` (Feature 10 / S10, WBS 2.4.1.2).
+- Kết quả đặc tả: **38 Pass**, 0 Fail, 0 Blocked (**100% Pass**).
+- Backend unit/API: **25 test pass** (Surefire: `ResidentInvoiceApiTest`, `ResidentInvoiceServiceTest`, `ResidentInvoicePrivacyTest`).
+- Frontend Vitest: **51 test pass** (5 test files: `s10-api.test.ts`, `s10-invoices.test.tsx`, `s10-detail.test.tsx`, `s10-routes.test.tsx`, `s10-session.test.tsx`).
+- Giới hạn: kiểm thử tích hợp DB thật và NFR 10.000 hồ sơ xem tại `docs/VALIDATION.md` (chuyển S14).
