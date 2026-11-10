@@ -14,6 +14,8 @@ Các giới hạn hiện tại: UI cư dân cho S10 là lượt riêng (chưa gh
 
 Các task tiếp theo (S11 export báo cáo, S12 gói dữ liệu cơ quan, S13 backup/restore, S14 hồi quy/hiệu năng, S15 đóng gói/bàn giao) tiếp tục được theo dõi trong [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md). Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
 
+**S10:** backend cung cấp API tra cứu hóa đơn cư dân theo hộ đăng nhập, snapshot và lịch sử thu/bù trừ. UI đã nối API thật: danh sách có lọc tháng/trạng thái và phân trang; chi tiết hiển thị phí snapshot, tiền đã thanh toán/còn nợ và lịch sử thu tiền mặt/bù trừ. UI cư dân chỉ đọc; không có thao tác thanh toán, hủy receipt hay đảo phân bổ. Demo mode giữ màn và dữ liệu mẫu riêng. Cần đăng nhập tài khoản `RESIDENT`.
+
 ## Công nghệ
 
 | Thành phần | Công nghệ |
@@ -61,6 +63,13 @@ scripts/dev-all.sh
 
 Script thực hiện lần lượt:
 
+- **Tài khoản và phiên:** đăng nhập/đăng xuất, đổi mật khẩu, cấp và quản lý account; kiểm tra vai trò và trạng thái account ở server.
+- **Hộ và cư trú:** quản lý hộ/nhân khẩu, chuyển đi, khai báo tạm vắng, duyệt/từ chối và ghi nhận đã quay lại.
+- **Phí và hóa đơn:** đơn giá có hiệu lực theo kỳ, xem trước phí, tạo kỳ thu và lưu snapshot hóa đơn.
+- **Thu tiền S09:** thu một phần/toàn bộ hoặc thừa; phần dư thành credit. ACCOUNTANT phân bổ credit FIFO, hủy receipt hoặc đảo phân bổ. ADMIN chỉ xem. Giao dịch dùng UUID idempotency và ghi audit cùng transaction.
+- **Hóa đơn cư dân S10:** danh sách và chi tiết hóa đơn theo hộ đăng nhập, gồm các dòng phí snapshot, số đã thanh toán/còn nợ và lịch sử thu tiền mặt/bù trừ. UI có bộ lọc tháng/trạng thái, phân trang, tải lại và thử lại khi lỗi; chỉ đọc, không gửi giao dịch thanh toán.
+- **Frontend:** API mode dùng backend thật ở các màn đã nối; Demo mode tiếp tục dùng dữ liệu mẫu riêng. Kế toán dùng `/accountant/collections`; Admin dùng `/admin/collections`; Cư dân xem hóa đơn tại `/resident/invoices`.
+
 1. Chuyển working directory về thư mục gốc và yêu cầu có `.env`.
 2. Kiểm tra các cổng `3306` (MySQL), `8080` (backend) và `5173` (Vite). Nếu có cổng bận, script in tiến trình/container liên quan rồi dừng; nó không tự tắt tiến trình.
 3. Chạy `docker compose up --build -d`, khởi động MySQL 8.4 và backend Spring Boot; Compose đợi MySQL healthy trước khi chạy backend.
@@ -85,6 +94,46 @@ Chạy công cụ kiểm tra/dọn cổng có hỏi xác nhận:
 scripts/free-dev-ports.sh
 ```
 
+   ~~~bash
+   scripts/dev-all.sh
+   ~~~
+
+   Script dựng DB/backend, đợi health check rồi chạy Vite tại `http://localhost:5173`. Nhấn `Ctrl+C` dừng frontend; dừng DB/backend bằng `docker compose stop`.
+
+   Hoặc chạy riêng backend:
+
+   ~~~bash
+   scripts/dev.sh
+   ~~~
+
+   Sau đó mở terminal khác để chạy frontend: `cd frontend && npm ci && npm run dev`. Dev server proxy `/api` và `/actuator` tới backend cục bộ.
+
+Không có account mặc định. Để tạo ADMIN đầu tiên trên DB mới:
+
+1. Đảm bảo MySQL Compose đang chạy. `.env` được Compose đọc, nhưng Maven/Java chạy trên máy host **không tự nạp `.env`**. Cấu hình biến DB cho terminal theo thông tin trong `.env`:
+
+   ~~~bash
+   export DB_HOST=127.0.0.1
+   export DB_PORT=3306
+   export DB_NAME=bluemoon
+   export DB_USER=bluemoon
+   printf 'Nhập DB_PASSWORD: '
+   read -rs DB_PASSWORD
+   printf '\n'
+   export DB_PASSWORD
+   ~~~
+
+   Cách nhập này không ghi mật khẩu vào lịch sử shell.
+
+2. Đóng gói backend và chạy profile bootstrap trong terminal tương tác thật (không chạy qua pipe hoặc redirect):
+
+   ~~~bash
+   cd backend
+   ./mvnw -B -ntp package
+   java -jar target/bluemoon-backend-0.1.0-SNAPSHOT.jar --spring.profiles.active=bootstrap
+   ~~~
+
+3. Nhập username, họ tên, email và mật khẩu hai lần tại console. Không có mật khẩu mặc định. Nếu DB đã có ADMIN (kể cả tài khoản inactive), bootstrap sẽ không tạo tài khoản khác.
 Công cụ liệt kê listener trên các cổng dev. Với container, nhập `y` để gọi `docker stop`; với process thường, nhập `y` để gửi `SIGTERM`. Nhập `N` hoặc nhấn Enter để giữ process/container. Sau khi cổng trống, chạy lại `scripts/dev-all.sh`.
 
 ### Script chạy database và backend
@@ -248,6 +297,11 @@ Integration tests có thể ghi fixture và áp migration. Chỉ trỏ chúng t�
 - **Backend integration (MySQL 8.4 test cô lập):** 158 test pass (bao gồm `ResidentInvoiceSnapshotIT` và `IdentitySessionIT`).
 - **Frontend tests:** 28 file, 134 test pass; TypeScript/Vite build pass.
 - **Giới hạn đã ghi nhận:** Chưa có browser E2E walkthrough với backend thật; UI cư dân cho S10 là lượt riêng (màn hình cư dân chưa nối API thật); phép đo hiệu năng 10.000 bản ghi/EXPLAIN chuyển sang S14; xem chi tiết trong [docs/VALIDATION.md](docs/VALIDATION.md).
+
+### Bằng chứng S10 UI gần nhất
+
+- Frontend: 185 test pass; TypeScript/Vite production build pass.
+- Kiểm tra thủ công của người dùng đã hoàn tất trên nhánh giao diện. Task checklist và validation chính thức vẫn xem tại `docs/sprint-1/TASKS.md` và `docs/VALIDATION.md`.
 
 ## Cấu trúc repo
 
