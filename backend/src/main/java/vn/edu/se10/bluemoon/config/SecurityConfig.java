@@ -87,6 +87,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/voluntary-campaigns/*/contributions", "/api/v1/voluntary-contributions/*/void").hasRole("ACCOUNTANT")
                 .requestMatchers(HttpMethod.GET, "/api/v1/reports/fee-collection.xlsx", "/api/v1/reports/cash-receipts.xlsx").hasAnyRole("ADMIN", "ACCOUNTANT")
                 .requestMatchers(HttpMethod.GET, "/api/v1/reports/residency.xlsx").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/agency-data-packages").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/agency-data-packages").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/agency-data-packages/*", "/api/v1/agency-data-packages/*/preview", "/api/v1/agency-data-packages/*/content.xlsx").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/agency-data-packages/*/approve", "/api/v1/agency-data-packages/*/reject", "/api/v1/agency-data-packages/*/revoke", "/api/v1/agency-data-packages/*/handoff").hasRole("ADMIN")
                 .anyRequest().denyAll())
             .securityContext(context -> context.securityContextRepository(contextRepository))
             .exceptionHandling(errors -> errors

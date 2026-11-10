@@ -49,6 +49,13 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Không tìm thấy tài nguyên.");
         problem.setProperty("code", exception.code()); return problem;
     }
+    @ExceptionHandler(ForbiddenException.class)
+    ProblemDetail forbiddenException(ForbiddenException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Không có quyền truy cập.");
+        problem.setProperty("code", exception.code());
+        return problem;
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     ProblemDetail forbidden(AccessDeniedException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "Không có quyền truy cập.");
