@@ -185,6 +185,7 @@ public class XlsxReportWriter {
         return createWorkbook(workbook -> {
             CellStyle headerStyle = createHeaderStyle(workbook);
             CellStyle boldStyle = createBoldStyle(workbook);
+            CellStyle nameWrapStyle = createWrapStyle(workbook);
 
             // Sheet CuTru
             SXSSFSheet cuTru = workbook.createSheet("CuTru");
@@ -213,7 +214,11 @@ public class XlsxReportWriter {
                 Row row = cuTru.createRow(rowIdx++);
                 setCell(row, 0, r.householdCode());
                 setCell(row, 1, r.apartmentCode());
-                setCell(row, 2, r.fullName());
+                createStyledCell(row, 2, r.fullName(), nameWrapStyle);
+                if (r.fullName() != null && r.fullName().length() > 28) {
+                    int lines = (int) Math.ceil((double) r.fullName().length() / 28.0);
+                    row.setHeightInPoints(Math.max(15.0f, lines * 15.0f));
+                }
                 String statusLabel = "RESIDING".equals(r.residencyStatus()) ? "Đang cư trú" : "Tạm vắng";
                 setCell(row, 3, statusLabel);
             }
@@ -255,6 +260,12 @@ public class XlsxReportWriter {
         Font font = workbook.createFont();
         font.setBold(true);
         style.setFont(font);
+        style.setWrapText(true);
+        return style;
+    }
+
+    private static CellStyle createWrapStyle(SXSSFWorkbook workbook) {
+        CellStyle style = workbook.createCellStyle();
         style.setWrapText(true);
         return style;
     }
