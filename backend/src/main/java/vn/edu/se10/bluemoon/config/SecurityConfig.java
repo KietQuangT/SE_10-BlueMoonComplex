@@ -48,6 +48,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/change-password").authenticated()
                 .requestMatchers("/api/v1/auth/me", "/api/v1/auth/logout").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/accounts").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/accounts", "/api/v1/accounts/*/disable", "/api/v1/accounts/*/enable", "/api/v1/accounts/*/unlock").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/v1/residency-declarations/mine").hasRole("RESIDENT")
                 .requestMatchers(HttpMethod.GET, "/api/v1/reports/fee-collection.xlsx", "/api/v1/reports/cash-receipts.xlsx").hasAnyRole("ADMIN", "ACCOUNTANT")
@@ -84,6 +85,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/voluntary-campaigns", "/api/v1/voluntary-campaigns/*/publish", "/api/v1/voluntary-campaigns/*/close").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/api/v1/voluntary-campaigns/*").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/voluntary-campaigns/*/contributions", "/api/v1/voluntary-contributions/*/void").hasRole("ACCOUNTANT")
+                .requestMatchers(HttpMethod.GET, "/api/v1/reports/fee-collection.xlsx", "/api/v1/reports/cash-receipts.xlsx").hasAnyRole("ADMIN", "ACCOUNTANT")
+                .requestMatchers(HttpMethod.GET, "/api/v1/reports/residency.xlsx").hasRole("ADMIN")
                 .anyRequest().denyAll())
             .securityContext(context -> context.securityContextRepository(contextRepository))
             .exceptionHandling(errors -> errors
