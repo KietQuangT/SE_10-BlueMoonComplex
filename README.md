@@ -6,13 +6,13 @@ Repo là monorepo: API Spring Boot, giao diện React, MySQL và tài liệu ngh
 
 ## Trạng thái hiện tại
 
-S01–S10 đã có triển khai trong mã nguồn backend. S08 (kỳ thu/tự nguyện) và S09 (thu tiền/gạch nợ) đã được đánh dấu hoàn thành theo yêu cầu của Sơn trong `TASKS.md`, với các giới hạn còn lưu trong `VALIDATION.md`. S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) vào `origin/main`.
+S01–S11 backend đã có triển khai. S08 (kỳ thu/tự nguyện), S09 (thu tiền/gạch nợ), S10 (API + UI hóa đơn cư dân) và S11 backend (xuất báo cáo XLSX thu phí/cư trú) đã được đánh dấu hoàn thành trong `TASKS.md`; giới hạn kiểm chứng được ghi trong `VALIDATION.md`. S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) vào `origin/main`.
 
 S10 bổ sung API tra cứu và chi tiết hóa đơn/lịch sử gạch nợ cho cư dân (`/api/v1/resident/invoices`), kiểm tra quyền theo hộ ở server (chặn IDOR/truy cập chéo hộ), snapshot hóa đơn và ledger với cô lập giao dịch `REPEATABLE_READ`, hỗ trợ phân trang và lọc theo trạng thái thanh toán. Backend S10 đã được Sơn duyệt G2 ngày 09/11/2026.
 
 Các giới hạn hiện tại: UI cư dân cho S10 là lượt riêng (chưa ghép giao diện cư dân); chưa có browser E2E walkthrough với backend thật; phép đo hiệu năng 10.000 bản ghi và kiểm tra EXPLAIN được chuyển sang S14; test snapshot chưa chạy thử loại bỏ `REPEATABLE_READ` để đo độ nhạy; test `MOVED_OUT` tạo nhân khẩu chuyển đi trong hộ nhưng chưa chứng minh account thuộc nhân khẩu do schema chưa nối account–nhân khẩu. Xem chi tiết bằng chứng và giới hạn trong [docs/VALIDATION.md](docs/VALIDATION.md).
 
-Các task tiếp theo (S11 export báo cáo, S12 gói dữ liệu cơ quan, S13 backup/restore, S14 hồi quy/hiệu năng, S15 đóng gói/bàn giao) tiếp tục được theo dõi trong [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md). Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
+Các task tiếp theo (UI export S11, S12 gói dữ liệu cơ quan, S13 backup/restore, S14 hồi quy/hiệu năng, S15 đóng gói/bàn giao) tiếp tục được theo dõi trong [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md). Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
 
 **S10:** backend cung cấp API tra cứu hóa đơn cư dân theo hộ đăng nhập, snapshot và lịch sử thu/bù trừ. UI đã nối API thật: danh sách có lọc tháng/trạng thái và phân trang; chi tiết hiển thị phí snapshot, tiền đã thanh toán/còn nợ và lịch sử thu tiền mặt/bù trừ. UI cư dân chỉ đọc; không có thao tác thanh toán, hủy receipt hay đảo phân bổ. Demo mode giữ màn và dữ liệu mẫu riêng. Cần đăng nhập tài khoản `RESIDENT`.
 
@@ -35,6 +35,7 @@ Các task tiếp theo (S11 export báo cáo, S12 gói dữ liệu cơ quan, S13 
 - **Phí và hóa đơn:** quản lý đơn giá theo kỳ, xem trước phí, tạo kỳ thu và snapshot các dòng phí khi phát hành.
 - **Thu bắt buộc S09:** nhiều receipt cho một hóa đơn; thu thừa trở thành credit hộ; phân bổ credit FIFO; hủy receipt và đảo phân bổ lưu lịch sử; idempotency bằng UUID và audit nghiệp vụ trong transaction; Kế toán thao tác, ADMIN chỉ đọc.
 - **Hóa đơn cư dân S10 (backend):** tra cứu danh sách hóa đơn theo hộ (`/api/v1/resident/invoices`), xem chi tiết hóa đơn kèm lịch sử gạch nợ/biên lai; xác thực quyền sở hữu hộ ở server (chặn IDOR/truy cập chéo hộ); giao dịch `REPEATABLE_READ` bảo đảm tính nhất quán giữa snapshot hóa đơn và ledger thanh toán; phân trang và lọc theo trạng thái thanh toán (`ALL`, `OUTSTANDING`, `UNPAID`, `PARTIALLY_PAID`, `PAID`, `CANCELLED`). Giao diện UI cư dân thực hiện ở lượt riêng.
+- **Báo cáo S11:** API tải XLSX công nợ theo kỳ (`/api/v1/reports/fee-collection.xlsx?period=YYYY-MM`), tiền mặt thu theo ngày (`/api/v1/reports/cash-receipts.xlsx?from=YYYY-MM-DD&to=YYYY-MM-DD`) và cư trú hiện tại (`/api/v1/reports/residency.xlsx`). Tối đa 50.000 dòng mỗi file; chỉ `ADMIN` được tải báo cáo cư trú, `ACCOUNTANT` chỉ được tải hai báo cáo tài chính. UI tải báo cáo là task riêng.
 - **Frontend:** có các màn hình v1; một số luồng dùng API thật, một số luồng vẫn là Demo. Chế độ Demo giữ bộ dữ liệu riêng, không ghi vào backend.
 
 Backend kiểm tra quyền và phạm vi hộ ở server. Các thay đổi dữ liệu dùng transaction và audit nghiệp vụ; schema thay đổi qua migration Flyway mới. Không có tài khoản mặc định; ADMIN đầu tiên được tạo bằng profile bootstrap tương tác.
