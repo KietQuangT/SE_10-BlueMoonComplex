@@ -322,3 +322,8 @@ Sơn chấp nhận và yêu cầu tick S13, S14 dựa trên các file S13, QA tr
 - `cd frontend && npm test && npm run build`: 248 test đạt, build đạt; có cảnh báo React act và kích thước bundle.
 - `bash tests/backup/run_all_tests.sh`: 4/4 nhóm đạt (mock, không thay thế diễn tập MySQL thật).
 - Chưa chạy `-Pintegration` trong lượt này: chưa thiết lập DB test cô lập; chưa xác minh cài đặt từ máy sạch. S15 chưa đủ căn cứ nghiệm thu.
+
+## Script email mô phỏng — 11/11/2026
+
+- `bash tests/scripts/test-mock-email.sh`: đạt; kiểm tra ID không hợp lệ và truy vấn giới hạn theo ID bằng Docker giả lập.
+- `bash -n scripts/mock-email.sh tests/scripts/test-mock-email.sh`: đạt. Truy vấn MySQL Compose với ID không tồn tại trả đúng thông báo không tìm thấy; chưa hiển thị thư thật để tránh lộ mật khẩu tài khoản.

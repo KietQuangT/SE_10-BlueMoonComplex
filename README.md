@@ -132,6 +132,16 @@ Các giá trị nhập vào được kiểm tra nghiêm ngặt theo quy tắc ng
 > [!CAUTION]
 > Không chạy bootstrap tự động trong script CI/CD nếu không có console tương tác. Tuyệt đối không commit credential, mật khẩu hoặc ghi mật khẩu vào shell history/log.
 
+## Xem mật khẩu tạm trong email mô phỏng
+
+Khi ADMIN vừa tạo tài khoản và cần lấy mật khẩu đăng nhập lần đầu, đảm bảo MySQL của Docker Compose đang chạy rồi dùng ID tài khoản được trả về khi tạo:
+
+```bash
+./scripts/mock-email.sh <user-id>
+```
+
+Ví dụ với ID 42: `./scripts/mock-email.sh 42`. Script chỉ đọc thư cấp tài khoản mới nhất của ID đó. Sau khi người dùng đổi mật khẩu, mật khẩu tạm bị xóa khỏi thư và script không còn trả thư này. Đầu ra có mật khẩu: chỉ chạy trong terminal riêng, không lưu hoặc chia sẻ log. Script dùng tài khoản MySQL được cấu hình trong container Compose.
+
 ## Kiểm thử
 
 ```bash
@@ -141,7 +151,7 @@ cd backend
 ./mvnw -B -ntp -Pintegration verify
 ```
 
-Frontend: `cd frontend && npm ci && npm test && npm run build`. Test backup: `bash tests/backup/run_all_tests.sh`. Hướng dẫn ca thủ công và báo cáo: [tests/README.md](tests/README.md). Không dùng dữ liệu cư dân thật cho kiểm thử.
+Frontend: `cd frontend && npm ci && npm test && npm run build`. Test backup: `bash tests/backup/run_all_tests.sh`. Test script email: `bash tests/scripts/test-mock-email.sh`. Hướng dẫn ca thủ công và báo cáo: [tests/README.md](tests/README.md). Không dùng dữ liệu cư dân thật cho kiểm thử.
 
 ## Backup và diễn tập phục hồi S13
 
