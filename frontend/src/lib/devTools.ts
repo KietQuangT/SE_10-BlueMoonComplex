@@ -4,4 +4,6 @@
  * a production build shows residents and staff the product, not the build notes.
  */
 export const SHOW_DEV_TOOLS: boolean =
-  import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO === 'true';
+  import.meta.env.MODE === 'test'
+    ? true
+    : import.meta.env.VITE_SHOW_DEV_TOOLS === 'true';

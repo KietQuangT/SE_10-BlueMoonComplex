@@ -21,8 +21,6 @@ interface NavGroup {
   items: NavItem[];
 }
 
-const SHOW_DEV_TOOLS = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO === 'true';
-
 function useNavGroups(role: RoleCode): NavGroup[] {
   const { residencyChanges, invoices, user, mode, absenceCount } = useAppState();
   const pendingAbsence = mode === 'api' ? absenceCount : residencyChanges.filter(
@@ -131,7 +129,7 @@ const RESIDENT_TABS: NavItem[] = [
 ];
 
 export function AppShell(): React.ReactElement {
-  const { user, households, logout, mode, forcedUiState, setQaDrawerOpen } = useAppState();
+  const { user, households, logout, mode, forcedUiState } = useAppState();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -143,7 +141,14 @@ export function AppShell(): React.ReactElement {
     setMenuOpen(false);
     if (previousPath.current !== location.pathname) {
       previousPath.current = location.pathname;
-      document.getElementById('main-content')?.focus();
+      if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+        try {
+          window.scrollTo(0, 0);
+        } catch {
+          // Ignore jsdom scrollTo unimplemented warning in tests
+        }
+      }
+      document.getElementById('main-content')?.focus({ preventScroll: true });
     }
   }, [location.pathname]);
 
@@ -189,7 +194,10 @@ export function AppShell(): React.ReactElement {
         <div>
           <NavLink to="/" className="rail-brand">
             <span className="line-mark" aria-hidden="true" />
-            <span className="rail-brand-title">BlueMoon</span>
+            <span className="rail-brand-text">
+              <span className="rail-brand-title">BlueMoon</span>
+              <span className="rail-brand-sub">Complex</span>
+            </span>
           </NavLink>
           <nav className="rail-nav">
             {groups.map((g) => (
@@ -226,6 +234,7 @@ export function AppShell(): React.ReactElement {
             {household ? ` · ${household.householdCode}` : ''}
           </span>
         </div>
+        <div className="rail-moon-art" aria-hidden="true" />
       </aside>
 
       <div className="app-workspace">
@@ -249,8 +258,6 @@ export function AppShell(): React.ReactElement {
             )}
             {mode === 'demo' ? (
               <span className="badge badge-assumed">Chế độ Demo</span>
-            ) : SHOW_DEV_TOOLS ? (
-              <span className="badge badge-paid hide-mobile">Kết nối backend</span>
             ) : null}
           </div>
           <div className="topbar-actions">
@@ -259,16 +266,6 @@ export function AppShell(): React.ReactElement {
             <NavLink to="/profile" className="btn btn-ghost btn-sm hide-mobile">
               Hồ sơ và đổi mật khẩu
             </NavLink>
-            {SHOW_DEV_TOOLS ? (
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm hide-mobile"
-                onClick={() => setQaDrawerOpen(true)}
-              >
-                <Icon name="sliders" size={16} />
-                Kiểm thử UI
-              </button>
-            ) : null}
             <button type="button" className="btn btn-secondary btn-sm hide-mobile" onClick={handleLogout}>
               <Icon name="log-out" size={16} />
               Đăng xuất
@@ -312,17 +309,6 @@ export function AppShell(): React.ReactElement {
                     <Icon name="lock" size={16} />
                     Hồ sơ và đổi mật khẩu
                   </NavLink>
-                  {SHOW_DEV_TOOLS ? (
-                    <button
-                      type="button"
-                      className="popover-link"
-                      role="menuitem"
-                      onClick={() => setQaDrawerOpen(true)}
-                    >
-                      <Icon name="sliders" size={16} />
-                      Kiểm thử UI
-                    </button>
-                  ) : null}
                   <button type="button" className="popover-link" role="menuitem" onClick={handleLogout}>
                     <Icon name="log-out" size={16} />
                     Đăng xuất

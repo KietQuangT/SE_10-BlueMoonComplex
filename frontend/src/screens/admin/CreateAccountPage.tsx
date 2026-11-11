@@ -190,7 +190,7 @@ export function CreateAccountPage(): React.ReactElement {
               fieldError('username')
             ) : (
               <span id="acc-username-hint" className="field-hint">
-                Ban quản trị nhập (D19): 3–100 ký tự, chữ không dấu, số và . _ -
+                Ban quản trị nhập: 3–100 ký tự, chữ không dấu, số và . _ -
               </span>
             )}
           </div>
@@ -234,10 +234,7 @@ export function CreateAccountPage(): React.ReactElement {
                 fieldError('householdId')
               ) : (
                 <span id="acc-household-hint" className="field-hint">
-                  Một tài khoản gắn đúng một hộ (D15).
-                  {mode === 'api'
-                    ? ' Danh sách hộ đang lấy từ dữ liệu mẫu cho tới khi có API S05; mã hộ phải tồn tại trong DB.'
-                    : ''}
+                  Một tài khoản gắn đúng một hộ.
                 </span>
               )}
             </div>

@@ -3,6 +3,7 @@ import React from 'react';
 export type IconName =
   | 'building'
   | 'receipt'
+  | 'user'
   | 'users'
   | 'calendar'
   | 'heart'
@@ -63,6 +64,14 @@ export function Icon({ name, size = 18, title }: IconProps): React.ReactElement 
           {title ? <title>{title}</title> : null}
           <path d="M5 3h14v18l-2.5-1.8L14 21l-2-1.8L10 21l-2.5-1.8L5 21V3Z" />
           <path d="M9 8h6M9 12h6M9 16h4" />
+        </svg>
+      );
+    case 'user':
+      return (
+        <svg {...common}>
+          {title ? <title>{title}</title> : null}
+          <circle cx="12" cy="8" r="3.8" />
+          <path d="M5.5 19.5a6.5 6.5 0 0 1 13 0" />
         </svg>
       );
     case 'users':
@@ -152,6 +161,7 @@ export function Icon({ name, size = 18, title }: IconProps): React.ReactElement 
           {title ? <title>{title}</title> : null}
           <rect x="5" y="11" width="14" height="10" rx="2" />
           <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+          <circle cx="12" cy="16" r="1" fill="currentColor" stroke="none" />
         </svg>
       );
     case 'unlock':

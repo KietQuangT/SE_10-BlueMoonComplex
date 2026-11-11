@@ -17,7 +17,7 @@ interface ScreenHeaderProps {
 export function ScreenHeader({
   screenCode,
   title,
-  description,
+  description: _description,
   contract,
   tierLabel,
   actions,
@@ -37,7 +37,6 @@ export function ScreenHeader({
               </>
             ) : null}
           </div>
-          {description ? <p className="screen-desc">{description}</p> : null}
         </div>
         {actions ? <div className="filter-row">{actions}</div> : null}
       </header>

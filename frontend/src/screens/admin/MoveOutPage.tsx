@@ -8,23 +8,54 @@ import { ResidencyBadge } from '../../components/ResidencyBadge';
 import { ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
 import { Icon } from '../../components/Icon';
 
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const todayIso = () => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Ho_Chi_Minh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const y = parts.find((p) => p.type === 'year')?.value ?? '1970';
+  const m = parts.find((p) => p.type === 'month')?.value ?? '01';
+  const d = parts.find((p) => p.type === 'day')?.value ?? '01';
+  return `${y}-${m}-${d}`;
+};
 
 /** M-15 — Ghi nhận chuyển đi (trạng thái, không xóa) và tab Lưu trữ. */
 export function MoveOutPage(): React.ReactElement {
   const { residents, households, residencyChanges, recordMoveOut, loadHouseholdDetail, mode, forcedUiState, setForcedUiState } =
     useAppState();
   const live = mode === 'api';
-  const [pickHousehold, setPickHousehold] = useState<string>('');
   const [params, setParams] = useSearchParams();
+  const queryHousehold = params.get('household') ?? '';
+  const queryResident = params.get('resident') ?? '';
+  const [pickHousehold, setPickHousehold] = useState<string>(() => {
+    if (queryHousehold) return queryHousehold;
+    if (queryResident) {
+      const match = residents.find((r) => String(r.id) === queryResident);
+      if (match) return String(match.householdId);
+    }
+    return '';
+  });
   const tab = params.get('tab') === 'archive' ? 'archive' : 'active';
-  const [selectedId, setSelectedId] = useState<string>(params.get('resident') ?? '');
+  const [selectedId, setSelectedId] = useState<string>(queryResident);
   const [effectiveDate, setEffectiveDate] = useState(todayIso());
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [archiveHousehold, setArchiveHousehold] = useState('ALL');
+
+  useEffect(() => {
+    const qh = params.get('household');
+    const qr = params.get('resident');
+    if (qh) setPickHousehold(qh);
+    if (qr) {
+      setSelectedId(qr);
+      const match = residents.find((r) => String(r.id) === qr);
+      if (match && !qh) setPickHousehold(String(match.householdId));
+    }
+  }, [params, residents]);
 
   // api mode: members are loaded per household, so load the one the admin picked.
   useEffect(() => {
@@ -170,6 +201,7 @@ export function MoveOutPage(): React.ReactElement {
                 type="date"
                 className="input"
                 value={effectiveDate}
+                max={todayIso()}
                 onChange={(e) => setEffectiveDate(e.target.value)}
               />
             </div>

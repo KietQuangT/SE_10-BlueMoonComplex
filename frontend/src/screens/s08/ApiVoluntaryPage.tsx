@@ -7,6 +7,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { EmptyStatePanel, ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
 import { formatBusinessDate, formatVndDecimal } from '../../lib/format';
+import { SHOW_DEV_TOOLS } from '../../lib/devTools';
 import { useAppState } from '../../state/AppStateContext';
 import { CampaignCard, campaignStatus } from './CampaignCard';
 import { Pager } from './Pager';
@@ -195,10 +196,12 @@ export function ApiVoluntaryPage() {
       description={resident ? 'Các đợt vận động Ban quản trị đã công bố. Đóng góp bằng tiền mặt tại Văn phòng Ban quản lý.' : 'Tạo, công bố và theo dõi các đợt vận động trong chung cư.'}
       actions={admin ? <button type="button" className="btn btn-primary" disabled={busy} onClick={openCreate}>Tạo đợt vận động mới</button> : undefined} />
 
-    <aside className="notice-box notice-warning s08-voluntary-note" aria-label="Quy tắc đóng góp tự nguyện">
-      <strong>Đóng góp tự nguyện, không tính vào công nợ</strong>
-      <p>Các khoản ủng hộ được theo dõi riêng, không cộng vào khoản phải đóng của hộ gia đình.</p>
-    </aside>
+    {SHOW_DEV_TOOLS && (
+      <aside className="notice-box notice-warning s08-voluntary-note" aria-label="Quy tắc đóng góp tự nguyện">
+        <strong>Đóng góp tự nguyện, không tính vào công nợ</strong>
+        <p>Các khoản ủng hộ được theo dõi riêng, không cộng vào khoản phải đóng của hộ gia đình.</p>
+      </aside>
+    )}
     {success && <div className="notice-box notice-success" role="status">{success}</div>}
     {error && !modalError && data && <div className="notice-box notice-warning s08-feedback" role="alert"><p>{error}</p><button type="button" className="btn btn-secondary" disabled={busy} onClick={reload}>Tải lại</button></div>}
 

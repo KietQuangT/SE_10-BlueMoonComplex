@@ -9,6 +9,7 @@ import { ContractBadge, StatusBadge } from '../../components/Badge';
 import { ChangeStatusBadge, ResidencyBadge, changeTypeLabel } from '../../components/ResidencyBadge';
 import { Icon } from '../../components/Icon';
 import { ErrorPage } from '../common/ErrorPage';
+import { SHOW_DEV_TOOLS } from '../../lib/devTools';
 
 /** M-13 — Chi tiết hộ: thông tin, thành viên, lịch sử biến động, tài khoản gắn hộ (đề xuất). */
 export function HouseholdDetailPage(): React.ReactElement {
@@ -124,7 +125,7 @@ export function HouseholdDetailPage(): React.ReactElement {
                     </td>
                     <td className="align-right">
                       {mode === 'api' && user?.role === 'ADMIN' && m.residencyStatus === 'Tạm vắng' && <button type="button" className="btn btn-secondary" onClick={() => { setReturnError(''); setReturnId(m.id); }}>Đã quay lại</button>}
-                      <Link to={`/admin/move-outs?resident=${m.id}`} className="btn btn-ghost btn-sm">
+                      <Link to={`/admin/move-outs?household=${household.id}&resident=${m.id}`} className="btn btn-ghost btn-sm">
                         Ghi nhận chuyển đi
                       </Link>
                     </td>
@@ -135,10 +136,12 @@ export function HouseholdDetailPage(): React.ReactElement {
           </div>
         )}
       </section>
-      <p className="field-hint">
-        Số giấy tờ và số điện thoại mặc định che; quy tắc hiện đầy đủ theo vai trò chờ quyết định.
-        Tập giá trị trạng thái cư trú chờ chốt.
-      </p>
+      {SHOW_DEV_TOOLS && (
+        <p className="field-hint">
+          Số giấy tờ và số điện thoại mặc định che; quy tắc hiện đầy đủ theo vai trò chờ quyết định.
+          Tập giá trị trạng thái cư trú chờ chốt.
+        </p>
+      )}
 
       <h2 className="section-heading">Lịch sử biến động</h2>
       <section className="surface-box">

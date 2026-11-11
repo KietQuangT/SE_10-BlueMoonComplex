@@ -47,7 +47,7 @@ lịch sử tài chính/cư trú.
 | Ban quản trị | Quản lý tài khoản, hộ/nhân khẩu, duyệt cư trú, tạo khoản thu, xem/xuất báo cáo |
 | Kế toán | Thiết lập đơn giá, lập kỳ thu, ghi nhận thanh toán, đối soát và báo cáo tài chính |
 | Cư dân | Xem dữ liệu của hộ mình, gửi khai báo cư trú, xem hóa đơn và lịch sử thanh toán |
-| Cơ quan chức năng/Bên liên quan | Chỉ xem hoặc nhận gói dữ liệu đã được xác thực/phê duyệt |
+| Cơ quan chức năng/Bên liên quan | Bên nhận gói ngoài hệ thống; trong S12 không có account/API/role đăng nhập. BQT xử lý yêu cầu/giấy phép ngoài hệ thống, tạo, duyệt và audit gói trước khi chuyển |
 
 Actor nghiệp vụ không đồng nhất với thành viên hoặc owner của repository.
 
@@ -132,7 +132,7 @@ chứa cả năng lực v2/TBD nên không được dùng riêng nó để mở 
 - Báo cáo tổng thu, tổng nợ và tỷ lệ dùng công thức được phê duyệt.
 - Báo cáo phải khớp dữ liệu giao dịch trong DB.
 - Danh sách cư trú dùng mẫu/cột đã thống nhất.
-- Cơ quan chức năng chỉ nhận gói dữ liệu đã xác thực/phê duyệt.
+- Cơ quan chức năng chỉ nhận gói do BQT tạo, duyệt và audit; S12 không cấp account/API/role đăng nhập cho cơ quan. Yêu cầu và kiểm tra giấy phép do BQT xử lý ngoài hệ thống. ADMIN chọn danh sách hộ ACTIVE rõ ràng, người ADMIN khác duyệt; người tạo được từ chối gói DRAFT; gói cư trú chỉ có mã hộ, căn hộ, họ tên, trạng thái cho nhân khẩu RESIDING/TEMPORARILY_ABSENT. Snapshot lưu 30 ngày từ lúc tạo, tải tối đa đến mốc sớm hơn giữa duyệt+7 ngày và tạo+30 ngày; các trường audit/retention theo D13.
 - Không trả dữ liệu thô hoặc trường ngoài whitelist.
 
 ## 8. Quy tắc dữ liệu và phi chức năng
@@ -192,8 +192,8 @@ BRD chỉ được chuyển sang baseline khi nhóm đã xác nhận:
 | TBD-02 | Account cư dân liên kết với hộ/nhân khẩu thế nào | Chưa chốt |
 | TBD-03 | Rounding, thu thiếu/thừa, sửa/hủy thanh toán | Chưa chốt |
 | TBD-04 | Công thức tỷ lệ thu hồi nợ và mẫu Excel | Chưa chốt |
-| TBD-05 | Mẫu/cột báo cáo cư trú cho cơ quan | Chưa chốt |
-| TBD-06 | Thời hạn audit, dữ liệu tài chính và cư trú | Chưa chốt |
+| TBD-05 | Phạm vi, allowlist và hợp đồng template/API/lifecycle S12 được Sơn duyệt tại G1 ngày 11/11/2026; implementation còn chờ kiểm chứng G2 | Đã chốt G1; chưa có bằng chứng G2 |
+| TBD-06 | Retention chung cho các miền dữ liệu còn mở; riêng S12 đã chốt snapshot 30 ngày, metadata/scope/reference và audit 5 năm theo D13 | Chưa chốt ngoài S12 |
 | TBD-07 | Nguồn và quy tắc báo cáo quỹ | Blocked |
 
 ## 12. Tài liệu liên quan
