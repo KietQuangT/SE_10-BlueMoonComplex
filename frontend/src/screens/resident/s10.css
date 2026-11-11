@@ -1,103 +1,88 @@
-/* Scoped styles for S10 Resident Billing & Invoice screens */
+/* S10 — Resident Billing & Invoices Styles (Unified BlueMoon Design System) */
+
+.s10-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
 
 .s10-filter-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  gap: 12px;
   align-items: flex-end;
-  margin-bottom: var(--space-4);
-  padding: var(--space-3);
-  background-color: var(--surface-subtle);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
+  padding: 14px 20px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .s10-filter-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  min-width: 140px;
+  gap: 5px;
+  min-width: 170px;
 }
 
 .s10-filter-group label {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-ink-muted);
+  font-size: 0.8rem;
+  color: var(--ink-secondary);
+  font-weight: 600;
 }
 
 .s10-filter-actions {
   display: flex;
-  gap: var(--space-2);
+  gap: 8px;
   align-items: center;
-  margin-top: auto;
 }
 
-.s10-filter-actions .btn {
-  min-height: 44px;
+.s10-history-section {
+  margin-top: 22px;
 }
 
-.s10-toolbar-row {
+.s10-section-title-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  gap: 12px;
+  padding: 15px 20px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.s10-notice-banner {
-  margin-bottom: var(--space-4);
+.s10-history-note {
+  margin: 4px 0 0 0;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
 }
 
 .s10-card-list {
   display: none;
   list-style: none;
-  padding: 0;
   margin: 0;
+  padding: 0;
 }
 
 .s10-card-item {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border-bottom: 1px solid var(--border-subtle);
-  background-color: var(--surface-panel);
+  gap: 6px;
 }
 
 .s10-card-item:last-child {
-  border-bottom: 0;
+  border-bottom: none;
 }
 
-.s10-history-section {
-  margin-top: var(--space-6);
-}
-
-.s10-section-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  margin-bottom: var(--space-2);
-}
-
-.s10-history-note {
-  font-size: var(--font-size-sm);
-  color: var(--color-ink-muted);
-  margin-top: var(--space-2);
-  margin-bottom: var(--space-2);
+.s10-notice-banner {
+  margin-bottom: 18px;
 }
 
 @media (max-width: 640px) {
-  .s10-desktop-table {
-    display: none;
-  }
-
-  .s10-card-list {
-    display: block;
-  }
-
   .s10-filter-bar {
     flex-direction: column;
     align-items: stretch;
@@ -109,6 +94,13 @@
 
   .s10-filter-actions {
     width: 100%;
-    justify-content: flex-end;
+  }
+
+  .s10-desktop-table {
+    display: none;
+  }
+
+  .s10-card-list {
+    display: block;
   }
 }

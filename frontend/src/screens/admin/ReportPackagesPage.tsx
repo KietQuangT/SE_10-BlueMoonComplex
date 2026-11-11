@@ -3,9 +3,11 @@ import { actOnAgencyPackage, createAgencyPackage, downloadAgencyPackage, fetchAg
 import type { AgencyPackageAction, AgencyPackageDetail, AgencyPackagePage, AgencyPackagePreview, AgencyPackageSummary } from '../../api/agencyPackages';
 import { ApiHttpError } from '../../api/client';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { StatusBadge } from '../../components/Badge';
 import { ScreenHeader } from '../../components/ScreenHeader';
 import { EmptyStatePanel, ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
 import { formatInstantVn } from '../../lib/format';
+import { SHOW_DEV_TOOLS } from '../../lib/devTools';
 import { useAppState } from '../../state/AppStateContext';
 
 const PAGE_SIZE = 20;
@@ -65,12 +67,35 @@ export function ReportPackagesPage(): React.ReactElement {
   const [detailLoading, setDetailLoading] = useState(false);
 
   const [createOpen, setCreateOpen] = useState(false);
+  const [householdSearch, setHouseholdSearch] = useState('');
   const [selectedHouseholds, setSelectedHouseholds] = useState<number[]>([]);
   const [agencyCode, setAgencyCode] = useState('');
   const [requestReference, setRequestReference] = useState('');
   const [licenceReference, setLicenceReference] = useState('');
   const [busy, setBusy] = useState(false);
   const [pendingAction, setPendingAction] = useState<AgencyPackageAction | null>(null);
+
+  const filteredHouseholds = useMemo(() => {
+    const query = householdSearch.trim().toLowerCase();
+    if (!query) return activeHouseholds;
+    return activeHouseholds.filter((h) =>
+      h.apartmentCode.toLowerCase().includes(query) ||
+      h.householdCode.toLowerCase().includes(query)
+    );
+  }, [activeHouseholds, householdSearch]);
+
+  const selectAllFiltered = () => {
+    const idsToAdd = filteredHouseholds.map((h) => h.id);
+    setSelectedHouseholds((prev) => Array.from(new Set([...prev, ...idsToAdd])));
+    if (error?.message === 'Chọn ít nhất một hộ đang hoạt động.') {
+      setError(null);
+    }
+  };
+
+  const deselectAllFiltered = () => {
+    const idsToRemove = new Set(filteredHouseholds.map((h) => h.id));
+    setSelectedHouseholds((prev) => prev.filter((id) => !idsToRemove.has(id)));
+  };
 
   useEffect(() => {
     if (mode !== 'api') {
@@ -245,14 +270,138 @@ export function ReportPackagesPage(): React.ReactElement {
     <div className="wayfinding-page">
       {header}
 
-      <section className="notice-box notice-warning mb-6" aria-label="Quy trình xử lý yêu cầu cơ quan">
-        <strong>Quy trình BQT:</strong> nhận yêu cầu và kiểm tra giấy phép bên ngoài hệ thống, tạo gói trong phạm vi hộ, xem trước rồi nhờ ADMIN khác duyệt. BQT tải tệp và bàn giao ngoài hệ thống; ứng dụng chỉ lưu mã tham chiếu tối thiểu.
-      </section>
+      {SHOW_DEV_TOOLS && (
+        <section className="notice-box notice-warning mb-6" aria-label="Quy trình xử lý yêu cầu cơ quan">
+          <strong>Quy trình BQT:</strong> nhận yêu cầu và kiểm tra giấy phép bên ngoài hệ thống, tạo gói trong phạm vi hộ, xem trước rồi nhờ ADMIN khác duyệt. BQT tải tệp và bàn giao ngoài hệ thống; ứng dụng chỉ lưu mã tham chiếu tối thiểu.
+        </section>
+      )}
 
       {error && <div className="notice-box notice-warning mb-4" role="alert"><p>{error.message}</p>{error.requestId && <small>Mã yêu cầu: {error.requestId}</small>}</div>}
       {success && <div className="notice-box notice-success mb-4" role="status">{success}</div>}
 
-      <section className="surface-box mb-6" aria-labelledby="package-list-title">
+      {createOpen && (
+        <section className="surface-box surface-box-pad mb-6" aria-labelledby="create-package-title">
+          <div className="box-toolbar">
+            <h2 id="create-package-title" className="box-title">Tạo bản nháp gói</h2>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCreateOpen(false)}>Đóng</button>
+          </div>
+          <p className="field-hint mb-4">
+            Chỉ chọn hộ thuộc đúng yêu cầu đã tiếp nhận. Hệ thống lưu mã tham chiếu, không lưu bản giấy phép hoặc nội dung yêu cầu.
+          </p>
+          <form onSubmit={(event) => void submitCreate(event)}>
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className="form-field" htmlFor="agency-code">
+                Mã cơ quan nhận gói
+                <input
+                  id="agency-code"
+                  className="input"
+                  autoFocus
+                  required
+                  maxLength={50}
+                  value={agencyCode}
+                  onChange={(event) => setAgencyCode(event.target.value)}
+                />
+              </label>
+              <label className="form-field" htmlFor="request-reference">
+                Mã tham chiếu yêu cầu
+                <input
+                  id="request-reference"
+                  className="input"
+                  required
+                  maxLength={100}
+                  value={requestReference}
+                  onChange={(event) => setRequestReference(event.target.value)}
+                />
+              </label>
+              <label className="form-field" htmlFor="licence-reference">
+                Mã tham chiếu giấy phép
+                <input
+                  id="licence-reference"
+                  className="input"
+                  required
+                  maxLength={100}
+                  value={licenceReference}
+                  onChange={(event) => setLicenceReference(event.target.value)}
+                />
+              </label>
+            </div>
+            <fieldset className="field-options mt-4">
+              <legend>Hộ trong phạm vi ({selectedHouseholds.length} đã chọn)</legend>
+              {dataLoadError ? (
+                <div>
+                  <p className="field-hint">Không tải được danh sách hộ. Tải lại danh sách trước khi tạo gói.</p>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => void reloadHouseholds()}>
+                    Tải lại danh sách hộ
+                  </button>
+                </div>
+              ) : activeHouseholds.length === 0 ? (
+                <p className="field-hint">Chưa có hộ đang hoạt động để chọn.</p>
+              ) : (
+                <>
+                  <div className="filter-row mb-3">
+                    <input
+                      type="search"
+                      className="input"
+                      style={{ maxWidth: '240px' }}
+                      placeholder="Lọc số căn hoặc mã hộ..."
+                      value={householdSearch}
+                      onChange={(event) => setHouseholdSearch(event.target.value)}
+                      aria-label="Lọc danh sách hộ"
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={selectAllFiltered}
+                      disabled={filteredHouseholds.length === 0}
+                    >
+                      Chọn tất cả ({filteredHouseholds.length})
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={deselectAllFiltered}
+                      disabled={selectedHouseholds.length === 0}
+                    >
+                      Bỏ chọn tất cả
+                    </button>
+                  </div>
+                  <div className="field-options max-h-48 overflow-y-auto">
+                    {filteredHouseholds.length === 0 ? (
+                      <p className="field-hint">Không tìm thấy hộ phù hợp bộ lọc.</p>
+                    ) : (
+                      filteredHouseholds.map((household) => (
+                        <label className="field-check" key={household.id}>
+                          <input
+                            type="checkbox"
+                            checked={selectedHouseholds.includes(household.id)}
+                            onChange={() => toggleHousehold(household.id)}
+                          />
+                          <span>
+                            <strong>{household.apartmentCode}</strong> · {household.householdCode}
+                            {typeof household.currentResidents === 'number'
+                              ? ` · ${household.currentResidents} nhân khẩu`
+                              : ''}
+                          </span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+            </fieldset>
+            <div className="filter-row mt-4">
+              <button type="submit" className="btn btn-primary" disabled={busy || activeHouseholds.length === 0}>
+                {busy ? 'Đang tạo...' : 'Tạo bản nháp'}
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => setCreateOpen(false)} disabled={busy}>
+                Hủy
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+
+      <section className="surface-box surface-box-pad mb-6" aria-labelledby="package-list-title">
         <div className="box-toolbar">
           <h2 id="package-list-title" className="box-title">Các gói dữ liệu</h2>
           <div className="filter-row"><button type="button" className="btn btn-secondary btn-sm" disabled={loading} onClick={() => setRefreshKey((value) => value + 1)}>Tải lại</button>
@@ -267,11 +416,11 @@ export function ReportPackagesPage(): React.ReactElement {
           <EmptyStatePanel title="Chưa có gói dữ liệu" description="Tạo bản nháp sau khi BQT đã tiếp nhận yêu cầu và kiểm tra giấy phép ngoài hệ thống." actionLabel="Tạo gói dữ liệu" onAction={() => setCreateOpen(true)} />
         ) : (
           <div className="overflow-x-auto"><table className="ledger-table">
-            <thead><tr><th>Mã gói</th><th>Trạng thái</th><th>Hộ</th><th>Nhân khẩu</th><th>Tạo lúc</th><th>Hạn tải / xóa</th><th>Thao tác</th></tr></thead>
+            <thead><tr><th>Mã gói</th><th>Trạng thái</th><th className="align-right">Hộ</th><th className="align-right">Nhân khẩu</th><th>Tạo lúc</th><th>Hạn tải / xóa</th><th className="align-right">Thao tác</th></tr></thead>
             <tbody>{list.map((pkg) => <tr key={pkg.id}>
-              <td className="font-mono">#{pkg.id}</td><td>{STATUS_LABEL[pkg.status] || pkg.status}</td><td>{pkg.householdCount}</td><td>{pkg.residentCount}</td>
-              <td>{formatInstantVn(pkg.createdAt)}</td><td>{formatInstantVn(latestExpiration(pkg))}</td>
-              <td><button type="button" className="btn btn-secondary btn-sm" onClick={() => void loadDetail(pkg.id)}>Xem chi tiết</button></td>
+              <td className="font-mono">#{pkg.id}</td><td><StatusBadge tone={pkg.status === 'APPROVED' ? 'paid' : pkg.status === 'DRAFT' ? 'pending' : 'neutral'} label={STATUS_LABEL[pkg.status] || pkg.status} /></td><td className="align-right tabular">{pkg.householdCount}</td><td className="align-right tabular">{pkg.residentCount}</td>
+              <td className="tabular">{formatInstantVn(pkg.createdAt)}</td><td className="tabular">{formatInstantVn(latestExpiration(pkg))}</td>
+              <td className="align-right"><button type="button" className="btn btn-secondary btn-sm" onClick={() => void loadDetail(pkg.id)}>Xem chi tiết</button></td>
             </tr>)}</tbody>
           </table></div>
         )}
@@ -281,41 +430,49 @@ export function ReportPackagesPage(): React.ReactElement {
         </nav>}
       </section>
 
-      {selected && <section className="surface-box mb-6" aria-labelledby="package-detail-title" aria-busy={detailLoading}>
+      {selected && <section className="surface-box surface-box-pad mb-6" aria-labelledby="package-detail-title" aria-busy={detailLoading}>
         <div className="box-toolbar"><div><h2 id="package-detail-title" className="box-title">Gói #{selected.id} · {STATUS_LABEL[selected.status] || selected.status}</h2><p className="field-hint">Cơ quan: {selected.recipientAgencyCode} · Yêu cầu: {selected.requestReference} · Giấy phép: {selected.licenceReference}</p></div>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setSelected(null); setPreview(null); }}>Đóng</button></div>
-        <dl className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4"><div><dt className="field-hint">Phạm vi hộ</dt><dd>{selected.householdCount} hộ / {selected.householdIds.join(', ')}</dd></div><div><dt className="field-hint">Người tạo</dt><dd>Account #{selected.createdBy}</dd></div><div><dt className="field-hint">Tạo lúc</dt><dd>{formatInstantVn(selected.createdAt)}</dd></div><div><dt className="field-hint">Hạn tải</dt><dd>{formatInstantVn(selected.downloadUntil)}</dd></div><div><dt className="field-hint">Xóa nội dung sau</dt><dd>{formatInstantVn(selected.contentDeleteAfter)}</dd></div><div><dt className="field-hint">SHA-256</dt><dd className="font-mono text-xs" style={{ wordBreak: 'break-all' }}>{selected.contentSha256}</dd></div></dl>
+        <dl className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div>
+            <dt className="field-hint">Phạm vi hộ</dt>
+            <dd>
+              {selected.householdCount} hộ
+              {selected.householdIds.length > 0 ? (
+                <>
+                  {' ('}
+                  {selected.householdIds
+                    .map((id) => {
+                      const h = households.find((item) => item.id === id);
+                      return h ? `Căn ${h.apartmentCode}` : `#${id}`;
+                    })
+                    .join(', ')}
+                  {')'}
+                </>
+              ) : null}
+            </dd>
+          </div>
+          <div><dt className="field-hint">Người tạo</dt><dd>Tài khoản #{selected.createdBy}</dd></div>
+          <div><dt className="field-hint">Tạo lúc</dt><dd className="tabular">{formatInstantVn(selected.createdAt)}</dd></div>
+          <div><dt className="field-hint">Hạn tải</dt><dd className="tabular">{formatInstantVn(selected.downloadUntil)}</dd></div>
+          <div><dt className="field-hint">Xóa nội dung sau</dt><dd className="tabular">{formatInstantVn(selected.contentDeleteAfter)}</dd></div>
+          <div><dt className="field-hint">SHA-256</dt><dd className="font-mono text-xs" style={{ wordBreak: 'break-all' }}>{selected.contentSha256}</dd></div>
+        </dl>
 
         <div className="filter-row mt-4">
           {selected.canApprove && <button type="button" className="btn btn-primary" onClick={() => setPendingAction('approve')}>Duyệt gói</button>}
-          {selected.canReject && <button type="button" className="btn btn-danger" onClick={() => setPendingAction('reject')}>Từ chối bản nháp</button>}
+          {selected.canReject && <button type="button" className="btn btn-secondary danger-text" onClick={() => setPendingAction('reject')}>Từ chối bản nháp</button>}
           {selected.canDownload && <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => void download()}>Tải XLSX</button>}
           {selected.canHandoff && <button type="button" className="btn btn-secondary" onClick={() => setPendingAction('handoff')}>Ghi nhận bàn giao</button>}
-          {selected.canRevoke && <button type="button" className="btn btn-danger" onClick={() => setPendingAction('revoke')}>Thu hồi</button>}
+          {selected.canRevoke && <button type="button" className="btn btn-secondary danger-text" onClick={() => setPendingAction('revoke')}>Thu hồi</button>}
         </div>
 
-        <div className="box-toolbar mt-5"><h3 className="box-title">Xem trước nội dung</h3>{preview && <span className="field-hint">{preview.totalElements} dòng · trang {preview.page + 1}/{Math.max(preview.totalPages, 1)}</span>}</div>
+        <div className="box-toolbar mt-4"><h3 className="box-title">Xem trước nội dung</h3>{preview && <span className="field-hint">{preview.totalElements} dòng · trang {preview.page + 1}/{Math.max(preview.totalPages, 1)}</span>}</div>
         {previewError ? <p className="field-hint" role="status">Bản xem trước chưa khả dụng: {previewError}</p> : preview ? (
           <><div className="overflow-x-auto"><table className="ledger-table"><thead><tr><th>Mã hộ</th><th>Căn hộ</th><th>Họ tên</th><th>Trạng thái cư trú</th></tr></thead><tbody>{preview.content.map((row, index) => <tr key={`${row.householdCode}-${row.fullName}-${index}`}><td>{row.householdCode}</td><td>{row.apartmentCode}</td><td>{row.fullName}</td><td>{residencyLabel(row.residencyStatus)}</td></tr>)}</tbody></table></div>
             {preview.totalPages > 1 && <div className="filter-row justify-between mt-3"><button type="button" className="btn btn-secondary btn-sm" disabled={previewPage === 0} onClick={() => void changePreviewPage(Math.max(0, previewPage - 1))}>Dòng trước</button><button type="button" className="btn btn-secondary btn-sm" disabled={previewPage + 1 >= preview.totalPages} onClick={() => void changePreviewPage(previewPage + 1)}>Dòng tiếp</button></div>}
           </>
         ) : detailLoading ? <SkeletonRows rows={3} /> : <p className="field-hint">Không có nội dung xem trước.</p>}
-      </section>}
-
-      {createOpen && <section className="surface-box mb-6" aria-labelledby="create-package-title">
-        <div className="box-toolbar"><h2 id="create-package-title" className="box-title">Tạo bản nháp gói</h2><button type="button" className="btn btn-ghost btn-sm" onClick={() => setCreateOpen(false)}>Đóng</button></div>
-        <p className="field-hint mb-4">Chỉ chọn hộ thuộc đúng yêu cầu đã tiếp nhận. Hệ thống lưu mã tham chiếu, không lưu bản giấy phép hoặc nội dung yêu cầu.</p>
-        <form onSubmit={(event) => void submitCreate(event)}>
-          <div className="grid gap-4 md:grid-cols-3">
-            <label className="form-field" htmlFor="agency-code">Mã cơ quan nhận gói<input id="agency-code" className="input" required maxLength={50} value={agencyCode} onChange={(event) => setAgencyCode(event.target.value)} /></label>
-            <label className="form-field" htmlFor="request-reference">Mã tham chiếu yêu cầu<input id="request-reference" className="input" required maxLength={100} value={requestReference} onChange={(event) => setRequestReference(event.target.value)} /></label>
-            <label className="form-field" htmlFor="licence-reference">Mã tham chiếu giấy phép<input id="licence-reference" className="input" required maxLength={100} value={licenceReference} onChange={(event) => setLicenceReference(event.target.value)} /></label>
-          </div>
-          <fieldset className="field-options mt-5"><legend>Hộ trong phạm vi ({selectedHouseholds.length} đã chọn)</legend>
-            {dataLoadError ? <div><p className="field-hint">Không tải được danh sách hộ. Tải lại danh sách trước khi tạo gói.</p><button type="button" className="btn btn-secondary btn-sm" onClick={() => void reloadHouseholds()}>Tải lại danh sách hộ</button></div> : activeHouseholds.length === 0 ? <p className="field-hint">Chưa có hộ đang hoạt động để chọn.</p> : activeHouseholds.map((household) => <label className="field-check" key={household.id}><input type="checkbox" checked={selectedHouseholds.includes(household.id)} onChange={() => toggleHousehold(household.id)} /><span><strong>{household.apartmentCode}</strong> · {household.householdCode}{typeof household.currentResidents === 'number' ? ` · ${household.currentResidents} nhân khẩu` : ''}</span></label>)}
-          </fieldset>
-          <div className="filter-row mt-5"><button type="submit" className="btn btn-primary" disabled={busy || activeHouseholds.length === 0}>{busy ? 'Đang tạo...' : 'Tạo bản nháp'}</button><button type="button" className="btn btn-secondary" onClick={() => setCreateOpen(false)} disabled={busy}>Hủy</button></div>
-        </form>
       </section>}
 
       {actionCopy && <ConfirmDialog open title={`${actionCopy.title} #${selected?.id ?? ''}`} confirmLabel={actionCopy.label} confirmTone={actionCopy.tone} consequence={actionCopy.consequence} busy={busy} onConfirm={() => void confirmAction()} onCancel={() => setPendingAction(null)} />}

@@ -3,6 +3,7 @@ import { ScreenHeader } from '../../components/ScreenHeader';
 import { EmptyStatePanel, ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
 import { StatusBadge } from '../../components/Badge';
 import { formatBusinessDate, formatPeriod, formatVnd, sumVndStrings } from '../../lib/format';
+import { SHOW_DEV_TOOLS } from '../../lib/devTools';
 import { useAppState } from '../../state/AppStateContext';
 
 /** Read-only Demo history. Real creation/submission/approval belongs to the S08 API screens. */
@@ -15,10 +16,12 @@ export function BillingPeriodsPage() {
     description="Xem lịch sử kỳ thu trong Demo. Lập nháp, trình duyệt và phát hành thực hiện ở chế độ Backend thật." />;
   return <div className="wayfinding-page">
     {header}
-    <div className="notice-box notice-info mb-6">
-      <strong>Kế toán lập nháp và trình duyệt; Ban quản trị duyệt phát hành.</strong>
-      <p>Chỉ lập kỳ của tháng hiện tại, mỗi tháng tối đa một kỳ chưa hủy. Kỳ thu gồm toàn bộ hộ hoạt động, với phí quản lý và phí rác.</p>
-    </div>
+    {SHOW_DEV_TOOLS && (
+      <div className="notice-box notice-info mb-6">
+        <strong>Kế toán lập nháp và trình duyệt; Ban quản trị duyệt phát hành.</strong>
+        <p>Chỉ lập kỳ của tháng hiện tại, mỗi tháng tối đa một kỳ chưa hủy. Kỳ thu gồm toàn bộ hộ hoạt động, với phí quản lý và phí rác.</p>
+      </div>
+    )}
     {forcedUiState === 'loading' ? <SkeletonRows /> : forcedUiState === 'error'
       ? <ErrorRetryPanel onRetry={() => setForcedUiState('normal')} />
       : periods.length === 0 || forcedUiState === 'empty'

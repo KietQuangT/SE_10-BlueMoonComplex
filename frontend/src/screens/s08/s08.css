@@ -1,59 +1,487 @@
-/* S08 uses the existing BlueMoon tokens in both themes. */
-.s08-page { display: block; width: 100%; min-width: 0; min-height: 0; }
-.s08-page .screen-header { align-items: flex-start; gap: var(--space-5); }
-.s08-page .screen-title-group { flex: 1; min-width: 0; }
-.s08-page .screen-header > .filter-row { flex-shrink: 0; }
-.s08-voluntary-note p, .s08-feedback p, .s08-details .field-hint { margin: var(--space-2) 0 0; }
-.s08-page > .notice-box { margin-bottom: var(--space-5); }
-.s08-feedback, .s08-title-row, .s08-actions { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); }
-.s08-feedback { justify-content: space-between; }
-.s08-feedback p { flex: 1; min-width: min(100%, 240px); margin: 0; }
-.s08-campaign { margin-bottom: var(--space-4); }
-.s08-campaign-selected { border-color: var(--color-brand); }
-.s08-campaign-head, .s08-campaign-foot { display: flex; justify-content: space-between; gap: var(--space-5); }
-.s08-campaign-head { align-items: flex-start; }
-.s08-campaign-foot { align-items: flex-end; margin-top: var(--space-5); }
-.s08-campaign-copy { flex: 1; min-width: 0; }
-.s08-title-row { align-items: baseline; }
-.s08-title-row .box-title { overflow-wrap: anywhere; }
-.s08-description { margin: var(--space-3) 0 var(--space-4); max-width: 72ch; color: var(--text-secondary); white-space: pre-line; overflow-wrap: anywhere; }
-.s08-campaign-total { flex: 0 1 auto; min-width: 0; max-width: 100%; margin: 0; text-align: right; }
-.s08-campaign-total dt, .s08-campaign-dates dt { color: var(--text-muted); font-size: var(--text-sm); }
-.s08-campaign-total dd { margin: var(--space-1) 0 0; color: var(--color-brand-ink); font-size: var(--text-lg); font-weight: 700; overflow-wrap: anywhere; }
-.s08-campaign-dates { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); margin: 0; }
-.s08-campaign-dates dd { margin: var(--space-1) 0 0; font-variant-numeric: tabular-nums; font-weight: 600; }
-.s08-campaign-foot > .btn { flex-shrink: 0; }
-.s08-section { padding: var(--space-5); }
-.s08-details > .s08-section, .s08-ledger { border-top: 1px solid var(--border-subtle); }
-.s08-actions { margin-top: var(--space-4); }
-.s08-actions > .field-hint { flex: 1 1 260px; }
-.s08-fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
-.s08-fieldset :is(input, select, textarea) { width: 100%; min-width: 0; }
-.s08-fieldset textarea { min-height: 96px; resize: vertical; }
-.s08-donor-search { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2) var(--space-3); align-items: end; margin-bottom: var(--space-4); }
-.s08-donor-search .field-hint { grid-column: 1 / -1; }
-.s08-ledger .field-hint { white-space: pre-line; overflow-wrap: anywhere; }
-.s08-details .box-toolbar .box-title { overflow-wrap: anywhere; }
-.s08-details .table-scroll { container-type: inline-size; }
-.s08-page .s08-pager { gap: var(--space-3); flex-wrap: wrap; }
-.s08-period-list { display: grid; gap: var(--space-3); }
-.s08-period-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3); padding-block: var(--space-3); border-bottom: 1px solid var(--border-subtle); }
-.s08-period-row:last-child { border-bottom: 0; }
-.s08-billing-items > article { padding-block: var(--space-4); border-bottom: 1px solid var(--border-subtle); }
-.s08-billing-items > article:last-child { border-bottom: 0; }
-.s08-billing-lines { display: grid; gap: var(--space-2); margin-block: var(--space-3); }
-.s08-billing-lines > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); }
-.s08-billing-lines :is(dt, dd) { margin: 0; }
-.s08-revision-field { max-width: 240px; }
-@media (max-width: 640px) {
-  .s08-page .screen-header, .s08-campaign-head, .s08-campaign-foot { flex-direction: column; align-items: stretch; }
-  .s08-page .screen-header > .filter-row, .s08-page .screen-header .btn { width: 100%; }
-  .s08-campaign-total { text-align: left; }
-  .s08-campaign-total dd { font-size: var(--text-lg); }
-  .s08-campaign-foot .btn { width: 100%; }
-  .s08-page .surface-box-pad, .s08-section { padding: var(--space-4); }
-  .s08-fieldset .form-grid, .s08-fieldset.form-grid { grid-template-columns: minmax(0, 1fr); }
-  .s08-fieldset .span-2 { grid-column: auto; }
-  .s08-page .s08-pager { justify-content: center; }
-  .s08-page .s08-pager span { order: -1; flex-basis: 100%; text-align: center; }
+/* S08 — Billing Periods & Voluntary Campaigns Styles (Unified BlueMoon Design System) */
+
+.s08-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.s08-page .screen-header {
+  margin-bottom: 0;
+}
+
+.s08-voluntary-note,
+.s08-feedback {
+  margin-bottom: 0;
+}
+
+.s08-campaign-list,
+.campaign-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+/* Campaign Card (CampaignCard.tsx) ----------------------------------------- */
+.s08-campaign {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 0;
+  padding: 24px 28px;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.s08-campaign:hover {
+  border-color: var(--border-strong);
+}
+
+.s08-campaign-selected {
+  border-color: var(--accent-primary);
+  box-shadow:
+    0 0 0 1px var(--accent-primary),
+    var(--shadow-panel);
+}
+
+.s08-campaign-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.s08-campaign-copy {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.s08-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.s08-title-row .box-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--ink-primary);
+}
+
+.s08-description {
+  margin: 10px 0 0;
+  max-width: 72ch;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--ink-secondary);
+}
+
+.s08-campaign-total {
+  flex: 0 0 auto;
+  min-width: 220px;
+  margin: 0;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  text-align: right;
+}
+
+.s08-campaign-total dt {
+  margin: 0 0 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink-muted);
+}
+
+.s08-campaign-total dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: var(--status-paid-ink);
+}
+
+.s08-campaign-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding-top: 18px;
+}
+
+.s08-campaign-dates {
+  flex: 1 1 480px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+.s08-campaign-dates > div {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+}
+
+.s08-campaign-dates dt {
+  margin: 0 0 4px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.s08-campaign-dates dd {
+  margin: 0;
+  font-size: 0.925rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-primary);
+}
+
+.s08-campaign-foot > .btn {
+  flex-shrink: 0;
+  min-width: 148px;
+}
+
+/* Campaign Detail & Contribution Sections (ApiVoluntaryPage / VoluntaryAdminPage) */
+.s08-details {
+  margin-bottom: 0;
+}
+
+.s08-section {
+  display: grid;
+  gap: 12px;
+  padding: 20px 24px;
+  margin: 0;
+}
+
+.s08-details > .s08-section,
+.s08-ledger {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.s08-ledger > .s08-section + .s08-section {
+  padding-top: 0;
+}
+
+.s08-details .field-hint {
+  margin: 4px 0 0;
+}
+
+.s08-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.s08-actions > .field-hint {
+  flex: 1 1 260px;
+  margin: 0;
+}
+
+.s08-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.s08-fieldset :is(input, select, textarea) {
+  width: 100%;
+  min-width: 0;
+}
+
+.s08-fieldset textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.s08-donor-search {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 12px;
+  align-items: end;
+  margin-bottom: 8px;
+}
+
+.s08-donor-search .field-hint {
+  grid-column: 1 / -1;
+}
+
+.s08-ledger {
+  overflow: hidden;
+}
+
+/* Billing Periods List & Detail (ApiBillingPage.tsx) ----------------------- */
+#period-list-title {
+  margin-bottom: 14px;
+}
+
+.s08-period-list {
+  display: grid;
+  gap: 10px;
+}
+
+.s08-period-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  width: 100%;
+  min-height: 54px;
+  padding: 12px 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  color: var(--ink-primary);
+  text-align: left;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.s08-period-row:hover {
+  background: var(--bg-row-hover);
+  border-color: var(--border-strong);
+}
+
+.s08-period-row.selected-row,
+.s08-period-row:has(> button[aria-expanded='true']) {
+  background: var(--bg-row-selected);
+  border-color: var(--accent-primary);
+  box-shadow: inset 3px 0 0 var(--accent-primary);
+}
+
+.s08-period-row > .btn {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  min-width: 108px;
+}
+
+.s08-period-row > .field-hint {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ink-secondary);
+}
+
+.s08-period-row > .s08-title-row {
+  margin-left: auto;
+}
+
+section[aria-labelledby='period-detail-title'] > .s08-title-row #period-detail-title {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 500;
+}
+
+section[aria-labelledby='period-detail-title'] > .s08-description {
+  margin: 8px 0 16px;
+}
+
+section[aria-labelledby='period-detail-title'] > .s08-actions:not(:last-child) {
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+section[aria-labelledby='period-detail-title'] > .notice-box {
+  margin-bottom: 18px;
+}
+
+section[aria-labelledby='period-detail-title'] > h3.box-title {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--ink-primary);
+}
+
+.s08-billing-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.s08-billing-items > article {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 18px 20px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.s08-billing-items > article:hover {
+  border-color: var(--border-strong);
+}
+
+.s08-billing-items > article > .box-title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink-primary);
+}
+
+.s08-billing-items > article > .field-hint {
+  margin: -4px 0 0;
+}
+
+.s08-billing-lines {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.s08-billing-lines > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 12px;
+  font-size: 0.875rem;
+}
+
+.s08-billing-lines dt {
+  margin: 0;
+  color: var(--ink-secondary);
+}
+
+.s08-billing-lines dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-primary);
+}
+
+.s08-billing-lines > div:last-child {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-subtle);
+  font-size: 0.95rem;
+}
+
+.s08-billing-lines > div:last-child dt,
+.s08-billing-lines > div:last-child dd {
+  color: var(--ink-primary);
+  font-weight: 700;
+}
+
+.s08-billing-lines > div:last-child dd {
+  color: var(--status-paid-ink);
+}
+
+section[aria-labelledby='period-detail-title'] > .s08-actions:last-child {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+  justify-content: flex-end;
+}
+
+.s08-revision-field {
+  max-width: 260px;
+}
+
+.s08-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.s08-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 18px;
+  padding: 14px 20px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+}
+
+.s08-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 170px;
+}
+
+.s08-filter-group label {
+  font-size: 0.8rem;
+  color: var(--ink-secondary);
+  font-weight: 600;
+}
+
+.s08-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+  font-size: 0.85rem;
+}
+
+.s08-pager-info {
+  color: var(--ink-secondary);
+  font-weight: 600;
+}
+
+.s08-pager-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .s08-campaign-head {
+    flex-direction: column;
+  }
+
+  .s08-campaign-total {
+    width: 100%;
+    text-align: left;
+  }
+
+  .s08-campaign-dates {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .s08-campaign-foot > .btn {
+    width: 100%;
+  }
 }

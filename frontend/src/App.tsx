@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { AppShell } from './components/AppShell';
 import { QaDrawer } from './components/QaDrawer';
+import { SHOW_DEV_TOOLS } from './lib/devTools';
 import { ApiBillingPage } from './screens/s08/ApiBillingPage';
 import { ApiVoluntaryPage } from './screens/s08/ApiVoluntaryPage';
 import { defaultHomeByRole } from './lib/format';
@@ -148,8 +149,36 @@ export function App(): React.ReactElement {
 
           {/* ACCOUNTANT Routes */}
           <Route element={<RequireRole roles={['ACCOUNTANT']} />}>
-            <Route path="/accountant/billing-periods" element={mode === 'api' ? <ApiBillingPage /> : <div className="wayfinding-page">Kỳ thu chưa khả dụng trong chế độ Demo.</div>} />
-            <Route path="/accountant/voluntary" element={mode === 'api' ? <ApiVoluntaryPage /> : <div className="wayfinding-page">Đóng góp chưa khả dụng trong chế độ Demo.</div>} />
+            <Route
+              path="/accountant/billing-periods"
+              element={
+                mode === 'api' ? (
+                  <ApiBillingPage />
+                ) : (
+                  <div className="wayfinding-page">
+                    <div className="surface-box surface-box-pad">
+                      <h1 className="screen-title mb-2">Kỳ thu bắt buộc</h1>
+                      <p className="text-secondary">Kỳ thu chưa khả dụng trong chế độ Demo.</p>
+                    </div>
+                  </div>
+                )
+              }
+            />
+            <Route
+              path="/accountant/voluntary"
+              element={
+                mode === 'api' ? (
+                  <ApiVoluntaryPage />
+                ) : (
+                  <div className="wayfinding-page">
+                    <div className="surface-box surface-box-pad">
+                      <h1 className="screen-title mb-2">Đóng góp tự nguyện</h1>
+                      <p className="text-secondary">Đóng góp chưa khả dụng trong chế độ Demo.</p>
+                    </div>
+                  </div>
+                )
+              }
+            />
             <Route path="/accountant/collections" element={mode === 'api' ? <ApiCollectionsPage key={user?.username} /> : <CollectionsPage />} />
             <Route
               path="/accountant/collection-rate"
@@ -179,7 +208,7 @@ export function App(): React.ReactElement {
       </Routes>
 
       {/* Global Developer & QA Simulation Drawer */}
-      <QaDrawer />
+      {SHOW_DEV_TOOLS && <QaDrawer />}
     </BrowserRouter>
   );
 }

@@ -10,6 +10,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { PaginationBar } from '../../components/PaginationBar';
 import { ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
 import { Icon } from '../../components/Icon';
+import { SHOW_DEV_TOOLS } from '../../lib/devTools';
 import type { AccountRecord } from '../../types/domain';
 
 /** M-10 — Danh sách tài khoản và quản lý trạng thái. */
@@ -274,9 +275,11 @@ export function AccountsPage(): React.ReactElement {
                                 Vô hiệu hóa
                               </button>
                             )}
-                            <button type="button" className="btn btn-ghost btn-sm" disabled title="Chờ chốt">
-                              Cấp lại mật khẩu tạm · chờ chốt
-                            </button>
+                            {SHOW_DEV_TOOLS && (
+                              <button type="button" className="btn btn-ghost btn-sm" disabled title="Chờ chốt">
+                                Cấp lại mật khẩu tạm · chờ chốt
+                              </button>
+                            )}
                           </span>
                         </td>
                       </tr>

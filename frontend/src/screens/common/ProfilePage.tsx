@@ -101,7 +101,7 @@ export function ProfilePage(): React.ReactElement {
       <ScreenHeader
         screenCode="M-03"
         title="Hồ sơ cá nhân và đổi mật khẩu"
-        description="Thông tin hồ sơ lấy từ phiên đăng nhập. Việc sửa hồ sơ đang chờ quyết định."
+        description="Thông tin hồ sơ người dùng và quản lý mật khẩu tài khoản."
         contract={tab === 'profile' || mode === 'api' ? 'api-live' : 'pending-rule'}
         tierLabel="Mức A"
       />
