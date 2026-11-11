@@ -1,0 +1,39 @@
+# Cấu hình mẫu cho BlueMoon S13 Backup / Restore
+# LƯU Ý BẢO MẬT:
+# 1. Tệp cấu hình thực tế PHẢI nằm ngoài repository và Docker volume/datadir.
+# 2. Phải phân quyền an toàn: chmod 0600 /path/to/backup.conf (chỉ user vận hành đọc/ghi).
+# 3. BACKUP_DIR bắt buộc là đường dẫn tuyệt đối trên ổ ngoài đã mã hóa. KHÔNG có fallback/default.
+# 4. Không commit tệp cấu hình chứa mật khẩu hoặc đường dẫn thật vào Git.
+
+# Đường dẫn tuyệt đối tới compose.yaml của dự án
+COMPOSE_FILE="/opt/bluemoon/compose.yaml"
+
+# Tên project Compose
+COMPOSE_PROJECT="bluemoon"
+
+# Tên service MySQL trong compose.yaml
+DB_SERVICE="db"
+
+# Tên cơ sở dữ liệu nguồn cần backup
+DB_NAME="bluemoon"
+
+# Tài khoản MySQL dùng cho backup (chỉ cần quyền đọc SELECT, RELOAD/LOCK TABLES nếu cần dump)
+DB_USER="bluemoon_backup"
+DB_PASSWORD="your_secure_backup_password_here"
+
+# Đích lưu backup: BẮT BUỘC đường dẫn tuyệt đối trên ổ ngoài đã mã hóa (Q2)
+# Ví dụ macOS: /Volumes/SECURE_BACKUP/bluemoon_backups
+# Ví dụ Linux: /mnt/encrypted_backup/bluemoon_backups
+BACKUP_DIR="/Volumes/SECURE_BACKUP/bluemoon_backups"
+
+# Mount point của ổ đĩa ngoài (để xác minh ổ đã mount, tránh ghi nhầm vào mountpoint rỗng trên ổ trong)
+BACKUP_MOUNT_POINT="/Volumes/SECURE_BACKUP"
+
+# Xác nhận ổ đĩa ngoài đã được mã hóa at-rest (true/false)
+REQUIRE_ENCRYPTION_VERIFIED="true"
+
+# Đường dẫn tệp khóa lock nguyên tử ngoài repository (chống chạy trùng lặp backup/prune/catch-up)
+BACKUP_LOCK_FILE="/var/run/bluemoon/backup.lock"
+
+# Đường dẫn tệp lưu trạng thái điều phối dispatcher ngoài repository
+DISPATCH_STATE_FILE="/var/run/bluemoon/backup_dispatch_state.json"
