@@ -126,7 +126,14 @@ export function ReportPackagesPage(): React.ReactElement {
   };
 
   const toggleHousehold = (id: number) => {
-    setSelectedHouseholds((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id]);
+    const isSelected = selectedHouseholds.includes(id);
+    const nextSelected = isSelected
+      ? selectedHouseholds.filter((value) => value !== id)
+      : [...selectedHouseholds, id];
+    setSelectedHouseholds(nextSelected);
+    if (nextSelected.length > 0 && error?.message === 'Chọn ít nhất một hộ đang hoạt động.') {
+      setError(null);
+    }
   };
 
   const submitCreate = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -300,12 +307,12 @@ export function ReportPackagesPage(): React.ReactElement {
         <p className="field-hint mb-4">Chỉ chọn hộ thuộc đúng yêu cầu đã tiếp nhận. Hệ thống lưu mã tham chiếu, không lưu bản giấy phép hoặc nội dung yêu cầu.</p>
         <form onSubmit={(event) => void submitCreate(event)}>
           <div className="grid gap-4 md:grid-cols-3">
-            <label className="form-field" htmlFor="agency-code">Mã cơ quan nhận gói<input id="agency-code" className="input" required maxLength={80} value={agencyCode} onChange={(event) => setAgencyCode(event.target.value)} /></label>
-            <label className="form-field" htmlFor="request-reference">Mã tham chiếu yêu cầu<input id="request-reference" className="input" required maxLength={120} value={requestReference} onChange={(event) => setRequestReference(event.target.value)} /></label>
-            <label className="form-field" htmlFor="licence-reference">Mã tham chiếu giấy phép<input id="licence-reference" className="input" required maxLength={120} value={licenceReference} onChange={(event) => setLicenceReference(event.target.value)} /></label>
+            <label className="form-field" htmlFor="agency-code">Mã cơ quan nhận gói<input id="agency-code" className="input" required maxLength={50} value={agencyCode} onChange={(event) => setAgencyCode(event.target.value)} /></label>
+            <label className="form-field" htmlFor="request-reference">Mã tham chiếu yêu cầu<input id="request-reference" className="input" required maxLength={100} value={requestReference} onChange={(event) => setRequestReference(event.target.value)} /></label>
+            <label className="form-field" htmlFor="licence-reference">Mã tham chiếu giấy phép<input id="licence-reference" className="input" required maxLength={100} value={licenceReference} onChange={(event) => setLicenceReference(event.target.value)} /></label>
           </div>
           <fieldset className="field-options mt-5"><legend>Hộ trong phạm vi ({selectedHouseholds.length} đã chọn)</legend>
-            {dataLoadError ? <div><p className="field-hint">Không tải được danh sách hộ. Tải lại danh sách trước khi tạo gói.</p><button type="button" className="btn btn-secondary btn-sm" onClick={() => void reloadHouseholds()}>Tải lại danh sách hộ</button></div> : activeHouseholds.length === 0 ? <p className="field-hint">Chưa có hộ đang hoạt động để chọn.</p> : activeHouseholds.map((household) => <label className="field-check" key={household.id}><input type="checkbox" checked={selectedHouseholds.includes(household.id)} onChange={() => toggleHousehold(household.id)} /><span><strong>{household.apartmentCode}</strong> · {household.householdCode} · {household.currentResidents ?? 0} nhân khẩu</span></label>)}
+            {dataLoadError ? <div><p className="field-hint">Không tải được danh sách hộ. Tải lại danh sách trước khi tạo gói.</p><button type="button" className="btn btn-secondary btn-sm" onClick={() => void reloadHouseholds()}>Tải lại danh sách hộ</button></div> : activeHouseholds.length === 0 ? <p className="field-hint">Chưa có hộ đang hoạt động để chọn.</p> : activeHouseholds.map((household) => <label className="field-check" key={household.id}><input type="checkbox" checked={selectedHouseholds.includes(household.id)} onChange={() => toggleHousehold(household.id)} /><span><strong>{household.apartmentCode}</strong> · {household.householdCode}{typeof household.currentResidents === 'number' ? ` · ${household.currentResidents} nhân khẩu` : ''}</span></label>)}
           </fieldset>
           <div className="filter-row mt-5"><button type="submit" className="btn btn-primary" disabled={busy || activeHouseholds.length === 0}>{busy ? 'Đang tạo...' : 'Tạo bản nháp'}</button><button type="button" className="btn btn-secondary" onClick={() => setCreateOpen(false)} disabled={busy}>Hủy</button></div>
         </form>
