@@ -138,9 +138,11 @@ Khi ADMIN vừa tạo tài khoản và cần lấy mật khẩu đăng nhập l�
 
 ```bash
 ./scripts/mock-email.sh <username>
+# Liệt kê mọi tài khoản còn mật khẩu tạm:
+./scripts/mock-email.sh --all
 ```
 
-Ví dụ: `./scripts/mock-email.sh accountant`. Script chỉ đọc thư cấp tài khoản mới nhất của username đó. Sau khi người dùng đổi mật khẩu, mật khẩu tạm bị xóa khỏi thư và script không còn trả thư này. Đầu ra có mật khẩu: chỉ chạy trong terminal riêng, không lưu hoặc chia sẻ log. Script dùng tài khoản MySQL được cấu hình trong container Compose.
+Ví dụ: `./scripts/mock-email.sh accountant`. Script chỉ đọc thư cấp tài khoản mới nhất của username đó. Sau khi người dùng đổi mật khẩu, mật khẩu tạm bị xóa khỏi thư và script không còn trả thư này. `--all` hiển thị username và thư mới nhất của mỗi tài khoản còn mật khẩu tạm. Đầu ra có mật khẩu: chỉ chạy trong terminal riêng, không lưu hoặc chia sẻ log. Script dùng tài khoản MySQL được cấu hình trong container Compose.
 
 ## Kiểm thử
 
