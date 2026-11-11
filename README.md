@@ -155,7 +155,7 @@ cd backend
 
 Frontend: `cd frontend && npm ci && npm test && npm run build`. Test backup: `bash tests/backup/run_all_tests.sh`. Test script email: `bash tests/scripts/test-mock-email.sh`. Hướng dẫn ca thủ công và báo cáo: [tests/README.md](tests/README.md). Không dùng dữ liệu cư dân thật cho kiểm thử.
 
-## Backup và diễn tập phục hồi S13
+## Backup và diễn tập phục hồi
 
 | Công cụ | Khi sử dụng |
 |---|---|
@@ -165,4 +165,4 @@ Frontend: `cd frontend && npm ci && npm test && npm run build`. Test backup: `ba
 | `scripts/scheduler/` | Cài systemd service/timer trên Linux để gọi dispatcher mỗi phút. |
 | `scripts/restore-rehearsal.sh` | Diễn tập khôi phục vào schema thử nghiệm riêng, kiểm tra dữ liệu và xuất evidence; không dùng DB nguồn làm đích. |
 
-Xem [hướng dẫn vận hành S13](docs/BACKUP_RESTORE.md) để cấu hình, cài scheduler và chạy restore an toàn. Giữ 7 bản backup thành công; Docker volume không thay thế backup. Bằng chứng chạy trên host Linux và MySQL thật còn thiếu theo [VALIDATION.md](docs/VALIDATION.md).
+Xem [hướng dẫn vận hành](docs/BACKUP_RESTORE.md) để cấu hình, cài scheduler và chạy restore an toàn. Giữ 7 bản backup thành công; Docker volume không thay thế backup. Bằng chứng chạy trên host Linux và MySQL thật còn thiếu theo [VALIDATION.md](docs/VALIDATION.md).
