@@ -19,9 +19,18 @@
 backups/
 
 # Harness và agent cục bộ của Sơn (Claude Code): hook, skill, agent, handoff, settings, workspace, ghi chú
-# AGENTS.md là hướng dẫn chung của nhóm nên vẫn được commit.
+# Các hướng dẫn và công cụ làm việc cá nhân giữ tại local.
 .claude/
 CLAUDE.local.md
 _agents_workspace/
 
 .claude/handoff/
+
+AGENTS.md
+CLAUDE.md
+.codex/
+.cursor/
+.taste-skill/
+frontend/.taste-skill/
+frontend/.vite/
+frontend/TASTE_UI_UX_AUDIT.md

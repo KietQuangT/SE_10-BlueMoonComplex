@@ -11,7 +11,7 @@ git switch -c codex/backend-foundation
 cd backend
 ./mvnw -B -ntp verify
 cd ..
-git add AGENTS.md README.md .gitignore .gitattributes .env.example .dockerignore compose.yaml backend docs frontend scripts .github
+git add README.md .gitignore .gitattributes .env.example .dockerignore compose.yaml backend docs frontend scripts .github
 git diff --cached --check
 git commit -m "chore: khởi tạo backend và harness Sprint 1"
 git push -u origin codex/backend-foundation

@@ -11,7 +11,6 @@ SE_10-BlueMoonComplex/
 │   └── workflows/
 │       └── backend.yml
 ├── .gitignore
-├── AGENTS.md
 ├── README.md
 ├── backend/
 │   ├── .mvn/
@@ -88,8 +87,11 @@ SE_10-BlueMoonComplex/
 ├── frontend/
 │   └── README.md
 └── scripts/
-    ├── dev.sh
-    └── verify.sh
+    ├── dev-all.sh
+    ├── free-dev-ports.sh
+    ├── backup.sh
+    ├── backup-dispatch.sh
+    └── restore-rehearsal.sh
 ```
 
 ## Vai trò thư mục
