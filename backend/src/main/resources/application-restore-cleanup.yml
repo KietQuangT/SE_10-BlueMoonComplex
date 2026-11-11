@@ -1,0 +1,11 @@
+spring:
+  main:
+    web-application-type: none
+  flyway:
+    enabled: false
+  datasource:
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:?Thieu DB_NAME target cho restore-cleanup}?connectionTimeZone=UTC
+
+app:
+  cleanup:
+    enabled: false
