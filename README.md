@@ -1,148 +1,58 @@
-# BlueMoon Complex — SE_10
+# BlueMoon Complex
 
-BlueMoon Complex là ứng dụng web quản lý vận hành chung cư trong đồ án SE_10. Phiên bản hiện tại tập trung vào tài khoản và phân quyền, hộ gia đình và nhân khẩu, cư trú, đơn giá, hóa đơn, thu tiền, công nợ và gói dữ liệu được Ban quản trị kiểm duyệt. Các vai trò trong hệ thống là Ban quản trị (`ADMIN`), Kế toán (`ACCOUNTANT`) và Cư dân (`RESIDENT`); cơ quan nhận gói không có tài khoản hay quyền truy cập hệ thống.
+BlueMoon là ứng dụng quản lý chung cư cho ban quản trị, kế toán và cư dân. Backend Spring Boot sử dụng MySQL; frontend React cung cấp giao diện theo vai trò. Thông báo email được mô phỏng, không gửi email thật.
 
-Repo là monorepo: API Spring Boot, giao diện React, MySQL và tài liệu nghiệp vụ nằm trong cùng một dự án. Trạng thái chính thức từng hạng mục nằm ở [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md); README mô tả phạm vi hiện có trong mã nguồn, không thay thế checklists.
+## Chức năng v1.0
 
-S01–S12 backend đã có triển khai. S08 (kỳ thu/tự nguyện), S09 (thu tiền/gạch nợ), S10 (API + UI hóa đơn cư dân), S11 backend (xuất báo cáo XLSX thu phí/cư trú) và S12 đã được đánh dấu hoàn thành trong `docs/sprint-1/TASKS.md`; giới hạn kiểm chứng được ghi trong `docs/VALIDATION.md`. UI S12 cho ADMIN đã triển khai và có bằng chứng test/build, risk review và walkthrough API thật. Nhánh `feat/ui-audit-s12` đồng bộ theme, shell, typography và các pattern giao diện; xem [frontend/DESIGN.md](frontend/DESIGN.md). Một số trạng thái UI S12 vẫn cần kiểm tra thủ công, được ghi trong `VALIDATION.md`. S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) và backend S10 qua PR [#32](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/32). Giao diện export S11 đã được triển khai trên nhánh `hhoangsonnw/feat-s11-ui`; task chờ review PR trước khi nghiệm thu.
+- Đăng nhập, quản lý tài khoản và vai trò; đổi mật khẩu, vô hiệu hóa tài khoản và ghi nhật ký nghiệp vụ.
+- Quản lý hộ, nhân khẩu, biến động cư trú; cư dân khai báo tạm vắng và ban quản trị duyệt hoặc từ chối.
+- Thiết lập đơn giá, kỳ thu và khoản đóng góp tự nguyện; ghi nhận tiền mặt, theo dõi công nợ, hóa đơn và lịch sử thu của hộ.
+- Xuất báo cáo tài chính, cư trú và lập gói dữ liệu cư trú được quản trị viên thứ hai phê duyệt trước khi chuyển ngoài hệ thống.
+- Sao lưu định kỳ và diễn tập phục hồi vào cơ sở dữ liệu riêng. QR/VNeID, khách thăm, ticket và mượn đồ ngoài phạm vi v1.
 
-S10 bổ sung API tra cứu và chi tiết hóa đơn/lịch sử gạch nợ cho cư dân (`/api/v1/resident/invoices`), kiểm tra quyền theo hộ ở server (chặn IDOR/truy cập chéo hộ), snapshot hóa đơn và ledger với cô lập giao dịch `REPEATABLE_READ`, phân trang và lọc theo trạng thái. UI cư dân dùng API thật để xem, lọc, phân trang và mở chi tiết/lịch sử; giao diện chỉ đọc và Demo mode dùng dữ liệu riêng. Backend S10 được duyệt G2 ngày 09/11/2026; walkthrough UI hoàn tất ngày 10/11/2026.
+Trạng thái nghiệm thu và các kiểm tra còn thiếu: [VALIDATION.md](docs/VALIDATION.md). Phạm vi chi tiết: [REQUIREMENTS.md](docs/REQUIREMENTS.md).
 
-Các giới hạn còn lại: chưa xác nhận viewport đúng 360px, zoom 200%, theme tối/reduced motion và trạng thái ledger hiếm (credit, receipt bị hủy, allocation bị đảo); chưa đo 10.000 bản ghi/EXPLAIN (chuyển sang S14); chưa chạy test snapshot khi bỏ `REPEATABLE_READ`; test `MOVED_OUT` chưa chứng minh account thuộc nhân khẩu do schema chưa nối account–nhân khẩu. Các giới hạn này không chặn S10 UI theo quyết định của Sơn. Xem [docs/VALIDATION.md](docs/VALIDATION.md).
+## Chuẩn bị
 
-S11 backend cung cấp ba endpoint tải XLSX cho Kế toán và Ban quản trị: công nợ theo kỳ, tiền mặt thu theo khoảng ngày và danh sách cư trú hiện tại. Các file được dựng theo mẫu đã duyệt, giới hạn 50.000 dòng và chỉ chứa các trường cần thiết; quyền cư trú bị từ chối với vai trò `ACCOUNTANT` và `RESIDENT`. UI `/reports` cho ADMIN/ACCOUNTANT kết nối cả ba endpoint, kiểm tra bộ lọc và xử lý trạng thái tải/lỗi.
-
-Danh sách tài khoản ADMIN dùng `GET /api/v1/accounts?page=0&size=100`, chỉ ADMIN được truy cập. API phân trang, không trả dữ liệu mật khẩu; M-10 tải dữ liệu thật và giữ tìm kiếm/lọc/phân trang hiện có. Bổ sung này đang chờ review cùng nhánh S11-UI.
-
-S12 backend cho ADMIN tạo gói dữ liệu theo phạm vi hộ, xem trước, duyệt bởi ADMIN khác người tạo, từ chối nháp, thu hồi, tải XLSX và ghi nhận bàn giao. BQT tự tiếp nhận yêu cầu và kiểm tra giấy phép bên ngoài hệ thống; chỉ mã tham chiếu tối thiểu được lưu. Metadata/audit được giữ 5 năm theo mục tiêu NFR-010, không phải khẳng định về thời hạn pháp luật. Tệp có thể tải tối đa 7 ngày từ lúc duyệt và bị xóa tối đa 30 ngày từ lúc tạo; tải bị chặn tại hạn đến trước. Xem [S12 trong VALIDATION.md](docs/VALIDATION.md) và [quyết định D13](docs/DECISIONS.md).
-
-S13 cung cấp CLI backup có retention 7 bản, lịch 02:00 Asia/Ho_Chi_Minh, catch-up sau downtime >24h qua Linux systemd và script diễn tập restore vào schema cô lập. Hướng dẫn cài đặt và vận hành nằm ở [Vận hành Backup & Restore S13](docs/BACKUP_RESTORE.md). Mã và test tự động đã có; cài scheduler trên host và diễn tập trên MySQL thật vẫn đang chờ nghiệm thu, xem [docs/VALIDATION.md](docs/VALIDATION.md).
-
-#### Dùng backup và restore S13
-
-1. **Thiết lập một lần:** tạo `/etc/bluemoon/backup.conf` từ `scripts/backup.conf.example`, đặt quyền `0600`, cấu hình ổ ngoài đã mã hóa và kiểm tra mount point.
-2. **Backup khởi tạo:** trước khi bật lịch, chạy `scripts/backup.sh --config /etc/bluemoon/backup.conf`; chỉ tiếp tục khi có `BACKUP_SUCCESS` và bundle chứa `COMPLETED`.
-3. **Backup định kỳ:** cài `bluemoon-backup.service` và `bluemoon-backup.timer` theo runbook. Timer gọi dispatcher mỗi phút; dispatcher chỉ backup tại 02:00 hoặc catch-up đúng một lần sau downtime trên 24 giờ.
-4. **Diễn tập phục hồi:** người vận hành chạy `scripts/restore-rehearsal.sh` với bundle đã chọn và schema thử nghiệm `bluemoon_restore_s13_*`. Không dùng schema `bluemoon`; script kiểm tra checksum, dữ liệu và xuất evidence đã loại PII.
-5. **Sau diễn tập:** kiểm tra evidence, thu hồi quyền thử nghiệm và xóa riêng schema thử nghiệm. Không xóa database hoặc Docker volume gốc.
-
-S14 (hồi quy/quyền/hiệu năng) và S15 (đóng gói/bàn giao) chưa nghiệm thu; trạng thái chính thức theo [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md). Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
-
-## Công nghệ
-
-| Thành phần | Công nghệ |
-| --- | --- |
-| Backend | Java 21, Spring Boot 4.0.9, Maven Wrapper |
-| Frontend | React 19, TypeScript 5.7, Vite 6 |
-| Database | MySQL 8.4 |
-| Migration | Flyway; Hibernate `ddl-auto=validate` |
-| Bảo mật | Spring Security, JDBC session, cookie HTTP-only, CSRF |
-| Kiểm thử | JUnit/Spring integration tests, Vitest, Testing Library |
-| Local runtime | Docker Compose v2 |
-
-## Phạm vi nghiệp vụ
-
-- **Tài khoản và phiên:** đăng nhập/đăng xuất, session, khóa do đăng nhập sai, cấp/vô hiệu hóa/kích hoạt tài khoản và đổi mật khẩu.
-- **Hộ và cư trú:** quản lý hộ/nhân khẩu, lịch sử biến động, chuyển đi, khai báo tạm vắng, duyệt/từ chối và ghi nhận cư dân đã quay lại.
-- **Phí và hóa đơn:** quản lý đơn giá theo kỳ, xem trước phí, tạo kỳ thu và snapshot các dòng phí khi phát hành.
-- **Thu bắt buộc S09:** nhiều receipt cho một hóa đơn; thu thừa trở thành credit hộ; phân bổ credit FIFO; hủy receipt và đảo phân bổ lưu lịch sử; idempotency bằng UUID và audit nghiệp vụ trong transaction; Kế toán thao tác, ADMIN chỉ đọc.
-- **Hóa đơn cư dân S10:** API và UI cho danh sách/chi tiết hóa đơn theo hộ đăng nhập, dòng phí snapshot, đã thu/còn nợ và lịch sử; lọc tháng/trạng thái, phân trang; server chặn truy cập chéo hộ. UI chỉ đọc, Demo mode độc lập.
-- **Báo cáo S11:** API tải XLSX công nợ theo kỳ (`/api/v1/reports/fee-collection.xlsx?period=YYYY-MM`), tiền mặt thu theo ngày (`/api/v1/reports/cash-receipts.xlsx?from=YYYY-MM-DD&to=YYYY-MM-DD`) và cư trú hiện tại (`/api/v1/reports/residency.xlsx`). Tối đa 50.000 dòng mỗi file; chỉ `ADMIN` được tải báo cáo cư trú, `ACCOUNTANT` chỉ được tải hai báo cáo tài chính.
-- **Gói dữ liệu S12:** API `/api/v1/agency-data-packages` dành cho ADMIN; kiểm tra yêu cầu/giấy phép và chuyển gói cho cơ quan do BQT xử lý ngoài hệ thống. Cơ quan không có role/account, không đăng nhập và không truy vấn dữ liệu thô.
-- **Frontend:** có các màn hình v1; một số luồng dùng API thật, một số luồng vẫn là Demo. Chế độ Demo giữ bộ dữ liệu riêng, không ghi vào backend.
-
-Backend kiểm tra quyền và phạm vi hộ ở server. Các thay đổi dữ liệu dùng transaction và audit nghiệp vụ; schema thay đổi qua migration Flyway mới. Không có tài khoản mặc định; ADMIN đầu tiên được tạo bằng profile bootstrap tương tác.
-
-## Yêu cầu chạy local
-
-- Git.
-- Docker Desktop hoặc Docker Engine cùng Docker Compose v2.
-- JDK 21 để chạy Maven/backend ngoài container.
-- Node.js và npm để chạy frontend ngoài container.
-- `curl` và `lsof` được script `dev-all.sh` sử dụng.
-
-## Khởi động toàn bộ bằng `scripts/dev-all.sh`
-
-Đây là lối chạy local gọn nhất. Mở terminal tại thư mục gốc repo:
+Cần Docker và Docker Compose, Node.js/npm, JDK 21, `curl` và `lsof`; các script dùng Bash. Từ thư mục gốc:
 
 ```bash
 cp .env.example .env
 ```
 
-Đổi các mật khẩu local trong `.env`, sau đó chạy:
+Sửa mật khẩu local trong `.env`; không commit file này. Cổng mặc định: MySQL 3306, backend 8080, frontend 5173.
+
+## Chạy nhanh bằng script
 
 ```bash
-scripts/dev-all.sh
+./scripts/dev-all.sh
 ```
 
-Script thực hiện lần lượt:
+Script build và chạy MySQL/backend bằng Compose, chờ health tối đa 2 phút, cài dependency frontend nếu cần và chạy Vite tại http://localhost:5173. Ctrl+C dừng frontend; `docker compose stop` dừng backend và MySQL mà giữ dữ liệu.
 
-1. Chuyển working directory về thư mục gốc và yêu cầu có `.env`.
-2. Kiểm tra các cổng `3306` (MySQL), `8080` (backend) và `5173` (Vite). Nếu có cổng bận, script in tiến trình/container liên quan rồi dừng; nó không tự tắt tiến trình.
-3. Chạy `docker compose up --build -d`, khởi động MySQL 8.4 và backend Spring Boot; Compose đợi MySQL healthy trước khi chạy backend.
-4. Kiểm tra `http://localhost:8080/actuator/health` tối đa 2 phút.
-5. Chạy `npm ci` nếu `frontend/node_modules` chưa có, rồi mở Vite tại `http://localhost:5173`.
+Nếu cổng 3306, 8080 hoặc 5173 bị chiếm, chạy `./scripts/free-dev-ports.sh`: script liệt kê tiến trình/container và hỏi trước khi dừng từng mục. Sau đó chạy lại `dev-all.sh`. Hai script dùng các cổng mặc định.
 
-Mở `http://localhost:5173` trong trình duyệt. Vite proxy các request `/api` và `/actuator` tới backend cục bộ. Dùng `localhost` để khớp CORS mặc định.
+## Build và chạy thủ công
 
-**Dừng dịch vụ:** `Ctrl+C` dừng Vite ở terminal này. MySQL và backend vẫn chạy trong Docker. Dừng chúng bằng lệnh tại thư mục gốc:
+1. Chạy MySQL và backend:
 
-```bash
-docker compose stop
-```
+   ```bash
+   docker compose up --build -d
+   curl -fsS http://localhost:8080/actuator/health
+   ```
 
-Lệnh `docker compose down` cũng dừng stack nhưng giữ volume MySQL. `docker compose down -v` xóa volume và dữ liệu local; chỉ dùng khi chủ động muốn xóa dữ liệu.
+2. Mở terminal khác và chạy frontend:
 
-### Khi cổng đang bị chiếm
+   ```bash
+   cd frontend
+   npm ci
+   npm run build
+   npm run dev
+   ```
 
-Chạy công cụ kiểm tra/dọn cổng có hỏi xác nhận:
+3. Để chạy backend từ host/IDE thay Compose backend: dùng `docker compose up -d db`, thiết lập `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` theo `.env`, rồi chạy `cd backend && ./mvnw -B -ntp verify && ./mvnw spring-boot:run`. Maven/IDE không tự đọc `.env`; trên Windows dùng `mvnw.cmd`.
 
-```bash
-scripts/free-dev-ports.sh
-```
-
-Công cụ liệt kê listener trên các cổng dev. Với container, nhập `y` để gọi `docker stop`; với process thường, nhập `y` để gửi `SIGTERM`. Nhập `N` hoặc nhấn Enter để giữ process/container. Sau khi cổng trống, chạy lại `scripts/dev-all.sh`.
-
-### Script chạy database và backend
-
-Nếu chỉ cần MySQL và backend trong Docker, không cần Vite:
-
-```bash
-scripts/dev.sh
-```
-
-Script kiểm tra `.env`, chạy Compose và in trạng thái dịch vụ cùng URL health. Frontend có thể được chạy riêng bằng `cd frontend && npm ci && npm run dev`.
-
-## Chạy từng thành phần
-
-### MySQL và backend bằng Compose
-
-```bash
-cp .env.example .env
-# Sửa mật khẩu local trong .env
-docker compose up --build -d
-docker compose ps
-curl -fsS http://localhost:8080/actuator/health
-```
-
-Compose công bố MySQL ở `127.0.0.1:3306` và backend ở `127.0.0.1:8080` theo mặc định. Có thể xem log backend bằng `docker compose logs -f backend`.
-
-### Backend từ máy host hoặc IDE
-
-Khởi động MySQL trước (`docker compose up -d db`), sau đó cấu hình biến `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` trong môi trường Maven/IDE. `.env` được Docker Compose đọc tự động, Maven/IDE không tự nạp file này.
-
-```bash
-cd backend
-./mvnw -B -ntp verify
-./mvnw spring-boot:run
-```
-
-Trên Windows dùng `mvnw.cmd`. Nếu chạy JAR thay cho IDE:
-
-```bash
-./mvnw -B -ntp package
-java -jar target/bluemoon-backend-0.1.0-SNAPSHOT.jar --spring.profiles.active=local
-```
+4. Với cơ sở dữ liệu mới, tạo ADMIN đầu tiên theo hướng dẫn bên dưới. Không có tài khoản mặc định.
 
 ### Tạo ADMIN đầu tiên
 
@@ -222,80 +132,25 @@ Các giá trị nhập vào được kiểm tra nghiêm ngặt theo quy tắc ng
 > [!CAUTION]
 > Không chạy bootstrap tự động trong script CI/CD nếu không có console tương tác. Tuyệt đối không commit credential, mật khẩu hoặc ghi mật khẩu vào shell history/log.
 
-### Frontend riêng
-
-```bash
-cd frontend
-npm ci
-npm run dev
-```
-
-Mở `http://localhost:5173`. Có thể dùng Demo mode để xem dữ liệu mẫu hoặc API mode khi backend đã sẵn sàng. API mode cần session đăng nhập hợp lệ và CSRF cho các request ghi.
-
 ## Kiểm thử
-
-Backend unit/API và đóng gói:
 
 ```bash
 cd backend
 ./mvnw -B -ntp verify
-```
-
-Backend integration cần MySQL 8.4 dành riêng cho test và các biến `DB_*`:
-
-```bash
-cd backend
+# MySQL test riêng đang chạy; export DB_* trước khi chạy:
 ./mvnw -B -ntp -Pintegration verify
 ```
 
-Frontend:
+Frontend: `cd frontend && npm ci && npm test && npm run build`. Test backup: `bash tests/backup/run_all_tests.sh`. Hướng dẫn ca thủ công và báo cáo: [tests/README.md](tests/README.md). Không dùng dữ liệu cư dân thật cho kiểm thử.
 
-```bash
-cd frontend
-npm test
-npm run build
-```
+## Backup và diễn tập phục hồi S13
 
-Integration tests có thể ghi fixture và áp migration. Chỉ trỏ chúng tới database cô lập dành cho kiểm thử, không dùng database chung hoặc dữ liệu cư dân thật. Ghi lệnh, kết quả và giới hạn kiểm thử vào [docs/VALIDATION.md](docs/VALIDATION.md).
+| Công cụ | Khi sử dụng |
+|---|---|
+| `scripts/backup.conf.example` | Sao chép cấu hình ra ngoài repository, bảo vệ quyền truy cập và cấu hình ổ ngoài mã hóa. |
+| `scripts/backup.sh` | Tạo backup ban đầu hoặc thủ công: `sudo /opt/bluemoon/scripts/backup.sh --config /etc/bluemoon/backup.conf`. |
+| `scripts/backup-dispatch.sh` | Dispatcher cho scheduler, xử lý lịch 02:00 và chạy bù; không cần gọi thủ công thường xuyên. |
+| `scripts/scheduler/` | Cài systemd service/timer trên Linux để gọi dispatcher mỗi phút. |
+| `scripts/restore-rehearsal.sh` | Diễn tập khôi phục vào schema thử nghiệm riêng, kiểm tra dữ liệu và xuất evidence; không dùng DB nguồn làm đích. |
 
-### Bằng chứng kiểm thử S11 backend
-
-- `./mvnw -B -ntp verify`: 353 test pass, 0 failure/error/skip.
-- `./mvnw -B -ntp -Pintegration verify`: 353 Surefire + 173 Failsafe = 526 test pass trên MySQL 8.4 test cô lập; container tạm được xóa sau lượt chạy.
-- Review rủi ro độc lập: không có lỗi chặn; ba workbook synthetic đã được mở và duyệt trong Excel.
-- UI tải báo cáo chưa nằm trong nhánh backend này; sẽ được làm ở task riêng.
-
-### Bằng chứng kiểm thử S09 và S10 gần nhất
-
-- **Backend verify:** 283 test pass (JDK 21).
-- **Backend integration (MySQL 8.4 test cô lập):** 158 test pass (bao gồm `ResidentInvoiceSnapshotIT` và `IdentitySessionIT`).
-- **Frontend tests:** 33 file, 185 test pass; TypeScript/Vite build pass.
-- **S10 UI:** walkthrough API thật bằng Orca Browser xác nhận danh sách, lọc `PARTIALLY_PAID`, chi tiết và receipt; 393×852 CSS px không cuộn ngang.
-- **Giới hạn đã ghi nhận:** viewport 360px, zoom 200%, theme tối/reduced motion, ledger hiếm và phép đo 10.000 bản ghi/EXPLAIN (S14) còn hoãn; xem [docs/VALIDATION.md](docs/VALIDATION.md).
-
-## Cấu trúc repo
-
-```text
-backend/                 Spring Boot API, migration, unit/API/integration tests
-frontend/                React app, API clients, role-based screens, UI tests
-docs/                    quyết định, yêu cầu, kiến trúc, kế hoạch, validation
-tests/                   bộ ca kiểm thử nghiệp vụ, báo cáo và quy trình test
-_agents_workspace/       contract, interview và evidence theo task
-scripts/                 dev-all.sh, dev.sh, free-dev-ports.sh, verify.sh
-compose.yaml             MySQL và backend local
-.env.example             mẫu cấu hình Compose local
-```
-
-Backend chia package theo tính năng, với luồng `api → application → persistence`. Không trả JPA entity trực tiếp từ API và không gọi repository từ controller. Chi tiết kiến trúc nằm ở [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
-## Tài liệu và quy ước đóng góp
-
-- [AGENTS.md](AGENTS.md): quy ước code, bảo mật, test và bàn giao.
-- [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md): phạm vi yêu cầu.
-- [docs/DECISIONS.md](docs/DECISIONS.md): hợp đồng và quyết định đã duyệt.
-- [docs/sprint-1/PLAN.md](docs/sprint-1/PLAN.md) và [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md): kế hoạch và tiến độ.
-- [docs/VALIDATION.md](docs/VALIDATION.md): bằng chứng test và giới hạn.
-- [frontend/README.md](frontend/README.md): phát triển UI.
-- [tests/README.md](tests/README.md): quy trình ca kiểm thử.
-
-Làm việc trên feature branch và mở PR vào `main`. Migration đã chia sẻ không được sửa; thêm schema bằng `V<n>__mo_ta.sql`. Không tắt CSRF hoặc chỉ dựa vào ẩn nút để bảo vệ quyền. Không commit `.env`, credential, PII hoặc dữ liệu thật.
+Xem [hướng dẫn vận hành S13](docs/BACKUP_RESTORE.md) để cấu hình, cài scheduler và chạy restore an toàn. Giữ 7 bản backup thành công; Docker volume không thay thế backup. Bằng chứng chạy trên host Linux và MySQL thật còn thiếu theo [VALIDATION.md](docs/VALIDATION.md).

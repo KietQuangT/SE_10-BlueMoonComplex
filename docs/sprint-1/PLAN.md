@@ -52,14 +52,3 @@ Giả định 8h/người/tuần, trừ họp/tài liệu/dự phòng còn 4,4h 
 | Nhóm mới / khung giờ ít | Luồng nhỏ chạy được, log giờ học/code/fix; hiệu chỉnh sau foundation; PM |
 | Chưa chạy Docker trong môi trường soạn | Chạy CI/MySQL và quickstart trên máy nhóm trước merge; Tuấn |
 | Nhầm mock với nghiệp vụ giả | Chỉ mô phỏng kênh ngoài, DB/giao dịch/report nội bộ chạy thật; cả nhóm |
-
-# Phần 3 — Dùng harness trong Codex
-
-Prompt khởi đầu:
-```text
-Đọc AGENTS.md và docs/sprint-1/TASKS.md. Chỉ thực hiện task [MÃ].
-Trình bày đầu vào đã có, assumption còn thiếu và file dự kiến sửa.
-Không mở rộng phạm vi hoặc tick task thiếu bằng chứng. Chạy kiểm tra phù hợp,
-cập nhật TASKS/VALIDATION và báo cáo API/schema thay đổi cùng đầu ra bàn giao.
-```
-Nếu thiếu quyết định ảnh hưởng dữ liệu/quyền: hỏi đúng phần đó, giữ task bị chặn, tiếp tục phần độc lập. Chưa đủ căn cứ tuyên bố confidence ≥95% cho toàn Sprint 1.
