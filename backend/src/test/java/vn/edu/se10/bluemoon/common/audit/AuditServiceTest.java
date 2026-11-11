@@ -52,6 +52,32 @@ class AuditServiceTest {
         assertThat(saved).isEmpty();
     }
 
+    @Test void retentionCleanupCoActorNullVaActionCoDinh() {
+        java.util.UUID batchId = java.util.UUID.fromString("11111111-2222-3333-4444-555555555555");
+        service.recordPackageRetentionCleanup(batchId, NOW, 5, 2, 10);
+        assertThat(saved).hasSize(1);
+        AuditLog log = saved.get(0);
+        assertThat(log.getActorUserId()).isNull();
+        assertThat(log.getAction()).isEqualTo("AGENCY_PACKAGE_RETENTION_CLEANUP");
+        assertThat(log.getEntityType()).isEqualTo("RetentionBatch");
+        assertThat(log.getEntityId()).isEqualTo("11111111-2222-3333-4444-555555555555");
+        assertThat(log.getChanges()).contains("\"batchId\":\"11111111-2222-3333-4444-555555555555\"");
+        assertThat(log.getChanges()).contains("\"contentCount\":\"5\"");
+        assertThat(log.getChanges()).contains("\"metadataCount\":\"2\"");
+        assertThat(log.getChanges()).contains("\"auditCount\":\"10\"");
+    }
+
+    @Test void retentionCleanupTuChoiThamSoNullHoacAm() {
+        java.util.UUID batchId = java.util.UUID.randomUUID();
+        assertThatThrownBy(() -> service.recordPackageRetentionCleanup(null, NOW, 1, 1, 1))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.recordPackageRetentionCleanup(batchId, null, 1, 1, 1))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.recordPackageRetentionCleanup(batchId, NOW, -1, 1, 1))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(saved).isEmpty();
+    }
+
     @ParameterizedTest @NullAndEmptySource @ValueSource(strings = {"  "})
     void tuChoiActionRong(String action) {
         assertThatThrownBy(() -> service.record(1, action, "Role", "1", null))

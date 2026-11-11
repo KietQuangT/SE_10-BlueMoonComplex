@@ -1,8 +1,10 @@
 package vn.edu.se10.bluemoon.common.audit;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +40,27 @@ public class AuditService {
     @Transactional(propagation = Propagation.MANDATORY)
     public void recordBootstrap(String entityId, Map<String, String> changes) {
         recordInternal(null, "BOOTSTRAP_ADMIN", "User", entityId, changes);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void recordPackageRetentionCleanup(UUID batchId, Instant cleanupAt, long contentCount, long metadataCount, long auditCount) {
+        if (batchId == null) {
+            throw new IllegalArgumentException("batchId không được null");
+        }
+        if (cleanupAt == null) {
+            throw new IllegalArgumentException("cleanupAt không được null");
+        }
+        if (contentCount < 0 || metadataCount < 0 || auditCount < 0) {
+            throw new IllegalArgumentException("Counts không được âm");
+        }
+        Map<String, String> changes = Map.of(
+            "batchId", batchId.toString(),
+            "cleanupAt", cleanupAt.toString(),
+            "contentCount", String.valueOf(contentCount),
+            "metadataCount", String.valueOf(metadataCount),
+            "auditCount", String.valueOf(auditCount)
+        );
+        recordInternal(null, "AGENCY_PACKAGE_RETENTION_CLEANUP", "RetentionBatch", batchId.toString(), changes);
     }
 
     private void recordInternal(Long actorUserId, String action, String entityType, String entityId, Map<String, String> changes) {

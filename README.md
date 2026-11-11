@@ -1,10 +1,10 @@
 # BlueMoon Complex — SE_10
 
-BlueMoon Complex là ứng dụng web quản lý vận hành chung cư trong đồ án SE_10. Phiên bản hiện tại tập trung vào tài khoản và phân quyền, hộ gia đình và nhân khẩu, cư trú, đơn giá, hóa đơn, thu tiền và công nợ. Các vai trò chính là Ban quản trị (`ADMIN`), Kế toán (`ACCOUNTANT`) và Cư dân (`RESIDENT`).
+BlueMoon Complex là ứng dụng web quản lý vận hành chung cư trong đồ án SE_10. Phiên bản hiện tại tập trung vào tài khoản và phân quyền, hộ gia đình và nhân khẩu, cư trú, đơn giá, hóa đơn, thu tiền, công nợ và gói dữ liệu được Ban quản trị kiểm duyệt. Các vai trò trong hệ thống là Ban quản trị (`ADMIN`), Kế toán (`ACCOUNTANT`) và Cư dân (`RESIDENT`); cơ quan nhận gói không có tài khoản hay quyền truy cập hệ thống.
 
 Repo là monorepo: API Spring Boot, giao diện React, MySQL và tài liệu nghiệp vụ nằm trong cùng một dự án. Trạng thái chính thức từng hạng mục nằm ở [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md); README mô tả phạm vi hiện có trong mã nguồn, không thay thế checklists.
 
-S01–S11 backend đã có triển khai. S08 (kỳ thu/tự nguyện), S09 (thu tiền/gạch nợ), S10 (API + UI hóa đơn cư dân) và S11 backend (xuất báo cáo XLSX thu phí/cư trú) đã được đánh dấu hoàn thành trong `TASKS.md`; giới hạn kiểm chứng được ghi trong `VALIDATION.md`. S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) và backend S10 qua PR [#32](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/32). Giao diện export S11 đã được triển khai trên nhánh `hhoangsonnw/feat-s11-ui`; task chờ review PR trước khi nghiệm thu.
+S01–S12 backend đã có triển khai. S08 (kỳ thu/tự nguyện), S09 (thu tiền/gạch nợ), S10 (API + UI hóa đơn cư dân) và S11 backend (xuất báo cáo XLSX thu phí/cư trú) đã được đánh dấu hoàn thành trong `TASKS.md`; giới hạn kiểm chứng được ghi trong `VALIDATION.md`. S12 backend hiện đã qua `verify` và MySQL integration; UI S12 đang được triển khai. S09 đã được merge qua PR [#28](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/28) và backend S10 qua PR [#32](https://github.com/KietQuangT/SE_10-BlueMoonComplex/pull/32). Giao diện export S11 đã được triển khai trên nhánh `hhoangsonnw/feat-s11-ui`; task chờ review PR trước khi nghiệm thu.
 
 S10 bổ sung API tra cứu và chi tiết hóa đơn/lịch sử gạch nợ cho cư dân (`/api/v1/resident/invoices`), kiểm tra quyền theo hộ ở server (chặn IDOR/truy cập chéo hộ), snapshot hóa đơn và ledger với cô lập giao dịch `REPEATABLE_READ`, phân trang và lọc theo trạng thái. UI cư dân dùng API thật để xem, lọc, phân trang và mở chi tiết/lịch sử; giao diện chỉ đọc và Demo mode dùng dữ liệu riêng. Backend S10 được duyệt G2 ngày 09/11/2026; walkthrough UI hoàn tất ngày 10/11/2026.
 
@@ -14,7 +14,9 @@ S11 backend cung cấp ba endpoint tải XLSX cho Kế toán và Ban quản tr�
 
 Danh sách tài khoản ADMIN dùng `GET /api/v1/accounts?page=0&size=100`, chỉ ADMIN được truy cập. API phân trang, không trả dữ liệu mật khẩu; M-10 tải dữ liệu thật và giữ tìm kiếm/lọc/phân trang hiện có. Bổ sung này đang chờ review cùng nhánh S11-UI.
 
-Các task tiếp theo (S12 gói dữ liệu cơ quan, S13 backup/restore, S14 hồi quy/hiệu năng, S15 đóng gói/bàn giao) và trạng thái review S11-UI tiếp tục được theo dõi trong [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md). Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
+S12 backend cho ADMIN tạo gói dữ liệu theo phạm vi hộ, xem trước, duyệt bởi ADMIN khác người tạo, từ chối nháp, thu hồi, tải XLSX và ghi nhận bàn giao. BQT tự tiếp nhận yêu cầu và kiểm tra giấy phép bên ngoài hệ thống; chỉ mã tham chiếu tối thiểu được lưu. Metadata/audit được giữ 5 năm theo mục tiêu NFR-010, không phải khẳng định về thời hạn pháp luật. Tệp có thể tải tối đa 7 ngày từ lúc duyệt và bị xóa tối đa 30 ngày từ lúc tạo; tải bị chặn tại hạn đến trước. Xem [S12 trong VALIDATION.md](docs/VALIDATION.md) và [quyết định D13](docs/DECISIONS.md).
+
+Các task tiếp theo (hoàn tất UI/nghiệm thu S12, S13 backup/restore, S14 hồi quy/hiệu năng, S15 đóng gói/bàn giao) và trạng thái review S11-UI tiếp tục được theo dõi trong [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md). Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Công nghệ
 
@@ -36,6 +38,7 @@ Các task tiếp theo (S12 gói dữ liệu cơ quan, S13 backup/restore, S14 h�
 - **Thu bắt buộc S09:** nhiều receipt cho một hóa đơn; thu thừa trở thành credit hộ; phân bổ credit FIFO; hủy receipt và đảo phân bổ lưu lịch sử; idempotency bằng UUID và audit nghiệp vụ trong transaction; Kế toán thao tác, ADMIN chỉ đọc.
 - **Hóa đơn cư dân S10:** API và UI cho danh sách/chi tiết hóa đơn theo hộ đăng nhập, dòng phí snapshot, đã thu/còn nợ và lịch sử; lọc tháng/trạng thái, phân trang; server chặn truy cập chéo hộ. UI chỉ đọc, Demo mode độc lập.
 - **Báo cáo S11:** API tải XLSX công nợ theo kỳ (`/api/v1/reports/fee-collection.xlsx?period=YYYY-MM`), tiền mặt thu theo ngày (`/api/v1/reports/cash-receipts.xlsx?from=YYYY-MM-DD&to=YYYY-MM-DD`) và cư trú hiện tại (`/api/v1/reports/residency.xlsx`). Tối đa 50.000 dòng mỗi file; chỉ `ADMIN` được tải báo cáo cư trú, `ACCOUNTANT` chỉ được tải hai báo cáo tài chính.
+- **Gói dữ liệu S12:** API `/api/v1/agency-data-packages` dành cho ADMIN; kiểm tra yêu cầu/giấy phép và chuyển gói cho cơ quan do BQT xử lý ngoài hệ thống. Cơ quan không có role/account, không đăng nhập và không truy vấn dữ liệu thô.
 - **Frontend:** có các màn hình v1; một số luồng dùng API thật, một số luồng vẫn là Demo. Chế độ Demo giữ bộ dữ liệu riêng, không ghi vào backend.
 
 Backend kiểm tra quyền và phạm vi hộ ở server. Các thay đổi dữ liệu dùng transaction và audit nghiệp vụ; schema thay đổi qua migration Flyway mới. Không có tài khoản mặc định; ADMIN đầu tiên được tạo bằng profile bootstrap tương tác.

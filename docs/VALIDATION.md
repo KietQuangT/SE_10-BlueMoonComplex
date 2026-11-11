@@ -277,3 +277,9 @@ S11 đã được tick trong `docs/sprint-1/TASKS.md` sau khi đủ bằng chứ
 - Backend: JDK 21 trong Docker, `./mvnw -B -ntp -Pintegration verify` với MySQL 8.4.13 riêng trên cổng 3323 dùng tmpfs: 355 test thường và 174 integration đạt, 0 lỗi/bỏ qua. Container kiểm thử đã dừng; không dùng DB đang chạy của ứng dụng.
 - Frontend: `npm test -- --run`: 39 file / 234 test đạt; `npm run build` đạt. `impeccable detect` không báo vấn đề cho `AccountsPage.tsx`.
 - Orca Browser với phiên ADMIN và backend mới: M-10 hiển thị danh sách sau tải lại; lọc vai trò Kế toán cho đúng kết quả; kiểm tra bố cục desktop và giả lập iPhone 14. Chưa thực hiện thao tác thay đổi trạng thái trên dữ liệu đang chạy. UI tải lần lượt tất cả trang để giữ bộ lọc phía client; số tài khoản lớn cần theo dõi hiệu năng.
+
+## S12 — Gói dữ liệu cơ quan, integration 11/11/2026
+
+- Worktree `hhoangsonnw/feat-s12`, commit `65449ec194dcd60d3bf835fc5678eeb3e364b4da`; dùng JDK 21. Chạy `cd backend && ./mvnw -B -ntp -Pintegration verify` với MySQL 8.4 trên cổng `3319`, container mới không gắn volume và dữ liệu trong tmpfs. **416 unit/API + 179 integration, 0 failure/error/skipped; BUILD SUCCESS (1m26s)**. `AgencyDataPackageIT`: 5/5 pass. Log: `/Users/hoangson/Downloads/SE_10-BlueMoonComplex/_agents_workspace/S12/integration-isolated.log`.
+- Lần chạy trước trên DB dev có 4 failure và 1 error trong test billing/payment; suite cô lập chạy sạch, gồm các test từng lỗi. Không reset hoặc sửa DB dev. Container tạm đã được dừng tự động sau khi chạy.
+- Đây là bằng chứng backend build/integration; chưa đánh dấu S12 hoàn thành bằng riêng kết quả này.
