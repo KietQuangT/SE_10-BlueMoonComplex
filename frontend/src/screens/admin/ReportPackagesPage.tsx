@@ -208,7 +208,7 @@ export function ReportPackagesPage(): React.ReactElement {
   const header = (
     <ScreenHeader
       screenCode="M-19"
-      contract={mode === 'api' ? 'api-live' : 'db-ready'}
+      contract="api-live"
       tierLabel="Mức C"
       title="Gói dữ liệu cơ quan"
       description="BQT tạo, kiểm tra và kiểm soát việc bàn giao gói dữ liệu. Cơ quan không đăng nhập hoặc truy vấn trực tiếp hệ thống."
@@ -217,7 +217,14 @@ export function ReportPackagesPage(): React.ReactElement {
   );
 
   if (mode !== 'api') {
-    return <div className="wayfinding-page">{header}<div className="notice-box notice-warning">Gói dữ liệu chỉ dùng API thật để bảo đảm phạm vi và kiểm toán ở máy chủ. Chuyển sang API mode để tiếp tục.</div></div>;
+    return (
+      <div className="wayfinding-page">
+        {header}
+        <div className="notice-box notice-warning">
+          Màn hình nhạy cảm này chỉ khả dụng ở chế độ Backend thật để bảo đảm kiểm soát phạm vi và ghi nhận kiểm toán tại máy chủ. Chuyển sang API mode để tiếp tục.
+        </div>
+      </div>
+    );
   }
 
   if (loading && !pageData) return <div className="wayfinding-page">{header}<SkeletonRows rows={5} /></div>;
