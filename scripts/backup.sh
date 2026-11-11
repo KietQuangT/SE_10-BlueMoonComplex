@@ -2,23 +2,13 @@
 # ==============================================================================
 # BlueMoon S13 — Script Backup Cơ Sở Dữ Liệu Tự Động (Q1–Q5, NFR-008)
 # ==============================================================================
-# Bản quyền: Ban Quản Trị Chung Cư BlueMoon
-# Quy tắc bảo mật:
-# - Chạy với Bash 4+ / POSIX sh tương thích; set -euo pipefail.
-# - Nhận cấu hình từ file bảo mật mode 0600 ngoài repository.
-# - Tuyệt đối không nhận mật khẩu qua argv hoặc ghi vào stdout/stderr.
-# - BACKUP_DIR bắt buộc là đường dẫn tuyệt đối trên ổ ngoài đã mã hóa.
-# - Giữ đúng 7 bản backup thành công mới nhất; không tính bản dở/hỏng.
-# - Loại bỏ SPRING_SESSION và SPRING_SESSION_ATTRIBUTES khỏi dump (Q4).
-# - Manifest chỉ chứa timestamp, checksum SHA-256, số bảng/số dòng (Q5 allowlist).
-# ==============================================================================
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd -P)"
 
 # ------------------------------------------------------------------------------
-# 1. Tải và kiểm tra cấu hình
+# 1. Tải và kiểm tra cấu hình an toàn trước khi source
 # ------------------------------------------------------------------------------
 CONFIG_FILE="${BACKUP_CONF:-}"
 
@@ -33,7 +23,8 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         *)
-            echo "Lỗi: Tham số không hợp lệ: $1" >&2
+            # Không in lại tham số đầu vào để tránh lộ giá trị nhạy cảm (canary)
+            echo "Lỗi: Tham số không hợp lệ." >&2
             exit 1
             ;;
     esac
@@ -45,11 +36,19 @@ if [[ -z "${CONFIG_FILE}" ]]; then
 fi
 
 if [[ ! -f "${CONFIG_FILE}" ]]; then
-    echo "Lỗi: File cấu hình không tồn tại: ${CONFIG_FILE}" >&2
+    echo "Lỗi: File cấu hình không tồn tại." >&2
     exit 1
 fi
 
-# Kiểm tra phân quyền file cấu hình (phải không cho nhóm khác đọc/ghi nếu trên hệ thống POSIX)
+CANONICAL_CONF="$(cd "$(dirname "${CONFIG_FILE}")" && pwd -P)/$(basename "${CONFIG_FILE}")"
+
+# File cấu hình không được nằm trong repo
+if [[ "${CANONICAL_CONF}" == "${REPO_ROOT}"* ]]; then
+    echo "Lỗi: File cấu hình không được nằm bên trong repository." >&2
+    exit 1
+fi
+
+# Kiểm tra phân quyền file cấu hình (phải là 0600 hoặc 0400, không cho group/other đọc)
 if [[ "$(uname -s)" != "CYGWIN"* && "$(uname -s)" != "MINGW"* ]]; then
     CONF_PERMS="$(stat -f "%OLp" "${CONFIG_FILE}" 2>/dev/null || stat -c "%a" "${CONFIG_FILE}" 2>/dev/null || true)"
     if [[ -n "${CONF_PERMS}" && "${CONF_PERMS}" =~ (..[1-7]|.[1-7].) ]]; then
@@ -58,7 +57,7 @@ if [[ "$(uname -s)" != "CYGWIN"* && "$(uname -s)" != "MINGW"* ]]; then
     fi
 fi
 
-# Tải cấu hình
+# Tải cấu hình an toàn sau khi đã kiểm tra vị trí và quyền
 # shellcheck source=/dev/null
 source "${CONFIG_FILE}"
 
@@ -83,14 +82,21 @@ if [[ "${BACKUP_DIR}" != /* ]]; then
     exit 1
 fi
 
-# Q2: Không được lưu trong repository
-CANONICAL_REPO="${REPO_ROOT}"
-# Tạo thư mục BACKUP_DIR nếu mount point tồn tại
+# Q2 & Q5: Xác minh mount point tồn tại
 if [[ ! -d "${BACKUP_MOUNT_POINT}" ]]; then
     echo "Lỗi: Ổ ngoài chưa được mount hoặc không tồn tại: ${BACKUP_MOUNT_POINT}" >&2
     exit 1
 fi
 
+# Q2 & Q5: Bắt buộc đã xác nhận mã hóa ổ ngoài trước khi tạo bất kỳ thư mục nào
+if [[ "${REQUIRE_ENCRYPTION_VERIFIED}" != "true" ]]; then
+    echo "Lỗi: Chưa xác nhận ổ ngoài đã mã hóa at-rest (REQUIRE_ENCRYPTION_VERIFIED!='true')." >&2
+    exit 1
+fi
+
+# Kiểm tra đường dẫn BACKUP_DIR không nằm trong repo hoặc volume/datadir
+CANONICAL_REPO="${REPO_ROOT}"
+# Chỉ tạo thư mục sau khi đã xác nhận mã hóa và mount point
 mkdir -p "${BACKUP_DIR}"
 CANONICAL_BACKUP_DIR="$(cd "${BACKUP_DIR}" && pwd -P)"
 
@@ -99,15 +105,8 @@ if [[ "${CANONICAL_BACKUP_DIR}" == "${CANONICAL_REPO}"* ]]; then
     exit 1
 fi
 
-# Không được nằm trong thư mục Docker volume/datadir
 if [[ "${CANONICAL_BACKUP_DIR}" == *"/var/lib/mysql"* || "${CANONICAL_BACKUP_DIR}" == *"/mysql_data"* ]]; then
     echo "Lỗi: BACKUP_DIR không được nằm trong volume hoặc datadir của MySQL." >&2
-    exit 1
-fi
-
-# Q2 & Q5: Xác minh mã hóa
-if [[ "${REQUIRE_ENCRYPTION_VERIFIED}" != "true" ]]; then
-    echo "Lỗi: Chưa xác nhận ổ ngoài đã mã hóa at-rest (REQUIRE_ENCRYPTION_VERIFIED!='true')." >&2
     exit 1
 fi
 
@@ -125,15 +124,9 @@ acquire_lock() {
     if [[ -f "${LOCK_DIR}/pid" ]]; then
         local old_pid
         old_pid="$(cat "${LOCK_DIR}/pid" 2>/dev/null || true)"
+        # Cho phép re-entry từ chính tiến trình hoặc parent dispatcher
         if [[ "${old_pid}" == "$$" || "${old_pid}" == "${PPID:-}" ]]; then
             return 0
-        fi
-        if [[ -n "${old_pid}" ]] && ! kill -0 "${old_pid}" 2>/dev/null; then
-            rm -rf "${LOCK_DIR}"
-            if mkdir "${LOCK_DIR}" 2>/dev/null; then
-                echo "$$" > "${LOCK_DIR}/pid"
-                return 0
-            fi
         fi
     fi
     return 1
@@ -174,6 +167,24 @@ utc_now() {
     date -u +"%Y-%m-%dT%H:%M:%SZ"
 }
 
+# Tạo option file tạm thời mode 0600 để tránh truyền credential trên argv/env
+OPT_FILE="$(mktemp "/tmp/.bm_bopt_XXXXXX.cnf")"
+chmod 0600 "${OPT_FILE}"
+cat <<EOF > "${OPT_FILE}"
+[client]
+user=${DB_USER}
+password="${DB_PASSWORD//\\/\\\\}"
+EOF
+
+cleanup_all() {
+    rm -f "${OPT_FILE}" 2>/dev/null || true
+    if [[ -n "${STAGING_DIR:-}" && -d "${STAGING_DIR}" ]]; then
+        rm -rf "${STAGING_DIR}" 2>/dev/null || true
+    fi
+    release_lock
+}
+trap cleanup_all EXIT INT TERM
+
 # ------------------------------------------------------------------------------
 # 5. Preflight kiểm tra MySQL và Database (khi không chạy mock)
 # ------------------------------------------------------------------------------
@@ -181,40 +192,64 @@ START_UTC="$(utc_now)"
 RUN_ID="$(date -u +"%Y%m%d_%H%M%SZ")_${RANDOM}"
 
 if [[ -z "${MOCK_MYSQLDUMP_CMD}" ]]; then
-    # Kiểm tra Docker Compose file tồn tại
     if [[ ! -f "${COMPOSE_FILE}" ]]; then
         echo "Lỗi: COMPOSE_FILE không tồn tại: ${COMPOSE_FILE}" >&2
         exit 1
     fi
 
-    # Kiểm tra container MySQL đang chạy
     if ! docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" ps --status running -q "${DB_SERVICE}" | grep -q .; then
         echo "Lỗi: Service MySQL '${DB_SERVICE}' không ở trạng thái running." >&2
         exit 1
     fi
 
-    # Truy vấn kiểm tra phiên bản MySQL 8.4
-    MYSQL_EXEC="docker compose -p ${COMPOSE_PROJECT} -f ${COMPOSE_FILE} exec -T ${DB_SERVICE} mysql -u${DB_USER} -p${DB_PASSWORD} -s -N"
-    
-    MYSQL_VERSION=$(${MYSQL_EXEC} -e "SELECT VERSION();" 2>/dev/null || true)
+    # Sao chép option file an toàn vào container để thực hiện truy vấn kiểm tra
+    docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" cp "${OPT_FILE}" "${DB_SERVICE}:/tmp/.opt_$$.cnf"
+    docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" exec -T "${DB_SERVICE}" chmod 0600 "/tmp/.opt_$$.cnf"
+
+    MYSQL_EXEC="docker compose -p ${COMPOSE_PROJECT} -f ${COMPOSE_FILE} exec -T ${DB_SERVICE} mysql --defaults-extra-file=/tmp/.opt_$$.cnf -s -N"
+
+    MYSQL_VERSION=$(${MYSQL_EXEC} -e "SELECT VERSION();" 2>/dev/null) || {
+        echo "Lỗi: Không thể kết nối hoặc xác minh phiên bản MySQL." >&2
+        docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" exec -T "${DB_SERVICE}" rm -f "/tmp/.opt_$$.cnf" 2>/dev/null || true
+        exit 1
+    }
+
     if [[ "${MYSQL_VERSION}" != *"8.4"* ]]; then
-        echo "Lỗi: Phiên bản MySQL không phải 8.4. Thực tế: ${MYSQL_VERSION}" >&2
+        echo "Lỗi: Phiên bản MySQL không phải 8.4." >&2
+        docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" exec -T "${DB_SERVICE}" rm -f "/tmp/.opt_$$.cnf" 2>/dev/null || true
         exit 1
     fi
 
-    # Kiểm tra tất cả các bảng đều là InnoDB
-    NON_INNODB_COUNT=$(${MYSQL_EXEC} -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '${DB_NAME}' AND engine != 'InnoDB';" 2>/dev/null || echo "0")
+    NON_INNODB_COUNT=$(${MYSQL_EXEC} -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '${DB_NAME}' AND engine != 'InnoDB';" 2>/dev/null) || {
+        echo "Lỗi: Truy vấn kiểm tra engine InnoDB thất bại." >&2
+        docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" exec -T "${DB_SERVICE}" rm -f "/tmp/.opt_$$.cnf" 2>/dev/null || true
+        exit 1
+    }
     if [[ "${NON_INNODB_COUNT}" != "0" ]]; then
-        echo "Lỗi: Phát hiện ${NON_INNODB_COUNT} bảng không phải InnoDB trong schema ${DB_NAME}." >&2
+        echo "Lỗi: Phát hiện bảng không phải InnoDB trong schema." >&2
+        docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" exec -T "${DB_SERVICE}" rm -f "/tmp/.opt_$$.cnf" 2>/dev/null || true
         exit 1
     fi
 
-    # Kiểm tra không có routine/trigger/view trỏ database khác ngoài thiết kế
-    ROUTINE_COUNT=$(${MYSQL_EXEC} -e "SELECT COUNT(*) FROM information_schema.routines WHERE routine_schema = '${DB_NAME}';" 2>/dev/null || echo "0")
-    TRIGGER_COUNT=$(${MYSQL_EXEC} -e "SELECT COUNT(*) FROM information_schema.triggers WHERE trigger_schema = '${DB_NAME}';" 2>/dev/null || echo "0")
-    VIEW_COUNT=$(${MYSQL_EXEC} -e "SELECT COUNT(*) FROM information_schema.views WHERE table_schema = '${DB_NAME}';" 2>/dev/null || echo "0")
+    ROUTINE_COUNT=$(${MYSQL_EXEC} -e "SELECT COUNT(*) FROM information_schema.routines WHERE routine_schema = '${DB_NAME}';" 2>/dev/null) || {
+        echo "Lỗi: Truy vấn kiểm tra routines thất bại." >&2
+        docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" exec -T "${DB_SERVICE}" rm -f "/tmp/.opt_$$.cnf" 2>/dev/null || true
+        exit 1
+    }
+    TRIGGER_COUNT=$(${MYSQL_EXEC} -e "SELECT COUNT(*) FROM information_schema.triggers WHERE trigger_schema = '${DB_NAME}';" 2>/dev/null) || {
+        echo "Lỗi: Truy vấn kiểm tra triggers thất bại." >&2
+        docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" exec -T "${DB_SERVICE}" rm -f "/tmp/.opt_$$.cnf" 2>/dev/null || true
+        exit 1
+    }
+    VIEW_COUNT=$(${MYSQL_EXEC} -e "SELECT COUNT(*) FROM information_schema.views WHERE table_schema = '${DB_NAME}';" 2>/dev/null) || {
+        echo "Lỗi: Truy vấn kiểm tra views thất bại." >&2
+        docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" exec -T "${DB_SERVICE}" rm -f "/tmp/.opt_$$.cnf" 2>/dev/null || true
+        exit 1
+    }
+
     if [[ "${ROUTINE_COUNT}" != "0" || "${TRIGGER_COUNT}" != "0" || "${VIEW_COUNT}" != "0" ]]; then
-        echo "Lỗi: Phát hiện object ngoài thiết kế chuẩn (routines: ${ROUTINE_COUNT}, triggers: ${TRIGGER_COUNT}, views: ${VIEW_COUNT})." >&2
+        echo "Lỗi: Phát hiện object ngoài thiết kế chuẩn." >&2
+        docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" exec -T "${DB_SERVICE}" rm -f "/tmp/.opt_$$.cnf" 2>/dev/null || true
         exit 1
     fi
 fi
@@ -230,29 +265,17 @@ DUMP_FILE="${STAGING_DIR}/dump.sql"
 touch "${DUMP_FILE}"
 chmod 0600 "${DUMP_FILE}"
 
-cleanup_staging() {
-    if [[ -d "${STAGING_DIR}" ]]; then
-        rm -rf "${STAGING_DIR}" 2>/dev/null || true
-    fi
-}
-trap 'cleanup_staging; release_lock' EXIT INT TERM
-
 # ------------------------------------------------------------------------------
 # 7. Thực hiện mysqldump stream vào staging
 # ------------------------------------------------------------------------------
 echo "Đang tiến hành mysqldump cho schema '${DB_NAME}'..." >&2
 
 if [[ -n "${MOCK_MYSQLDUMP_CMD}" ]]; then
-    # Hỗ trợ synthetic test runner
     eval "${MOCK_MYSQLDUMP_CMD}" > "${DUMP_FILE}"
 else
-    # Sử dụng mysqldump trong MySQL service qua docker compose exec
-    # Cấu hình option an toàn theo Mục 5:
-    # --single-transaction --quick --hex-blob --no-tablespaces --set-gtid-purged=OFF --skip-lock-tables
-    # và loại bỏ SPRING_SESSION, SPRING_SESSION_ATTRIBUTES theo Q4
     docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" exec -T \
-        -e MYSQL_PWD="${DB_PASSWORD}" "${DB_SERVICE}" \
-        mysqldump -u"${DB_USER}" \
+        "${DB_SERVICE}" \
+        mysqldump --defaults-extra-file="/tmp/.opt_$$.cnf" \
             --single-transaction \
             --quick \
             --hex-blob \
@@ -262,6 +285,9 @@ else
             --ignore-table="${DB_NAME}.SPRING_SESSION" \
             --ignore-table="${DB_NAME}.SPRING_SESSION_ATTRIBUTES" \
             "${DB_NAME}" > "${DUMP_FILE}"
+
+    # Dọn dẹp option file trong container ngay sau dump
+    docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" exec -T "${DB_SERVICE}" rm -f "/tmp/.opt_$$.cnf" 2>/dev/null || true
 fi
 
 # ------------------------------------------------------------------------------
@@ -272,19 +298,16 @@ if [[ ! -s "${DUMP_FILE}" ]]; then
     exit 1
 fi
 
-# Kiểm tra dump kết thúc hợp lệ
 if ! grep -q "\-\- Dump completed" "${DUMP_FILE}" && ! grep -q "\-\- End of dump" "${DUMP_FILE}"; then
     echo "Lỗi: File dump bị cắt ngắn, thiếu dấu hoàn tất của mysqldump." >&2
     exit 1
 fi
 
-# Q4: Kiểm tra tuyệt đối không có bảng SPRING_SESSION trong dump
 if grep -Ei "CREATE TABLE [\`\"']?SPRING_SESSION|INSERT INTO [\`\"']?SPRING_SESSION" "${DUMP_FILE}" >/dev/null; then
     echo "Lỗi vi phạm Q4: Phát hiện SPRING_SESSION trong tệp dump." >&2
     exit 1
 fi
 
-# Đếm số bảng và số dòng trong dump
 TABLE_COUNT=$(grep -c "^CREATE TABLE " "${DUMP_FILE}" || echo "0")
 TOTAL_ROW_COUNT=$(grep -c "^INSERT INTO " "${DUMP_FILE}" || echo "0")
 
@@ -293,7 +316,6 @@ if [[ "${TABLE_COUNT}" -eq 0 ]]; then
     exit 1
 fi
 
-# Tính checksum SHA-256
 DUMP_SHA256="$(compute_sha256 "${DUMP_FILE}")"
 echo "${DUMP_SHA256}  dump.sql" > "${STAGING_DIR}/dump.sha256"
 chmod 0600 "${STAGING_DIR}/dump.sha256"
@@ -301,7 +323,7 @@ chmod 0600 "${STAGING_DIR}/dump.sha256"
 END_UTC="$(utc_now)"
 
 # ------------------------------------------------------------------------------
-# 9. Ghi Manifest theo Q5 Allowlist (Chỉ timestamp, checksum, số bảng, số dòng)
+# 9. Ghi Manifest theo chuẩn Q5 Allowlist
 # ------------------------------------------------------------------------------
 MANIFEST_FILE="${STAGING_DIR}/manifest.json"
 cat <<EOF > "${MANIFEST_FILE}"
@@ -327,7 +349,6 @@ FINAL_BUNDLE_DIR="${CANONICAL_BACKUP_DIR}/${FINAL_BUNDLE_NAME}"
 mv "${STAGING_DIR}" "${FINAL_BUNDLE_DIR}"
 chmod 0700 "${FINAL_BUNDLE_DIR}"
 
-# Cập nhật state file nếu có
 if [[ -n "${DISPATCH_STATE_FILE:-}" ]]; then
     STATE_DIR="$(dirname "${DISPATCH_STATE_FILE}")"
     mkdir -p "${STATE_DIR}" 2>/dev/null || true
@@ -348,28 +369,48 @@ fi
 echo "Kiểm tra xoay vòng giữ 7 bản backup mới nhất..." >&2
 RETENTION_COUNT=7
 
-# Lấy danh sách các bundle hợp lệ đã COMPLETED, sắp xếp theo tên (chứa UTC timestamp)
+# Đọc và xác minh tính toàn vẹn của từng bundle trước khi đưa vào danh sách hợp lệ
 VALID_BUNDLES=()
 while IFS= read -r bundle_path; do
-    if [[ -d "${bundle_path}" && -f "${bundle_path}/COMPLETED" ]]; then
-        VALID_BUNDLES+=("${bundle_path}")
+    if [[ -d "${bundle_path}" && -f "${bundle_path}/COMPLETED" && -f "${bundle_path}/dump.sql" && -f "${bundle_path}/manifest.json" ]]; then
+        # Kiểm tra checksum sha256 hợp lệ
+        B_SHA="$(compute_sha256 "${bundle_path}/dump.sql" 2>/dev/null || true)"
+        M_SHA="$(jq -r '.sha256 // ""' "${bundle_path}/manifest.json" 2>/dev/null || true)"
+        if [[ -n "${B_SHA}" && "${B_SHA}" == "${M_SHA}" ]]; then
+            B_TIME="$(jq -r '.completed_at_utc // ""' "${bundle_path}/manifest.json" 2>/dev/null || true)"
+            VALID_BUNDLES+=("${B_TIME}|${bundle_path}")
+        fi
     fi
-done < <(find "${CANONICAL_BACKUP_DIR}" -mindepth 1 -maxdepth 1 -type d -name "bluemoon_backup_*" | sort)
+done < <(find "${CANONICAL_BACKUP_DIR}" -mindepth 1 -maxdepth 1 -type d -name "bluemoon_backup_*" 2>/dev/null)
 
-TOTAL_BUNDLES=${#VALID_BUNDLES[@]}
-echo "Tổng số bản backup hợp lệ hiện có: ${TOTAL_BUNDLES}" >&2
+# Sắp xếp theo completed_at_utc tăng dần
+IFS=$'\n' SORTED_BUNDLES=($(sort <<<"${VALID_BUNDLES[*]:-}"))
+unset IFS
 
+TOTAL_BUNDLES=${#SORTED_BUNDLES[@]}
+echo "Tổng số bản backup hợp lệ đã xác minh: ${TOTAL_BUNDLES}" >&2
+
+PRUNE_ERROR=false
 if [[ ${TOTAL_BUNDLES} -gt ${RETENTION_COUNT} ]]; then
     EXCESS=$((TOTAL_BUNDLES - RETENTION_COUNT))
     echo "Cần xoay vòng xóa ${EXCESS} bản cũ nhất..." >&2
     for ((i=0; i<EXCESS; i++)); do
-        OLD_BUNDLE="${VALID_BUNDLES[i]}"
-        # Xác minh không xóa ngoài CANONICAL_BACKUP_DIR và không đi theo symlink
+        OLD_ENTRY="${SORTED_BUNDLES[i]}"
+        OLD_BUNDLE="${OLD_ENTRY#*|}"
         if [[ -d "${OLD_BUNDLE}" && ! -L "${OLD_BUNDLE}" && "${OLD_BUNDLE}" == "${CANONICAL_BACKUP_DIR}/bluemoon_backup_"* ]]; then
             echo "Đang xoay vòng: $(basename "${OLD_BUNDLE}")" >&2
-            rm -rf "${OLD_BUNDLE}" || echo "Cảnh báo: Không thể xóa ${OLD_BUNDLE}, giữ lại để bảo toàn dữ liệu." >&2
+            if ! rm -rf "${OLD_BUNDLE}"; then
+                echo "Lỗi: Không thể xóa ${OLD_BUNDLE} trong quá trình prune." >&2
+                PRUNE_ERROR=true
+                break
+            fi
         fi
     done
+fi
+
+if [[ "${PRUNE_ERROR}" == "true" ]]; then
+    echo "Lỗi: Quá trình xoay vòng bản backup gặp lỗi, bảo toàn các bản còn lại." >&2
+    exit 1
 fi
 
 # In kết quả allowlist ra stdout (Q5: timestamp, sha256, table/row count)
