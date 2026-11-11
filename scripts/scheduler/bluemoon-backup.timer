@@ -1,0 +1,10 @@
+[Unit]
+Description=Chạy BlueMoon Backup Dispatcher mỗi 60 giây
+
+[Timer]
+OnBootSec=60s
+OnUnitActiveSec=60s
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target
