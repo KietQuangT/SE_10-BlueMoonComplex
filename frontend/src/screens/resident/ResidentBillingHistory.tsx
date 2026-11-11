@@ -270,8 +270,10 @@ export function ReceiptHistoryBlock({
                       <ResidentReceiptStatusBadge status={r.status} voidedAt={r.voidedAt} />
                     </td>
                     <td>
-                      {r.hasLateReason || r.hasVoidReason ? (
-                        <span className="badge badge-neutral">Có lý do</span>
+                      {r.hasVoidReason ? (
+                        <span className="badge badge-neutral" title="Lý do hủy được lưu tại Ban quản lý">Đã lưu lý do hủy tại BQL</span>
+                      ) : r.hasLateReason ? (
+                        <span className="badge badge-neutral" title="Ghi nhận muộn có lý do tại Ban quản lý">Ghi nhận muộn (có lý do)</span>
                       ) : (
                         '—'
                       )}
@@ -300,7 +302,9 @@ export function ReceiptHistoryBlock({
                 </div>
                 {(r.hasLateReason || r.hasVoidReason) && (
                   <div>
-                    <span className="badge badge-neutral">Có lý do</span>
+                    <span className="badge badge-neutral">
+                      {r.hasVoidReason ? 'Đã lưu lý do hủy tại BQL' : 'Ghi nhận muộn (có lý do)'}
+                    </span>
                   </div>
                 )}
                 {showInvoiceLink && (
@@ -490,7 +494,7 @@ export function AllocationHistoryBlock({
                     </td>
                     <td>
                       {a.hasReverseReason ? (
-                        <span className="badge badge-neutral">Có lý do</span>
+                        <span className="badge badge-neutral" title="Lý do đảo phân bổ được lưu tại Ban quản lý">Đã lưu lý do đảo tại BQL</span>
                       ) : (
                         '—'
                       )}
@@ -516,7 +520,7 @@ export function AllocationHistoryBlock({
                 </div>
                 {a.hasReverseReason && (
                   <div>
-                    <span className="badge badge-neutral">Có lý do</span>
+                    <span className="badge badge-neutral">Đã lưu lý do đảo tại BQL</span>
                   </div>
                 )}
                 {showInvoiceLink && (

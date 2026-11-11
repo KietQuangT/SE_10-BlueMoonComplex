@@ -36,7 +36,7 @@ người nhận dữ liệu được phê duyệt.
 | ADMIN/Ban quản trị | Quản lý account, hộ/nhân khẩu, duyệt cư trú, cấu hình phí, báo cáo |
 | ACCOUNTANT/Kế toán | Cấu hình phí/kỳ thu, ghi nhận thanh toán, xem báo cáo tài chính |
 | RESIDENT/Cư dân | Xem dữ liệu của hộ được gắn, gửi khai báo, xem hóa đơn |
-| Cơ quan chức năng | Chỉ nhận gói dữ liệu đã phê duyệt và giới hạn trường |
+| Cơ quan chức năng | Bên nhận ngoài hệ thống; S12 không cấp account/API/role đăng nhập. BQT xử lý yêu cầu/giấy phép ngoài hệ thống, ADMIN tạo gói cư trú theo danh sách hộ ACTIVE tường minh, ADMIN thứ hai duyệt rồi BQT chuyển. Gói chỉ có mã hộ, căn hộ, họ tên, trạng thái của người RESIDING/TEMPORARILY_ABSENT; snapshot giữ 30 ngày từ lúc tạo, tải đến mốc sớm hơn giữa duyệt+7 ngày và tạo+30 ngày; ADMIN có thể thu hồi lượt tải tiếp theo. Metadata/audit tối thiểu không PII giữ 5 năm; không lưu tệp giấy phép, nội dung gói hoặc PII trong audit. |
 
 ### 3.2. Kiến trúc logic
 
@@ -84,7 +84,7 @@ Mỗi yêu cầu có mã ổn định để liên kết với test và task.
 |---|---|---|---|
 | FR-RES-001 | ADMIN tạo, xem, sửa và chuyển trạng thái hộ theo quyền | ADMIN | Must |
 | FR-RES-002 | Hệ thống quản lý nhiều resident trong một household và liên kết account với household theo quyết định được duyệt | ADMIN | Must |
-| FR-RES-003 | Tra cứu hộ/nhân khẩu theo trường được cho phép, có phân trang | ADMIN, cơ quan được cấp quyền | Must |
+| FR-RES-003 | Tra cứu hộ/nhân khẩu theo trường được cho phép, có phân trang | ADMIN | Must |
 | FR-RES-004 | Resident chỉ xem danh sách thành viên và dữ liệu của household được server xác định | RESIDENT | Must |
 | FR-RES-005 | Resident gửi khai báo tạm vắng/tạm trú trong phạm vi được cấp; bản ghi bắt đầu ở trạng thái `PENDING` | RESIDENT | Must |
 | FR-RES-006 | ADMIN duyệt hoặc từ chối khai báo; lưu người duyệt, thời gian, lý do và trạng thái | ADMIN | Must |
@@ -120,12 +120,12 @@ Mỗi yêu cầu có mã ổn định để liên kết với test và task.
 
 | ID | Yêu cầu | Actor | Ưu tiên |
 |---|---|---|---|
-| FR-REP-001 | Xuất báo cáo tổng thu, tổng nợ và tỷ lệ theo công thức được duyệt | ADMIN, ACCOUNTANT | Must |
-| FR-REP-002 | Tổng báo cáo phải khớp dữ liệu giao dịch trong DB tại thời điểm truy vấn | Hệ thống | Must |
-| FR-REP-003 | Xuất danh sách cư trú theo mẫu và cột được phê duyệt | ADMIN | Must |
-| FR-REP-004 | Cơ quan chức năng chỉ xem/tải gói đã xác thực, phê duyệt và whitelist trường | Cơ quan chức năng | Must |
+| FR-REP-001 | Xuất công nợ theo kỳ hóa đơn (settled/total, không gồm tự nguyện) và tiền mặt theo khoảng `paidOn`; tách tiền thực nhận khỏi phân bổ credit | ADMIN, ACCOUNTANT | Must |
+| FR-REP-002 | Tổng báo cáo khớp dữ liệu DB trên cùng read snapshot; không nhân đôi tiền khi tổng hợp receipts/allocations | Hệ thống | Must |
+| FR-REP-003 | Xuất danh sách hiện tại của hộ ACTIVE, nhân khẩu RESIDING hoặc TEMPORARILY_ABSENT; chỉ gồm mã hộ, căn hộ, họ tên, trạng thái | ADMIN | Must |
+| FR-REP-004 | BQT tiếp nhận yêu cầu/kiểm tra giấy phép ngoài hệ thống; ADMIN tạo gói cho danh sách hộ ACTIVE tường minh, ADMIN thứ hai duyệt snapshot; người tạo được tự từ chối gói DRAFT nhưng không tự duyệt. Chỉ chuyển ngoài hệ thống gói cư trú có mã hộ, căn hộ, họ tên, trạng thái cho người RESIDING/TEMPORARILY_ABSENT. Không cấp account/API/role đăng nhập cho cơ quan; không xuất trường ngoài allowlist. Snapshot mọi trạng thái giữ 30 ngày từ lúc tạo; tải hết hạn ở mốc sớm hơn giữa duyệt+7 ngày và tạo+30 ngày; ADMIN có thể thu hồi lượt tải tiếp theo. Audit tạo/duyệt/từ chối/cho tải/chuyển/thu hồi ghi actor, thời điểm, packageId/version, template, số hộ/người và tham chiếu recipient, không chứa PII/nội dung/giấy phép; metadata giữ 5 năm từ createdAt, audit từ occurredAt UTC. Cleanup chạy mỗi 60 giây, quyền tải hết đúng hạn độc lập với job; audit cleanup fixed action AGENCY_PACKAGE_RETENTION_CLEANUP, actor NULL, RetentionBatch, batchId/thời điểm/count, cùng transaction. Không yêu cầu xác nhận/thông báo cư dân qua hệ thống | ADMIN/BQT | Must |
 | FR-REP-005 | Không expose entity hoặc dữ liệu thô ra API báo cáo | Hệ thống | Must |
-| FR-REP-006 | File Excel phải đọc được, có tiêu đề/cột/tổng theo mẫu đã duyệt | ADMIN, ACCOUNTANT | Must |
+| FR-REP-006 | Ba file XLSX `ThuTheoKy`, `TienMatTheoNgay`, `CuTruHienTai` phải mở được và đúng sheet/cột/tổng tại D29 | ADMIN, ACCOUNTANT (cư trú chỉ ADMIN) | Must |
 
 ## 5. Hợp đồng API mức khái niệm
 
@@ -143,7 +143,9 @@ triển khai. Các nhóm endpoint dự kiến:
 | `/api/v1/billing-periods` | Tạo/mở/đóng kỳ thu |
 | `/api/v1/charges` | Tạo bảng kê, xem chi tiết/công nợ |
 | `/api/v1/payments` | Ghi nhận và xem giao dịch |
-| `/api/v1/reports` | Báo cáo và export đã whitelist |
+| `/api/v1/reports/fee-collection.xlsx` | Export công nợ theo `period=YYYY-MM` |
+| `/api/v1/reports/cash-receipts.xlsx` | Export tiền mặt theo khoảng ngày `from`/`to` (`paidOn`, inclusive) |
+| `/api/v1/reports/residency.xlsx` | Export danh sách cư trú hiện tại theo whitelist D29 |
 
 Quy tắc HTTP:
 
@@ -232,8 +234,8 @@ nợ bắt buộc, export đúng whitelist và CI unit/integration đạt.
 | SRS-TBD-01 | Ma trận role/quyền và account–household–resident | Identity, residency, API ownership |
 | SRS-TBD-02 | Rounding và hiệu lực đơn giá | Billing, invoice, report |
 | SRS-TBD-03 | Thu thiếu/thừa, sửa/hủy và idempotency key | Payment, transaction, audit |
-| SRS-TBD-04 | Công thức tỷ lệ, mẫu Excel và cột export | Reporting |
-| SRS-TBD-05 | Mẫu báo cáo cư trú và whitelist cơ quan | Reporting, privacy |
+| SRS-TBD-04 | ĐÃ GIẢI QUYẾT tại D29: công thức tỷ lệ, cohort, ba mẫu XLSX và cột export S11 | Reporting |
+| SRS-TBD-05 | Đã giải quyết: phạm vi và hợp đồng endpoint/schema/format/storage/error mapping S12 được Sơn duyệt G1 ngày 11/11/2026; implementation và kiểm chứng thuộc G2 | Reporting, privacy |
 | SRS-TBD-06 | Backup schedule, restore evidence và retention | Operations, compliance |
 | SRS-TBD-07 | Kênh thông báo kết quả duyệt | Residency |
 

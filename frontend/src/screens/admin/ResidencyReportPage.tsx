@@ -2,6 +2,7 @@ import { formatBusinessDate } from '../../lib/format';
 import { useState } from 'react';
 import { OpenQuestions, ScreenHeader } from '../../components/ScreenHeader';
 import { EmptyStatePanel, ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
+import { SHOW_DEV_TOOLS } from '../../lib/devTools';
 import { useAppState } from '../../state/AppStateContext';
 
 export function ResidencyReportPage() {
@@ -62,12 +63,14 @@ export function ResidencyReportPage() {
           </button>}
         />
 
-      <div className="notice-box notice-warning mb-6">
-        <p className="font-semibold">Lưu ý về mẫu chuẩn báo cáo pháp lý</p>
-        <p className="text-sm mt-1">
-          Hiện tại chưa có mẫu danh mục cột chính thức được cơ quan công an địa phương phê duyệt. Giao diện dưới đây hiển thị bản xem trước theo cấu trúc trường hiện có trong hệ thống và chưa cam kết đạt chuẩn pháp lý nhà nước.
-        </p>
-      </div>
+      {SHOW_DEV_TOOLS && (
+        <div className="notice-box notice-warning mb-6">
+          <p className="font-semibold">Lưu ý về mẫu chuẩn báo cáo pháp lý</p>
+          <p className="text-sm mt-1">
+            Hiện tại chưa có mẫu danh mục cột chính thức được cơ quan công an địa phương phê duyệt. Giao diện dưới đây hiển thị bản xem trước theo cấu trúc trường hiện có trong hệ thống và chưa cam kết đạt chuẩn pháp lý nhà nước.
+          </p>
+        </div>
+      )}
 
       <p id="residency-export-note" className="field-hint mb-6">Tải tệp Excel chưa khả dụng. Bạn có thể lọc và xem danh sách bên dưới.</p>
 

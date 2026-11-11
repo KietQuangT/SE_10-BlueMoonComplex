@@ -266,7 +266,7 @@ export function ApiInvoiceDetailPage(): React.ReactElement {
       </div>
 
       {isCancelled && (
-        <div className="banner banner-neutral s10-notice-banner" role="alert">
+        <div className="banner banner-info s10-notice-banner" role="alert">
           <div className="banner-content">
             <Icon name="info" />
             <span>
