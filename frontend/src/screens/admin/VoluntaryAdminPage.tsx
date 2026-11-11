@@ -4,12 +4,14 @@ import '../s08/s08.css';
 import { useState } from 'react';
 import { OpenQuestions, ScreenHeader } from '../../components/ScreenHeader';
 import { EmptyStatePanel, ErrorRetryPanel, SkeletonRows } from '../../components/StateFrame';
+import { SHOW_DEV_TOOLS } from '../../lib/devTools';
 import { useAppState } from '../../state/AppStateContext';
 
 export function VoluntaryAdminPage() {
   const { voluntaryCampaigns, publishVoluntaryCampaignDemo, forcedUiState } = useAppState();
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [opensOn, setOpensOn] = useState('2026-11-01');
@@ -79,12 +81,14 @@ export function VoluntaryAdminPage() {
           </button>}
         />
 
-      <div className="notice-box notice-warning mb-6">
-        <p className="font-semibold">Lưu ý quy tắc nghiệp vụ quan trọng</p>
-        <p className="text-sm mt-1">
-          Các khoản thu tự nguyện (quỹ đền ơn đáp nghĩa, vì người nghèo, khuyến học...) tuyệt đối <strong>không tính vào công nợ bắt buộc</strong> của hộ gia đình. Không tính tiền phạt hoặc chặn quyền lợi nếu cư dân không tham gia.
-        </p>
-      </div>
+      {SHOW_DEV_TOOLS && (
+        <div className="notice-box notice-warning mb-6">
+          <p className="font-semibold">Lưu ý quy tắc nghiệp vụ quan trọng</p>
+          <p className="text-sm mt-1">
+            Các khoản thu tự nguyện (quỹ đền ơn đáp nghĩa, vì người nghèo, khuyến học...) tuyệt đối <strong>không tính vào công nợ bắt buộc</strong> của hộ gia đình. Không tính tiền phạt hoặc chặn quyền lợi nếu cư dân không tham gia.
+          </p>
+        </div>
+      )}
 
       {successBanner && (
         <div className="notice-box notice-success mb-6" role="status">
@@ -92,14 +96,43 @@ export function VoluntaryAdminPage() {
         </div>
       )}
 
-      <div className="campaign-list">
+      <div className="s08-campaign-list">
         {forcedUiState === 'empty' || voluntaryCampaigns.length === 0 ? <EmptyStatePanel
           title="Chưa có đợt vận động tự nguyện nào"
           description="Chọn Tạo đợt vận động mới để nhập nội dung và thời gian."
         /> : voluntaryCampaigns.map((camp) => <CampaignCard key={camp.id}
           campaign={{ ...camp, postedCount: camp.contributionsCount, totalCollected: camp.totalCollectedDisplay.replace(/\./g, '') }}
-          resident={false} selected={false} disabled={false} />)}
+          resident={false}
+          selected={selectedId === camp.id}
+          disabled={false}
+          onSelect={() => setSelectedId((prev) => (prev === camp.id ? null : camp.id))}
+        />)}
       </div>
+
+      {selectedId ? (() => {
+        const selected = voluntaryCampaigns.find((c) => c.id === selectedId);
+        if (!selected) return null;
+        return (
+          <section id="campaign-details" className="surface-box s08-details mb-6" aria-labelledby="campaign-detail-title">
+            <div className="box-toolbar">
+              <div>
+                <h2 id="campaign-detail-title" className="box-title">Chi tiết: {selected.name}</h2>
+                <p className="field-hint">Đang mở · {selected.opensOn} – {selected.closesOn}</p>
+              </div>
+              <button type="button" className="btn btn-ghost" onClick={() => setSelectedId(null)}>
+                Đóng chi tiết
+              </button>
+            </div>
+            <section className="s08-ledger" aria-labelledby="contribution-ledger-title">
+              <div className="s08-section">
+                <h3 id="contribution-ledger-title" className="box-title">Sổ đóng góp</h3>
+                <p className="field-hint">Khoản đã hủy vẫn lưu lịch sử và không tính vào tổng thu.</p>
+              </div>
+              <p className="s08-section">Đã ghi nhận {selected.contributionsCount} lượt đóng góp ({selected.totalCollectedDisplay} đ).</p>
+            </section>
+          </section>
+        );
+      })() : null}
 
       <OpenQuestions
         items={[

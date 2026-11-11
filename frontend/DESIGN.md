@@ -1,189 +1,73 @@
----
-name: BlueMoon Complex
-description: "Quản lý cư trú và thu phí chung cư: giao diện trung tính, một màu nhấn xanh cobalt, nền xanh ngả trăng, chữ có dấu tiếng Việt rõ."
-colors:
-  ground: "#f2f6fd"
-  panel: "#ffffff"
-  subtle: "#f3f3f3"
-  muted: "#eeeeee"
-  ink: "#0a0a0a"
-  text-secondary: "#333333"
-  text-muted: "#5a5a5a"
-  brand: "#1d4ed8"
-  brand-hover: "#185530"
-  brand-soft: "#e8f1ec"
-  brand-ink: "#14522c"
-  amber: "#b45309"
-  amber-soft: "#fef3c7"
-  amber-ink: "#7c3405"
-  danger: "#b91c1c"
-  danger-soft: "#fee2e2"
-  danger-ink: "#7f1d1d"
-  info: "#1d4e6b"
-  info-soft: "#e6f0f6"
-  hairline: "#dcdcdc"
-  control-edge: "#767676"
-typography:
-  hero:
-    fontFamily: "Newsreader, Georgia, serif"
-    fontSize: "clamp(2rem, 1.5rem + 2vw, 3.25rem)"
-    fontWeight: 500
-    lineHeight: 1.2
-    letterSpacing: "-0.015em"
-  headline:
-    fontFamily: "Newsreader, Georgia, serif"
-    fontSize: "clamp(1.75rem, 1.4rem + 1.2vw, 2.375rem)"
-    fontWeight: 500
-    lineHeight: 1.2
-    letterSpacing: "-0.015em"
-  title:
-    fontFamily: "Hanken Grotesk, system-ui, sans-serif"
-    fontSize: "1.375rem"
-    fontWeight: 600
-    lineHeight: 1.3
-  body:
-    fontFamily: "Hanken Grotesk, system-ui, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 400
-    lineHeight: 1.5
-  label:
-    fontFamily: "Hanken Grotesk, system-ui, sans-serif"
-    fontSize: "0.8125rem"
-    fontWeight: 600
-    lineHeight: 1.4
-rounded:
-  sm: "8px"
-  md: "12px"
-  lg: "20px"
-  pill: "999px"
-spacing:
-  xs: "4px"
-  sm: "8px"
-  md: "16px"
-  lg: "24px"
-  xl: "32px"
-  xxl: "48px"
-components:
-  button-primary:
-    backgroundColor: "{colors.brand}"
-    textColor: "#ffffff"
-    rounded: "{rounded.sm}"
-    height: "44px"
-    padding: "10px 20px"
-  button-primary-hover:
-    backgroundColor: "{colors.brand-hover}"
-  button-secondary:
-    backgroundColor: "{colors.panel}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.sm}"
-    height: "44px"
-    padding: "10px 20px"
-  input:
-    backgroundColor: "{colors.panel}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.sm}"
-    height: "48px"
-    padding: "10px 14px"
-  panel:
-    backgroundColor: "{colors.panel}"
-    rounded: "{rounded.md}"
+# DESIGN.md — BlueMoon Complex Frontend Design System
+
+**Project:** SE_10 — BlueMoon Complex Residential & Fee Management System
+**Visual References:** `/fe-reference/dashboard-desktop.png` (Dark Mode) & `/fe-reference/dashboard-responsive.png` (Light Mode)
+**Theme Persistence:** `<html data-theme="dark|light">`, `localStorage['bm-theme']` (`src/lib/theme.ts`, `src/components/ThemeToggle.tsx`)
+
 ---
 
-# Design System: BlueMoon Complex
+## 1. Visual Identity & Aesthetic Direction
 
-## Overview
+- **Domain:** Administrative ledger & residential management portal for a high-rise apartment complex (Ban quản trị, Kế toán, Cư dân).
+- **Signature Identity:** Calm, authoritative midnight-navy & cobalt-blue administrative workspace with the recognizable BlueMoon crescent emblem and subtle atmospheric moonlit radial glow.
+- **Dual-Theme Architecture:**
+  - **Dark Mode (`[data-theme='dark']`):** Deep midnight navy ground (`#050b18`), elevated navy panels (`#0a152c`), translucent topbar (`rgba(7, 15, 34, 0.86)`), gradient sidebar (`#071124` → `#0b1c3d`) with subtle crescent moon artwork, luminous periwinkle-blue primary actions (`#709dff` → `#5585f7`), and high-contrast ice-white typography (`#f2f6ff`).
+  - **Light Mode (`[data-theme='light']`):** Pale moonlit porcelain ground (`#eef4fb`), crisp white panels (`#ffffff`), soft ice-blue sidebar (`#eff5fd` → `#dfebfa`), royal cobalt primary actions (`#3472f7` → `#2563eb`), and deep navy ink (`#0b1730`).
 
-**Creative North Star: "Quầy lễ tân yên tĩnh"** (The Quiet Front Desk). Một văn phòng Ban quản lý gọn gàng: giấy trắng, mực đen, một cây bút xanh cobalt để đánh dấu việc cần làm. Giao diện không trang trí; số tiền, mã căn hộ và trạng thái là nhân vật chính.
+---
 
-Chế độ **Operate**: người dùng làm việc lặp lại (tra cứu, thu tiền, duyệt đơn), nhiều cư dân lớn tuổi dùng một tay trên điện thoại 360px. Nền trung tính 90–95% màn hình; màu cobalt chỉ xuất hiện ở nút chính, vòng focus, liên kết và dấu mục đang chọn. Gradient và vầng trăng chỉ ở nền (Login, đầu vùng làm việc, chân thanh bên, xem `moon.svg`); panel, bảng, biểu mẫu luôn trắng. Không dùng bóng đổ trang trí, chữ in hoa, hay màu tím.
+## 2. Color Tokens (`src/styles/tokens.css`)
 
-Hệ này thay thế hoàn toàn bản "Biển chỉ dẫn tuyến Văn Phú" trước đó (bản cũ lưu ở `_agents_workspace/backup/`). Bảng màu `mint-pink-accounts` và cặp chữ Newsreader / Hanken Grotesk được chọn bằng `start.mjs deal --page service` của Taste Skill; Newsreader và Hanken Grotesk đều có bộ ký tự tiếng Việt (Instrument Sans và Schibsted Grotesk, hai cặp còn lại, thì không).
+### Surface & Ink Tokens
 
-**Key Characteristics:**
-- Một màu nhấn duy nhất; trạng thái luôn có nhãn chữ và kiểu viền, không chỉ màu.
-- Chữ nội dung ≥16px, nhãn ≥13px; tương phản chữ ≥7:1 trên nền, viền ô nhập ≥4,5:1.
-- Nút 44px (48px trên điện thoại), ô nhập 48px, mọi vùng chạm ≥44px.
-- Bảng hẹp tự chuyển thành mỗi dòng một thẻ.
+| Token | Light Mode | Dark Mode | Role |
+|---|---|---|---|
+| `--bg-ground` | `#eef4fb` | `#050b18` | Page canvas background |
+| `--bg-surface` | `#ffffff` | `#0a152c` | Primary cards, tables, forms |
+| `--bg-subtle` | `#f4f8fe` | `#0e1d3a` | Table headers, filter bars, card footers |
+| `--bg-muted` | `#e6effa` | `#15284d` | Hover states, secondary fills |
+| `--bg-input` | `#ffffff` | `#071124` | Form inputs, selects, textareas |
+| `--ink-primary` | `#0b1730` | `#f2f6ff` | Headings, primary data, amounts |
+| `--ink-secondary` | `#33476b` | `#b8c8e6` | Table headers, descriptions, labels |
+| `--ink-muted` | `#5c7196` | `#8296bb` | Hints, timestamps, secondary metadata |
+| `--border-subtle` | `#d5e1f2` | `rgba(74, 108, 172, 0.28)` | Panel borders, row dividers |
+| `--border-strong` | `#8aa1c4` | `rgba(98, 138, 210, 0.48)` | Input borders, secondary buttons, role plates |
+| `--accent-primary` | `#2563eb` | `#6392ff` | Active states, focus rings, links |
 
-## Colors
+### Semantic Status Tokens (Pill Badges with Leading Dot)
 
-Trung tính ấm-lạnh cân bằng, một màu xanh cobalt của dịch vụ.
+| Status Tone | Class | Meaning | Light (`bg` / `ink`) | Dark (`bg` / `ink`) |
+|---|---|---|---|---|
+| **Paid / Active** | `.badge-paid` | Đang cư trú, Hoạt động, Đã đóng, Đã duyệt | `#e6f7ef` / `#0d6847` | `rgba(16,85,62,0.48)` / `#6ee7b7` |
+| **Pending / Warn** | `.badge-pending` | Tạm vắng, Chưa đóng, Chờ duyệt, Nháp | `#fef5e4` / `#8c4b08` | `rgba(98,60,14,0.52)` / `#fcd34d` |
+| **Danger / Locked** | `.badge-danger` | Đã khóa, Từ chối, Quá hạn, Lỗi | `#feebed` / `#991b1b` | `rgba(104,24,34,0.52)` / `#fca5a5` |
+| **Neutral / Closed** | `.badge-neutral` | Đã chuyển đi, Ngừng dùng, Đã đóng, Đã hủy | `#edf2f9` / `#3b4c6b` | `rgba(38,54,86,0.62)` / `#c5d3eb` |
+| **Assumed / Info** | `.badge-assumed` | Thông tin đối chiếu, Tạm trú | `#e8f1ff` / `#1e40af` | `rgba(26,62,132,0.52)` / `#93c5fd` |
 
-### Primary
-- **Xanh cobalt Blue Moon** (#1d4ed8): nút chính (chữ trắng 6,7:1), vòng focus, liên kết, dấu mục đang chọn. Dưới 3% diện tích mỗi màn. Hover #1e40af; nền nhạt #e6eefc; chữ trên nền nhạt #1e3a8a.
+---
 
-### Neutral
-- **Giấy ánh trăng** (#f2f6fd): nền trang. **Tờ trắng** (#ffffff): panel, bảng, hộp thoại. **Xanh nhạt** (#eaf0fa, #e2eaf7): hàng được rê chuột, mục đang chọn, thanh công cụ.
-- **Mực** (#0a0a0a): chữ chính, nút mã căn hộ. **Chữ phụ** (#333333) và **chữ mờ** (#5a5a5a, ≥6:1) cho nhãn, ngày, ghi chú.
-- **Đường kẻ** (#dcdcdc): cấu trúc. **Viền ô nhập** (#767676): cạnh của điều khiển, 4,5:1 trên nền trắng.
+## 3. Typography & Numeric Discipline
 
-### Semantic (chỉ cho trạng thái, luôn kèm nhãn chữ)
-- **Hổ phách** (#b45309, nền #fef3c7, chữ #7c3405): còn nợ, chờ xử lý (viền đứt).
-- **Đỏ** (#b91c1c, nền #fee2e2, chữ #7f1d1d): lỗi, hành động hủy.
-- **Xanh biển** (#1d4e6b, nền #e6f0f6): ghi chú dữ liệu mẫu (chỉ DEV/Demo).
+- **Display / Page Titles (`--font-display`):** `'Newsreader', Georgia, serif` — weight `500`, `clamp(1.85rem, 2.3vw, 2.35rem)` for `.screen-title` (`h1`), `1.35rem–1.55rem` for section headings and KPI figures.
+- **Application UI & Controls (`--font-sans`):** `'Be Vietnam Pro', sans-serif` — full Vietnamese diacritic support, weights `400 / 500 / 600 / 700`.
+- **Monospace & Codes (`--font-mono`):** `'JetBrains Mono', monospace` — used for apartment codes, household codes, invoice codes, and SHA-256 hashes.
+- **Tabular Figures (`.tabular`):** `font-variant-numeric: tabular-nums` is enforced on all VND amounts, m² areas, dates (`DD/MM/YYYY`), periods (`MM/YYYY`), and counts.
 
-### Named Rules
-**The One Voice Rule.** Chỉ một màu nhấn. Màu trạng thái không bao giờ đứng một mình: luôn có chữ ("Chưa đóng", "Đã đóng") và kiểu viền (liền, đứt, kép).
+---
 
-## Typography
+## 4. Application Shell & Component Conventions
 
-**Display Font:** Newsreader (Georgia, serif) · **Body Font:** Hanken Grotesk (system-ui, sans-serif). Số, mã căn hộ và tiền dùng Hanken Grotesk với `tabular-nums` và không ngắt dòng giữa số và đơn vị (`50,00 m²`).
-
-**Character:** serif trầm cho tiêu đề (đáng tin, như văn bản hành chính), sans trung tính cho mọi thứ người dùng phải đọc nhanh.
-
-### Hierarchy
-- **Hero** (500, clamp 32–52px, 1.2): chỉ tiêu đề trang Đăng nhập.
-- **Headline** (500, clamp 28–38px, 1.2): tên màn (`h1`).
-- **Title** (600, 22px, 1.3): tiêu đề khối và thẻ (`h2`), cũng là cỡ lớn nhất của số liệu trên màn.
-- **Body** (400, 16px, 1.5): nội dung, dòng dài tối đa khoảng 62 ký tự.
-- **Label** (600, 13px): nhãn trường, đầu cột bảng, huy hiệu. Không có cỡ dưới 13px; không in hoa.
-
-### Named Rules
-**The Figure Cap Rule.** Một con số không bao giờ lớn hơn tiêu đề `h2` cùng màn (22px).
-
-## Layout
-
-Màn hình làm việc: thanh điều hướng trái cố định 264px (nền trắng, đường kẻ), thanh trên 64px, vùng nội dung tối đa 1240px. Từ 900px trở xuống: ẩn thanh trái, thêm thanh điều hướng dưới 3 tab cho cư dân (64px, ba cột đều). Trang Đăng nhập: một màn hình, nội dung và biểu mẫu nằm trên hai mép lề bằng nhau (lề 24–80px).
-
-Spacing theo thang 4, 8, 12, 16, 24, 32, 48, 64. Bảng và danh sách trong khung hẹp (dưới 720px chiều rộng khung, không phụ thuộc cửa sổ) chuyển thành mỗi dòng một thẻ, nhãn cột lấy từ đầu cột (`data-label`). "Bỏ qua menu" là link ẩn ngoài màn, chỉ hiện khi nhận focus.
-
-## Elevation & Depth
-
-Phẳng. Chiều sâu đến từ lớp nền (giấy, tờ trắng, xám nhạt) và đường kẻ 1px. Chỉ hộp thoại, hộp menu nổi và ngăn QA (chỉ DEV) có một bóng đổ nền (`0 12px 32px rgba(10,10,10,.16)`).
-
-## Shapes
-
-Bo góc "mềm" ba bậc: **8px** điều khiển và nút, **12px** panel và bảng, **20px** khung lớn (thẻ đăng nhập). Huy hiệu dùng bo 8px. Không có pill, trừ bộ đếm tròn trên thanh điều hướng.
-
-## Components
-
-- **Nút:** một chiều cao, một cỡ chữ (16px). Chỉ nút chính được tô màu nhấn. Nút phụ viền xám đậm, nền trắng. Nút nguy hiểm (tô đỏ) chỉ dùng trong hộp xác nhận. Nút ghost cho hành động thứ ba.
-- **Ô nhập:** cao 48px, nhãn 14px phía trên, viền 4,5:1, viền xanh khi focus, đỏ nhạt khi lỗi kèm câu lỗi.
-- **Huy hiệu trạng thái:** nền nhạt + viền + chữ; liền = hoàn tất, đứt = đang chờ, kép = lỗi.
-- **Hộp xác nhận:** `<dialog>` gốc; tiêu đề nêu đúng đối tượng, một câu hậu quả, nút là động từ cụ thể ("Vô hiệu hóa ngay"); Esc đóng và **trả focus về nút đã mở**.
-- **Bảng sổ cái:** đầu cột 13px, hàng 16px, số căn phải; trong khung hẹp thành thẻ.
-- **Dải 3 số (tóm tắt):** ba cột chia bằng đường kẻ đứng, số 22px.
-
-## Do's and Don'ts
-
-### Do
-- Luôn định dạng tiền `560.000 đ`, diện tích `50,00 m²`, ngày `dd/MM/yyyy`; che CCCD thành `********1234`.
-- Giữ nội dung form khi phiên hết hạn (401).
-- Dùng nhãn chữ cho mọi trạng thái.
-
-### Don't
-- Không dùng float để tính tiền trên giao diện.
-- Không thêm màu nhấn thứ hai, gradient, bóng đổ trang trí, chữ in hoa hay màu tím.
-- Không hiện nhãn nội bộ (mã màn, "Giả định", "Chờ chốt", câu hỏi mở) cho người dùng thật: chúng chỉ hiện ở DEV hoặc Demo.
-- Không dùng ảnh chụp không phải tòa nhà thật làm "ảnh tòa nhà". Thư viện ảnh của Taste Skill không có chủ đề nhà ở, nên Đăng nhập hiện chưa có ảnh; khi có ảnh thật của BlueMoon thì thêm làm khung bên phải của khối chữ.
-
-
-## Blue Moon (06/11/2026)
-Đổi từ xanh lá/xám sang cobalt + nền ngả xanh theo yêu cầu của Sơn. Vầng trăng (`src/styles/moon.svg`) là nền: to và thở chậm (`--moon-breathe` 9 s, tắt khi reduced-motion) ở Login; nhỏ, tĩnh ở chân thanh bên. Đầu vùng làm việc có quầng sáng xanh nhạt. Bản trước ở `_agents_workspace/backup/frontend-css-20261106-moon/`.
-
-## Sáng / Tối (06/11/2026)
-Hai chủ đề, chọn bằng `<html data-theme>` (script trong `index.html` đặt trước khi vẽ; `src/lib/theme.ts` giữ lựa chọn trong `localStorage` khóa `bm-theme`). Mặc định theo hệ thống; nút `ThemeToggle` xoay vòng Tự động → Sáng → Tối ở thanh trên của Login và app.
-- **Tối:** nền gần đen xanh `#04060d`, panel `#0b1222`, nhấn xanh điện `#5b8cff`. Chữ trên nút là màu đêm (`--text-on-brand: #04060d`, 6,4:1) vì chữ trắng không đạt 4,5:1 trên màu này. Login là cảnh đầy đủ: trời sao (hai lớp, một lớp nhấp nháy 4,5 s), trăng lớn có quầng xanh, mặt hồ có đường chân trời và vệt phản chiếu gợn sóng; thẻ đăng nhập là kính mờ nằm vắt trên mặt hồ. Trong app: quầng trăng ở đầu vùng làm việc và trăng mờ ở chân thanh bên, không có hồ.
-- **Sáng:** cùng cảnh ban ngày: trời xanh nhạt chuyển trắng, trăng nhạt, hồ xanh sáng với vệt phản chiếu trắng. Không có sao.
-- **Chung:** bố cục Login một cột giữa (trăng, tiêu đề, thẻ, hàng tầng nhà); cảnh cao đúng một màn hình, trang dài hơn thì tiếp tục trên màu của mặt hồ. Chuyển động (trăng thở 9 s, sao, gợn sóng) tắt hoàn toàn khi reduced-motion. Panel, bảng, biểu mẫu luôn là bề mặt đặc.
-- Bản trước khi thêm chế độ tối: `_agents_workspace/backup/frontend-theme-20261106-darklight/`.
+1. **Sidebar Navigation (`.app-rail`, `248px`):**
+   - Left-aligned `.rail-brand` with glowing crescent emblem and stacked `BlueMoon` / `Complex` serif title.
+   - Grouped navigation links (`.rail-group-heading`, `.rail-link`) with active royal-blue gradient pill (`.rail-link.active`), pending count badges (`.rail-badge`), user profile footer (`.rail-profile`), and decorative crescent moon backdrop (`.rail-moon-art`).
+2. **Top Header Bar (`.app-topbar`, `62px`):**
+   - Left scope: `.role-plate` for `ADMIN` / `ACCOUNTANT`, or `.apartment-sign` + area metadata for `RESIDENT`.
+   - Right actions: `<ThemeToggle />`, user profile link (`Hồ sơ và đổi mật khẩu`), optional QA drawer trigger (`SHOW_DEV_TOOLS`), and logout button (`Đăng xuất`).
+3. **Screen Header (`<ScreenHeader />`):**
+   - Renders serif `h1.screen-title`, operational subtitle `p.screen-desc`, and right-aligned primary/secondary `.screen-actions`.
+4. **KPI Summary Strip (`.wayfinding-strip` / `.s09-summary-strip`):**
+   - Elevated cards (`.wayfinding-station`) displaying a status dot (`.station-node`), label (`.station-title`), serif tabular metric (`.station-figure`), and context subtitle (`.station-sub`).
+5. **Surface Panels & Data Tables (`.surface-box`, `.box-toolbar`, `.ledger-table`, `<PaginationBar />`):**
+   - `12px` radius panels with subtle elevation shadow, integrated filter toolbar (`.box-toolbar`), high-legibility table headers (`thead th`), hoverable/selectable rows, right-aligned monetary columns (`.align-right.tabular`), and bottom pagination bar.
+6. **Dialogs & Modals (`<ConfirmDialog />`, `<FormDialog />`, `.s08-modal`, `.s09-modal`):**
+   - Native `<dialog>` and accessible modal overlays with blurred backdrop, serif header, clear consequence copy, and right-aligned footer actions.

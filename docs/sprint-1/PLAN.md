@@ -1,6 +1,6 @@
 # Phần 1 — Hiểu dự án và giới hạn
 
-BlueMoon số hóa hồ sơ hộ/nhân khẩu, khoản thu theo diện tích, đóng góp tự nguyện, ghi nhận thu tiền, công nợ và báo cáo. Vai trò: BQT, Kế toán, Cư dân, Cơ quan chức năng; không đồng nhất vai trò người dùng với quyền truy cập của thành viên GitHub.
+BlueMoon số hóa hồ sơ hộ/nhân khẩu, khoản thu theo diện tích, đóng góp tự nguyện, ghi nhận thu tiền, công nợ và báo cáo. Các role backend hiện có: BQT, Kế toán, Cư dân. Cơ quan chức năng là bên nhận dữ liệu ngoài hệ thống trong S12; quyết định có thêm role/account cơ quan vào v1 sau S12 vẫn mở theo D13. Không đồng nhất vai trò nghiệp vụ với quyền truy cập của thành viên GitHub.
 Đã đọc 10 file SE_10 ở Drive, 6 file kế hoạch revised và workbook constraint mới nhất. Kiểm kê, xung đột và nguồn trong SOURCE_REVIEW. Repo hiện có README và .github/CODEOWNERS, chưa có mã ứng dụng.
 User chọn Java/Spring, MySQL, server session, monorepo và WBS mới làm phạm vi v1. Các quy tắc còn thiếu trong DECISIONS; không tự chốt chỉ từ mã ID sai.
 
