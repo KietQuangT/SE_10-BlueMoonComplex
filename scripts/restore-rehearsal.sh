@@ -98,24 +98,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [[ -n "${EVIDENCE_FILE}" ]]; then
+    rm -f "${EVIDENCE_FILE}" 2>/dev/null || true
+fi
+
 # ------------------------------------------------------------------------------
 # 2. Guard rails kiểm tra an toàn schema và tài khoản
 # ------------------------------------------------------------------------------
-if [[ -n "${BUNDLE_DIR}" ]]; then
-    DUMP_FILE="${BUNDLE_DIR}/dump.sql"
-    MANIFEST_FILE="${BUNDLE_DIR}/manifest.json"
-fi
-
-if [[ -z "${DUMP_FILE}" || ! -f "${DUMP_FILE}" ]]; then
-    echo "Lỗi: Không tìm thấy file dump.sql hợp lệ." >&2
-    exit 1
-fi
-
-if [[ -z "${MANIFEST_FILE}" || ! -f "${MANIFEST_FILE}" ]]; then
-    echo "Lỗi: Không tìm thấy file manifest.json hợp lệ." >&2
-    exit 1
-fi
-
 : "${TARGET_DB:?Thiếu --target-db (bắt buộc tên schema thử nghiệm)}"
 : "${TARGET_USER:?Thiếu --target-user}"
 : "${TARGET_PASSWORD:?Thiếu --target-password}"
@@ -137,7 +126,48 @@ fi
 # Kiểm tra tiền tố bắt buộc của target schema (Mục 4 & 6)
 REQUIRED_PREFIX="bluemoon_restore_"
 if [[ "${TARGET_DB}" != "${REQUIRED_PREFIX}"* ]]; then
-    echo "Lỗi an toàn: Tên schema thử nghiệm phải bắt đầu bằng '${REQUIRED_PREFIX}'. Thưc tế: ${TARGET_DB}" >&2
+    echo "Lỗi an toàn: Tên schema thử nghiệm phải bắt đầu bằng '${REQUIRED_PREFIX}'. Thực tế: ${TARGET_DB}" >&2
+    exit 1
+fi
+
+# Giới hạn độ dài tên identifier MySQL (tối đa 64 ký tự)
+if [[ ${#TARGET_DB} -gt 64 ]]; then
+    echo "Lỗi an toàn: Tên schema thử nghiệm vượt quá độ dài tối đa 64 ký tự của MySQL: ${TARGET_DB}" >&2
+    exit 1
+fi
+
+# Kiểm tra toàn bộ tên schema theo strict ASCII MySQL identifier allowlist [a-zA-Z0-9_]
+if [[ ! "${TARGET_DB}" =~ ^[a-zA-Z0-9_]+$ || "${TARGET_DB}" == "${REQUIRED_PREFIX}" ]]; then
+    echo "Lỗi an toàn: Tên schema thử nghiệm chứa ký tự không an toàn hoặc thiếu hậu tố. Chỉ cho phép ký tự ASCII [a-zA-Z0-9_]: ${TARGET_DB}" >&2
+    exit 1
+fi
+
+# Kiểm tra cấu trúc bundle và sự hiện diện của marker COMPLETED
+COMPLETED_FILE=""
+if [[ -n "${BUNDLE_DIR}" ]]; then
+    if [[ ! -d "${BUNDLE_DIR}" ]]; then
+        echo "Lỗi: Thư mục bundle không tồn tại: ${BUNDLE_DIR}" >&2
+        exit 1
+    fi
+    DUMP_FILE="${BUNDLE_DIR}/dump.sql"
+    MANIFEST_FILE="${BUNDLE_DIR}/manifest.json"
+    COMPLETED_FILE="${BUNDLE_DIR}/COMPLETED"
+elif [[ -n "${DUMP_FILE}" ]]; then
+    COMPLETED_FILE="$(dirname "${DUMP_FILE}")/COMPLETED"
+fi
+
+if [[ -z "${COMPLETED_FILE}" || ! -f "${COMPLETED_FILE}" ]]; then
+    echo "Lỗi toàn vẹn bundle: Thiếu marker COMPLETED xác nhận bundle backup hoàn tất." >&2
+    exit 1
+fi
+
+if [[ -z "${DUMP_FILE}" || ! -f "${DUMP_FILE}" ]]; then
+    echo "Lỗi: Không tìm thấy file dump.sql hợp lệ." >&2
+    exit 1
+fi
+
+if [[ -z "${MANIFEST_FILE}" || ! -f "${MANIFEST_FILE}" ]]; then
+    echo "Lỗi: Không tìm thấy file manifest.json hợp lệ." >&2
     exit 1
 fi
 
@@ -224,16 +254,27 @@ START_REHEARSAL_UTC="$(utc_now)"
 # 5. Xác minh Artifact & Checksum từ ổ ngoài mã hóa
 # ------------------------------------------------------------------------------
 echo "Đang xác minh SHA-256 của file dump..." >&2
-ACTUAL_SHA256="$(compute_sha256 "${DUMP_FILE}")"
-EXPECTED_SHA256="$(jq -r '.sha256 // ""' "${MANIFEST_FILE}" 2>/dev/null || true)"
 
-if [[ -z "${EXPECTED_SHA256}" ]]; then
-    echo "Lỗi: Manifest không chứa trường sha256." >&2
+if ! jq empty "${MANIFEST_FILE}" 2>/dev/null; then
+    echo "Lỗi cấu trúc manifest: File manifest.json không phải định dạng JSON hợp lệ." >&2
     exit 1
 fi
 
-if [[ "${ACTUAL_SHA256}" != "${EXPECTED_SHA256}" ]]; then
+ACTUAL_SHA256="$(compute_sha256 "${DUMP_FILE}")"
+EXPECTED_SHA256="$(jq -r '.sha256 // ""' "${MANIFEST_FILE}" 2>/dev/null || true)"
+
+if [[ ! "${EXPECTED_SHA256}" =~ ^[0-9a-fA-F]{64}$ ]]; then
+    echo "Lỗi: Manifest không chứa trường sha256 hợp lệ." >&2
+    exit 1
+fi
+
+if [[ "${ACTUAL_SHA256,,}" != "${EXPECTED_SHA256,,}" ]]; then
     echo "Lỗi toàn vẹn dữ liệu: Checksum SHA-256 không khớp!" >&2
+    exit 1
+fi
+
+if ! grep -q "\-\- Dump completed" "${DUMP_FILE}" && ! grep -q "\-\- End of dump" "${DUMP_FILE}"; then
+    echo "Lỗi toàn vẹn dữ liệu: File dump bị cắt ngắn, thiếu dấu hoàn tất của mysqldump." >&2
     exit 1
 fi
 
