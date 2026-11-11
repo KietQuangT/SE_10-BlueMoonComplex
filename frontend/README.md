@@ -1,6 +1,6 @@
 # Frontend BlueMoon
 
-Ứng dụng React/TypeScript cho Ban quản trị, Kế toán và Cư dân. Công nghệ: React 19, TypeScript 5.7, Vite 6 và React Router 7; kiểm thử bằng Vitest, Testing Library và jsdom.
+Ứng dụng React/TypeScript cho Ban quản trị, Kế toán và Cư dân. Cơ quan nhận gói dữ liệu không có tài khoản frontend; BQT thao tác tạo, duyệt và bàn giao gói trong hệ thống. Công nghệ: React 19, TypeScript 5.7, Vite 6 và React Router 7; kiểm thử bằng Vitest, Testing Library và jsdom.
 
 ## Chạy và kiểm tra
 
@@ -32,7 +32,7 @@ Frontend trong nhánh hiện tại gồm các màn xác thực/account, hộ/nh�
 - Preview số tiền dùng số nguyên/BigInt. Các lệnh chưa rõ kết quả giữ UUID và payload trong sessionStorage theo username để retry cùng lệnh.
 - Lý do nhập lùi ngày, hủy receipt và đảo phân bổ không hiển thị nguyên văn trong lịch sử; UI chỉ hiện cờ “Có lý do”.
 
-Danh sách các phần chưa nối và khác biệt giữa API mode/Demo mode được ghi tại mã màn hình và [docs/VALIDATION.md](../docs/VALIDATION.md).
+S12 UI đang được nối tại `/admin/reports/packages` với API `/api/v1/agency-data-packages`; form yêu cầu mã cơ quan và mã tham chiếu yêu cầu/giấy phép do BQT xử lý ngoài hệ thống. Không tạo route/account cho cơ quan. Tiến độ và giới hạn kiểm chứng được ghi tại [docs/VALIDATION.md](../docs/VALIDATION.md).
 
 ## Cấu trúc
 

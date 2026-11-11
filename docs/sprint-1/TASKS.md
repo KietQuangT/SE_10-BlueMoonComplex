@@ -18,7 +18,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 | ☑ | S09 | L | Quân + Sơn | Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1 | S05,S08 | Thu đúng số tiền, nợ giảm đúng, transaction/audit; duplicate/concurrent không thu hai lần; chốt thu thiếu/thừa/sửa/hủy. |
 | ☑ | S10 | M | Kiệt + Quân | API và UI hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2 | S08; S09 để ghép cuối | Backend giới hạn theo hộ; UI API mode có danh sách/lọc/phân trang, chi tiết và lịch sử; Demo tách riêng; chỉ đọc; các kiểm tra hoãn được ghi ở VALIDATION. |
 | ☑ | S11 | M | Tuấn + Quân + Kiệt | Export thu phí/cư trú; WBS 2.4.1.3 | S06,S09 | Excel mở được và tổng khớp; mẫu/cột/tỷ lệ đã duyệt; không export dữ liệu thừa; dùng dữ liệu thật từ DB. |
-| ☐ | S12 | M | Tuấn + Sơn | Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023 | S11 | Chỉ gói/trường BQT phê duyệt; cơ quan không truy DB thô; có test deny trường/hộ ngoài phạm vi. |
+| ☐ | S12 | M | Tuấn + Sơn | Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023 | S11 | Backend `verify` + MySQL integration đã pass; UI ADMIN đang làm. BQT xử lý yêu cầu/giấy phép ngoài hệ thống; không tạo account/role cơ quan. Chưa tick đến khi UI/nghiệm thu hoàn tất. |
 | ☐ | S13 | M | Tuấn; Sơn hỗ trợ | Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4 | F02; dữ liệu mẫu S09 | Job backup có lịch/retention được chốt; restore vào DB thử riêng rồi đối chiếu; không xóa DB gốc. |
 | ☐ | S14 | L | Cả nhóm; Tuấn điều phối | Hồi quy/quyền/hiệu năng nền; WBS 2.4.1.4 | S02–S13 hoàn tất; có thể chuẩn bị trước | E2E hộ→kỳ→thu→báo cáo; ca sai/IDOR/duplicate; 10k và thời gian có cấu hình đo; sửa và test lại. |
 | ☐ | S15 | S | Cả nhóm; Kiệt tổng hợp | Đóng gói/bàn giao v1; WBS 2.4.1.4 | S14 | Cài từ máy sạch, dữ liệu giả, hướng dẫn, kết quả test và lỗi còn lại có PO chấp nhận; không còn blocker. |
@@ -42,7 +42,7 @@ S08 và S09 được Sơn yêu cầu đánh dấu hoàn thành; các giới hạ
 - [x] S09 — Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1
 - [x] S10 — API và UI hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2 (NFR chuyển S14; kiểm tra hoãn xem `docs/VALIDATION.md`)
 - [x] S11 — Export thu phí/cư trú; WBS 2.4.1.3
-- [ ] S12 — Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023
+- [ ] S12 — Backend đã triển khai/kiểm chứng; đang làm UI ADMIN. Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023.
 - [ ] S13 — Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4
 - [ ] S14 — Hồi quy/quyền/hiệu năng nền; WBS 2.4.1.4
 - [ ] S15 — Đóng gói/bàn giao v1; WBS 2.4.1.4
@@ -73,13 +73,13 @@ AC:
   - Trường dữ liệu: Sơn báo đồng ý mục 4 (V2–V4 giữ nguyên).
   - Hợp đồng API S01: Sơn báo đồng ý mục 5 (csrf, login, logout, me).
   - Giải quyết mapping sai: mục 1 đồng ý (vai trò thứ tư là một vai trò; PBI-004 khóa account khác US-004 audit).
-Đầu ra giao cho: S01 (Sơn; Tuấn review), S05, S07; S12 (vai trò thứ tư).
+Đầu ra giao cho: S01 (Sơn; Tuấn review), S05, S07; S12 (quyền gói dữ liệu cơ quan; xem D13).
 Assumption đã xác nhận (qua lời Sơn, 05/11/2026): mục 1–5 đồng ý; Q1 a, Q2 a, Q3 a, Q4 a; Q5 theo D17 (khóa theo account, sai thêm 1 lần là lên bậc 1/5/10/15/30/60 phút rồi tiếp tục tăng, không trần, đếm lại khi đăng nhập thành công, ADMIN không bị khóa).
 Lỗi còn lại, điều chưa kiểm thử:
   - Chưa có xác nhận bằng văn bản của Quân, Tuấn, Kiệt; toàn bộ xác nhận là lời Sơn kể lại. Mục 9 của bản đề xuất yêu cầu văn bản: tick theo quyết định của Sơn, không theo điều kiện mục 9.
-  - Tên mã vai trò thứ tư chưa có; mô tả của Sơn (yêu cầu trích xuất có giấy phép, thông báo qua BQT) rộng hơn PBI-023, chưa thành quy tắc quyền, chốt ở S12.
+  - Vai trò thứ tư đã được xử lý ở S12/D13: không tạo account/role cho cơ quan; BQT tiếp nhận yêu cầu, kiểm tra giấy phép và bàn giao ngoài hệ thống.
   - D17: các bậc cụ thể sau 60 phút chưa liệt kê; không trần + khóa theo account cho phép khóa vô thời hạn tài khoản không phải ADMIN; ADMIN không bị khóa nên không có lớp chặn dò mật khẩu ADMIN ở tầng ứng dụng.
-  - Hàng "HOÃN" của ma trận (S05, S06, S07, S08, S11, S12) và tập giá trị residency_status/change_type chưa chốt.
+  - Hàng "HOÃN" của ma trận (S05, S06, S07, S08, S11) và tập giá trị residency_status/change_type chưa chốt.
 Kết luận: tick theo yêu cầu của Sơn kèm các caveat trên
 ```
 
