@@ -134,13 +134,13 @@ Các giá trị nhập vào được kiểm tra nghiêm ngặt theo quy tắc ng
 
 ## Xem mật khẩu tạm trong email mô phỏng
 
-Khi ADMIN vừa tạo tài khoản và cần lấy mật khẩu đăng nhập lần đầu, đảm bảo MySQL của Docker Compose đang chạy rồi dùng ID tài khoản được trả về khi tạo:
+Khi ADMIN vừa tạo tài khoản và cần lấy mật khẩu đăng nhập lần đầu, đảm bảo MySQL của Docker Compose đang chạy rồi dùng tên đăng nhập của tài khoản:
 
 ```bash
-./scripts/mock-email.sh <user-id>
+./scripts/mock-email.sh <username>
 ```
 
-Ví dụ với ID 42: `./scripts/mock-email.sh 42`. Script chỉ đọc thư cấp tài khoản mới nhất của ID đó. Sau khi người dùng đổi mật khẩu, mật khẩu tạm bị xóa khỏi thư và script không còn trả thư này. Đầu ra có mật khẩu: chỉ chạy trong terminal riêng, không lưu hoặc chia sẻ log. Script dùng tài khoản MySQL được cấu hình trong container Compose.
+Ví dụ: `./scripts/mock-email.sh accountant`. Script chỉ đọc thư cấp tài khoản mới nhất của username đó. Sau khi người dùng đổi mật khẩu, mật khẩu tạm bị xóa khỏi thư và script không còn trả thư này. Đầu ra có mật khẩu: chỉ chạy trong terminal riêng, không lưu hoặc chia sẻ log. Script dùng tài khoản MySQL được cấu hình trong container Compose.
 
 ## Kiểm thử
 
