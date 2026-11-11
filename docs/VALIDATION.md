@@ -327,3 +327,7 @@ Sơn chấp nhận và yêu cầu tick S13, S14 dựa trên các file S13, QA tr
 
 - `bash tests/scripts/test-mock-email.sh`: đạt; kiểm tra ID không hợp lệ và truy vấn giới hạn theo ID bằng Docker giả lập.
 - `bash -n scripts/mock-email.sh tests/scripts/test-mock-email.sh`: đạt. Truy vấn MySQL Compose với ID không tồn tại trả đúng thông báo không tìm thấy; chưa hiển thị thư thật để tránh lộ mật khẩu tài khoản.
+
+## Sửa tra cứu email theo username — 11/11/2026
+
+- `bash tests/scripts/test-mock-email.sh`: xác minh username hợp lệ và từ chối đầu vào không hợp lệ với Docker giả lập.
