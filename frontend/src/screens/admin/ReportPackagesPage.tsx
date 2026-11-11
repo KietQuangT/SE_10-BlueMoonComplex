@@ -208,11 +208,12 @@ export function ReportPackagesPage(): React.ReactElement {
   const header = (
     <ScreenHeader
       screenCode="M-19"
-      contract="api-live"
+      contract={mode === 'api' ? 'api-live' : 'db-ready'}
       tierLabel="Mức C"
       title="Gói dữ liệu cơ quan"
       description="BQT tạo, kiểm tra và kiểm soát việc bàn giao gói dữ liệu. Cơ quan không đăng nhập hoặc truy vấn trực tiếp hệ thống."
       actions={mode === 'api' ? <button type="button" className="btn btn-primary" onClick={() => { setError(null); setCreateOpen(true); }}>Tạo gói dữ liệu</button> : undefined}
+      showMockNote={false}
     />
   );
 
