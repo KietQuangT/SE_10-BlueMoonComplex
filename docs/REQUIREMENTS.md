@@ -20,7 +20,7 @@ User đã chọn WBS mới làm phạm vi v1 ngày 04/11/2026. Các AC dưới �
 | 015 | Kế toán ghi nhận tiền mặt, cập nhật nợ đúng số tiền trong transaction và lưu audit; ngăn duplicate/concurrent. Chốt thu thiếu/thừa/hủy trước code. |
 | 021 | Xuất Excel chứa tổng thu, tổng nợ và tỷ lệ; công thức mẫu số phải được duyệt; tổng khớp dữ liệu DB. |
 | 022 | Xuất danh sách cư trú theo mẫu/cột đã thống nhất. Chưa có mẫu thì không gọi là đã đạt chuẩn pháp lý. |
-| 023 | Cơ quan chỉ xem/tải gói dữ liệu BQT đã xác thực/phê duyệt, không truy cập dữ liệu thô hoặc các trường ngoài phạm vi. |
+| 023 | BQT tiếp nhận yêu cầu và kiểm tra giấy phép ngoài hệ thống, tạo gói theo phạm vi hộ, ADMIN khác người tạo duyệt, rồi BQT tải và bàn giao gói. Cơ quan không có account/role và không truy cập trực tiếp hệ thống, DB thô hoặc trường ngoài phạm vi. |
 
 ## Phần WBS gộp nhưng vẫn phải có
 
