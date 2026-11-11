@@ -5,7 +5,6 @@ import type {
   Household,
   InvoiceRecord,
   PaymentTransaction,
-  ReportPackage,
   ResidencyChangeRecord,
   ResidentMember,
   SessionUser,
@@ -40,13 +39,6 @@ export const DEMO_SESSIONS: Record<string, SessionUser> = {
     role: 'RESIDENT',
     householdId: 2,
     mustChangePassword: true,
-  },
-  authority: {
-    username: 'demo-coquan',
-    fullName: 'Cán Bộ Thanh Tra Phường',
-    role: 'AUTHORITY',
-    householdId: null,
-    mustChangePassword: false,
   },
 };
 
@@ -320,19 +312,6 @@ export const INITIAL_VOLUNTARY_CAMPAIGNS: VoluntaryCampaign[] = [
     note: 'Tự nguyện, không tính vào công nợ',
     contributionsCount: 14,
     totalCollectedDisplay: '4.200.000',
-  },
-];
-
-export const INITIAL_REPORT_PACKAGES: ReportPackage[] = [
-  {
-    id: 1,
-    type: 'DANH_SACH_LUU_TRU',
-    typeLabel: 'Danh sách lưu trú',
-    period: '2026-Q4',
-    status: 'APPROVED',
-    approvedBy: 'Demo Ban Quản Trị',
-    approvedAt: '2026-11-05T07:00:00Z',
-    allowedFields: ['fullName', 'apartmentCode', 'residencyStatus'],
   },
 ];
 

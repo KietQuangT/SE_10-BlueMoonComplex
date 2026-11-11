@@ -1,4 +1,4 @@
-export type RoleCode = 'ADMIN' | 'ACCOUNTANT' | 'RESIDENT' | 'AUTHORITY';
+export type RoleCode = 'ADMIN' | 'ACCOUNTANT' | 'RESIDENT';
 
 export type ContractBadgeKind = 'api-live' | 'db-ready' | 'assumed' | 'pending-rule';
 
@@ -144,17 +144,6 @@ export interface VoluntaryCampaign {
   note: string;
   contributionsCount: number;
   totalCollectedDisplay: string;
-}
-
-export interface ReportPackage {
-  id: number;
-  type: string;
-  typeLabel: string;
-  period: string;
-  status: 'APPROVED' | 'REVOKED';
-  approvedBy: string;
-  approvedAt: string;
-  allowedFields: string[];
 }
 
 export interface CollectionRateSummary {
