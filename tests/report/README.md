@@ -50,3 +50,13 @@ Báo cáo chi tiết và kết quả thực thi tại [resident-invoices.md](res
 - Frontend Vitest: **51 test pass** (5 test files: `s10-api.test.ts`, `s10-invoices.test.tsx`, `s10-detail.test.tsx`, `s10-routes.test.tsx`, `s10-session.test.tsx`).
 - Giới hạn: kiểm thử tích hợp DB thật và NFR 10.000 hồ sơ xem tại `docs/VALIDATION.md` (chuyển S14).
 
+## QA S11 (Feature 11: Xuất báo cáo Excel thu phí, tiền mặt và cư trú) ngày 10/11/2026
+
+Báo cáo chi tiết và kết quả thực thi tại [s11-reports.md](s11-reports.md):
+
+- Phạm vi: 22 ca kiểm thử đặc tả từ `REP-01.1` đến `REP-06.4` (Feature 11 / S11, WBS 2.4.1.3, PBI-021, PBI-022, PBI-023).
+- Kết quả đặc tả: **22 Pass**, 0 Fail, 0 Blocked (**100% Pass**).
+- Backend unit/API: **32 test pass** (Surefire: `ReportApiTest`, `ReportingReadStoreTest`, `ReportingServiceTest`, `ReportingWorkbookLimitQaTest`, `ReportingWorkbookQaTest`, `XlsxReportWriterTest`).
+- Frontend Vitest: **31 test pass** (4 test files: `s11-ui-api.test.ts`, `s11-ui-page.test.tsx`, `s11-ui-routes.test.tsx`, `s11-ui-session.test.tsx`).
+- Bằng chứng và kiểm thử tích hợp: `docs/VALIDATION.md`.
+
