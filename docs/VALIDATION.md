@@ -301,12 +301,13 @@ S11 đã được tick trong `docs/sprint-1/TASKS.md` sau khi đủ bằng chứ
   - `scripts/restore-rehearsal.sh`: Diễn tập phục hồi vào schema thử nghiệm riêng (`bluemoon_restore_s13_*`), rào chắn quyền cấm đọc DB gốc `bluemoon`, tái tạo hai bảng session rỗng từ DDL V1, đối chiếu snapshot bảng/dòng/khóa ngoại và tính toàn vẹn S09, gọi profile dọn dẹp S12, xuất evidence JSON chuẩn Q5 allowlist.
   - `scripts/scheduler/bluemoon-backup.{service,timer}`: Mẫu native systemd service và timer chạy mỗi 60 giây trên Linux host (theo chỉ đạo chính thức của coordinator ngày 11/11/2026).
   - `RestoreRetentionCleanupRunner.java` và `application-restore-cleanup.yml`: Headless adapter cho profile `restore-cleanup`, kiểm tra prefix và từ chối DB dev gốc `bluemoon`, gọi `AgencyDataPackageService.executeRetentionCleanup()`.
-- Kiểm thử tự động:
-  - Backend unit tests: `RestoreRetentionCleanupRunnerTest` (6 test pass). Toàn bộ backend unit tests: **422 test, 0 failure, 0 error, BUILD SUCCESS**.
-  - Shell test suites (`tests/backup/`): 4 suites, **38 test cases đạt 100%**, gồm:
+- Kiểm thử tự động (11/11/2026, chạy sau khi thêm regression guards QA, JDK 21):
+  - `cd backend && ./mvnw -B -ntp verify`: **430 test, 0 failure, 0 error, 0 skipped; BUILD SUCCESS**. `RestoreRetentionCleanupRunnerTest` có 6 test pass.
+  - `./tests/backup/run_all_tests.sh`: **4/4 suites, 43 assertions đạt**, gồm:
     1. `test_backup_guards.sh`: 6 test pass (kiểm tra thiếu/tương đối BACKUP_DIR, thư mục trong repo, ổ chưa mount, chưa xác nhận mã hóa, atomic lock).
     2. `test_backup_retention.sh`: 11 test pass (dump hỏng, rò rỉ session, xoay vòng 8 -> 7 bản, bỏ qua file dở, manifest chuẩn Q5).
     3. `test_dispatch_catchup.sh`: 11 test pass (02:00 Asia/Ho_Chi_Minh, đúng 24h chưa catch-up, >24h catch-up 1 lần, chống burst, gộp mốc, timestamp tương lai).
-    4. `test_restore_rehearsal_guards.sh`: 10 test pass (tiền tố `bluemoon_restore_`, cấm dev/system DB, SHA-256 lệch, rò rỉ session, session rỗng, orphan FK, evidence Q5).
+    4. `test_restore_rehearsal_guards.sh`: 15 test pass (tiền tố và ký tự schema an toàn, giới hạn 64 ký tự, marker `COMPLETED`, cấm dev/system DB, SHA-256 lệch, rò rỉ session, evidence Q5).
+- QA vòng 2 trước sửa có 2 regression failure: bundle thiếu `COMPLETED` và schema đích chứa SQL syntax. Sau khi thêm guard và regression tests, toàn bộ `verify` và shell suites chạy lại đều đạt. Kiểm tra code review của QA cũng dẫn tới guard xác minh mount point thực trên Linux trước khi tạo thư mục backup.
 - Tài liệu vận hành: [docs/BACKUP_RESTORE.md](BACKUP_RESTORE.md).
-- Giới hạn nghiệm thu: Chưa cài đặt scheduler thật trên host của người dùng và chưa diễn tập trên MySQL dev đang chạy theo đúng hợp đồng G1; việc diễn tập thực tế trên hạ tầng của Sơn được dành cho bước kiểm chứng sau review. Không xóa DB/volume dev.
+- Giới hạn nghiệm thu: Chưa chạy `-Pintegration`, chưa cài/chạy systemd timer trên host Linux và chưa diễn tập trên MySQL thật trong schema cô lập. Guard mount thực trên Linux cũng chưa được thực thi trên host triển khai. Risk reviewer được bỏ qua theo yêu cầu của Sơn. Không xóa DB/volume dev; S13 chưa tick cho đến khi có bằng chứng restore thực và đối chiếu theo G1. S14 chưa bắt đầu nghiệm thu.

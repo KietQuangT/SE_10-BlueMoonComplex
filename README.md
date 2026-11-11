@@ -16,9 +16,17 @@ Danh sách tài khoản ADMIN dùng `GET /api/v1/accounts?page=0&size=100`, ch�
 
 S12 backend cho ADMIN tạo gói dữ liệu theo phạm vi hộ, xem trước, duyệt bởi ADMIN khác người tạo, từ chối nháp, thu hồi, tải XLSX và ghi nhận bàn giao. BQT tự tiếp nhận yêu cầu và kiểm tra giấy phép bên ngoài hệ thống; chỉ mã tham chiếu tối thiểu được lưu. Metadata/audit được giữ 5 năm theo mục tiêu NFR-010, không phải khẳng định về thời hạn pháp luật. Tệp có thể tải tối đa 7 ngày từ lúc duyệt và bị xóa tối đa 30 ngày từ lúc tạo; tải bị chặn tại hạn đến trước. Xem [S12 trong VALIDATION.md](docs/VALIDATION.md) và [quyết định D13](docs/DECISIONS.md).
 
-S13 cung cấp bộ CLI backup tự động định kỳ (02:00 Asia/Ho_Chi_Minh), retention 7 bản mới nhất, catch-up tự động sau downtime >24h trên Linux systemd timer, và script diễn tập phục hồi vào schema thử nghiệm cô lập kèm profile dọn dẹp S12. Chi tiết xem [Vận hành Backup & Restore S13](docs/BACKUP_RESTORE.md).
+S13 cung cấp CLI backup có retention 7 bản, lịch 02:00 Asia/Ho_Chi_Minh, catch-up sau downtime >24h qua Linux systemd và script diễn tập restore vào schema cô lập. Hướng dẫn cài đặt và vận hành nằm ở [Vận hành Backup & Restore S13](docs/BACKUP_RESTORE.md). Mã và test tự động đã có; cài scheduler trên host và diễn tập trên MySQL thật vẫn đang chờ nghiệm thu, xem [docs/VALIDATION.md](docs/VALIDATION.md).
 
-Các task tiếp theo (S14 hồi quy/hiệu năng, S15 đóng gói/bàn giao) và trạng thái review S11-UI tiếp tục được theo dõi trong [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md). Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
+#### Dùng backup và restore S13
+
+1. **Thiết lập một lần:** tạo `/etc/bluemoon/backup.conf` từ `scripts/backup.conf.example`, đặt quyền `0600`, cấu hình ổ ngoài đã mã hóa và kiểm tra mount point.
+2. **Backup khởi tạo:** trước khi bật lịch, chạy `scripts/backup.sh --config /etc/bluemoon/backup.conf`; chỉ tiếp tục khi có `BACKUP_SUCCESS` và bundle chứa `COMPLETED`.
+3. **Backup định kỳ:** cài `bluemoon-backup.service` và `bluemoon-backup.timer` theo runbook. Timer gọi dispatcher mỗi phút; dispatcher chỉ backup tại 02:00 hoặc catch-up đúng một lần sau downtime trên 24 giờ.
+4. **Diễn tập phục hồi:** người vận hành chạy `scripts/restore-rehearsal.sh` với bundle đã chọn và schema thử nghiệm `bluemoon_restore_s13_*`. Không dùng schema `bluemoon`; script kiểm tra checksum, dữ liệu và xuất evidence đã loại PII.
+5. **Sau diễn tập:** kiểm tra evidence, thu hồi quyền thử nghiệm và xóa riêng schema thử nghiệm. Không xóa database hoặc Docker volume gốc.
+
+S14 (hồi quy/quyền/hiệu năng) và S15 (đóng gói/bàn giao) chưa nghiệm thu; trạng thái chính thức theo [docs/sprint-1/TASKS.md](docs/sprint-1/TASKS.md). Quy tắc đã duyệt và điểm nghiệp vụ còn mở nằm trong [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Công nghệ
 

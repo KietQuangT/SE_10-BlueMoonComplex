@@ -78,12 +78,42 @@ cat <<EOF > "${BUNDLE_DIR}/manifest.json"
   "total_row_count": 1
 }
 EOF
+touch "${BUNDLE_DIR}/COMPLETED"
 
 # 1. Test: Tên target schema không có tiền tố bluemoon_restore_ -> Từ chối
 assert_fails_with "Target DB không có tiền tố bluemoon_restore_ phải bị từ chối" \
     "Tên schema thử nghiệm phải bắt đầu bằng 'bluemoon_restore_'" \
     --bundle "${BUNDLE_DIR}" \
     --target-db "custom_restore_db" \
+    --target-user "test_u" \
+    --target-password "test_p"
+
+# 1b. Test: Tên target schema chứa ký tự đặc biệt hoặc SQL syntax -> Từ chối
+assert_fails_with "Target DB chứa ký tự không an toàn phải bị từ chối" \
+    "Chỉ cho phép ký tự ASCII [a-zA-Z0-9_]" \
+    --bundle "${BUNDLE_DIR}" \
+    --target-db "bluemoon_restore_s13_x' OR '1'='1" \
+    --target-user "test_u" \
+    --target-password "test_p"
+
+# 1c. Test: Tên target schema quá 64 ký tự -> Từ chối
+LONG_TARGET="bluemoon_restore_$(printf 'a%.0s' {1..55})"
+assert_fails_with "Target DB vượt quá 64 ký tự phải bị từ chối" \
+    "vượt quá độ dài tối đa 64 ký tự" \
+    --bundle "${BUNDLE_DIR}" \
+    --target-db "${LONG_TARGET}" \
+    --target-user "test_u" \
+    --target-password "test_p"
+
+# 1d. Test: Bundle thiếu marker COMPLETED -> Từ chối
+BUNDLE_INCOMPLETE="${TEST_TMP}/bundle_incomplete"
+mkdir -p "${BUNDLE_INCOMPLETE}"
+cp "${BUNDLE_DIR}/dump.sql" "${BUNDLE_INCOMPLETE}/dump.sql"
+cp "${BUNDLE_DIR}/manifest.json" "${BUNDLE_INCOMPLETE}/manifest.json"
+assert_fails_with "Bundle thiếu marker COMPLETED phải bị từ chối" \
+    "Thiếu marker COMPLETED" \
+    --bundle "${BUNDLE_INCOMPLETE}" \
+    --target-db "bluemoon_restore_s13_test" \
     --target-user "test_u" \
     --target-password "test_p"
 
@@ -112,6 +142,7 @@ cat <<EOF > "${BUNDLE_CORRUPT}/manifest.json"
   "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
 }
 EOF
+touch "${BUNDLE_CORRUPT}/COMPLETED"
 assert_fails_with "Checksum SHA-256 không khớp phải báo lỗi và dừng ngay" \
     "Checksum SHA-256 không khớp" \
     --bundle "${BUNDLE_CORRUPT}" \
@@ -122,6 +153,7 @@ assert_fails_with "Checksum SHA-256 không khớp phải báo lỗi và dừng n
 # 5. Test: Artifact chứa SPRING_SESSION -> Từ chối
 BUNDLE_LEAK="${TEST_TMP}/bundle_leak"
 mkdir -p "${BUNDLE_LEAK}"
+touch "${BUNDLE_LEAK}/COMPLETED"
 cat <<EOF > "${BUNDLE_LEAK}/dump.sql"
 -- MySQL dump 8.4
 CREATE TABLE \`SPRING_SESSION\` (primary_id VARCHAR(36));

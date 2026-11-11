@@ -82,6 +82,12 @@ if [[ "${BACKUP_DIR}" != /* ]]; then
     exit 1
 fi
 
+# Q2: BACKUP_MOUNT_POINT bắt buộc là đường dẫn tuyệt đối
+if [[ "${BACKUP_MOUNT_POINT}" != /* ]]; then
+    echo "Lỗi: BACKUP_MOUNT_POINT phải là đường dẫn tuyệt đối: ${BACKUP_MOUNT_POINT}" >&2
+    exit 1
+fi
+
 # Q2 & Q5: Xác minh mount point tồn tại
 if [[ ! -d "${BACKUP_MOUNT_POINT}" ]]; then
     echo "Lỗi: Ổ ngoài chưa được mount hoặc không tồn tại: ${BACKUP_MOUNT_POINT}" >&2
@@ -94,9 +100,60 @@ if [[ "${REQUIRE_ENCRYPTION_VERIFIED}" != "true" ]]; then
     exit 1
 fi
 
-# Kiểm tra đường dẫn BACKUP_DIR không nằm trong repo hoặc volume/datadir
+CANONICAL_MOUNT="$(cd "${BACKUP_MOUNT_POINT}" && pwd -P)"
 CANONICAL_REPO="${REPO_ROOT}"
-# Chỉ tạo thư mục sau khi đã xác nhận mã hóa và mount point
+
+# Kiểm tra đường dẫn không nằm trong repo trước khi tạo bất kỳ thư mục nào
+if [[ "${CANONICAL_MOUNT}" == "${CANONICAL_REPO}" || "${CANONICAL_MOUNT}" == "${CANONICAL_REPO}/"* || "${BACKUP_DIR}" == "${CANONICAL_REPO}" || "${BACKUP_DIR}" == "${CANONICAL_REPO}/"* ]]; then
+    echo "Lỗi: BACKUP_DIR không được nằm bên trong repository: ${BACKUP_DIR}" >&2
+    exit 1
+fi
+
+# Kiểm tra đường dẫn không nằm trong volume/datadir của MySQL
+if [[ "${CANONICAL_MOUNT}" == *"/var/lib/mysql"* || "${CANONICAL_MOUNT}" == *"/mysql_data"* || "${BACKUP_DIR}" == *"/var/lib/mysql"* || "${BACKUP_DIR}" == *"/mysql_data"* ]]; then
+    echo "Lỗi: BACKUP_DIR không được nằm trong volume hoặc datadir của MySQL." >&2
+    exit 1
+fi
+
+# BACKUP_DIR bắt buộc phải nằm trên mount point của ổ ngoài đã chỉ định
+if [[ "${BACKUP_DIR}" != "${CANONICAL_MOUNT}" && "${BACKUP_DIR}" != "${CANONICAL_MOUNT}/"* && "${BACKUP_DIR}" != "${BACKUP_MOUNT_POINT}" && "${BACKUP_DIR}" != "${BACKUP_MOUNT_POINT}/"* ]]; then
+    echo "Lỗi: BACKUP_DIR (${BACKUP_DIR}) phải nằm trên mount point của ổ ngoài (${BACKUP_MOUNT_POINT})." >&2
+    exit 1
+fi
+
+# Trên Linux, xác minh mount point là một mount thực sự và không phải filesystem hệ thống nội bộ
+if [[ "$(uname -s)" == "Linux" && -z "${MOCK_MYSQLDUMP_CMD}" ]]; then
+    IS_MOUNTED="false"
+    if command -v mountpoint >/dev/null 2>&1; then
+        if mountpoint -q "${CANONICAL_MOUNT}"; then
+            IS_MOUNTED="true"
+        fi
+    elif [[ -r /proc/mounts ]]; then
+        if awk '{print $2}' /proc/mounts | grep -Fxq "${CANONICAL_MOUNT%/}"; then
+            IS_MOUNTED="true"
+        fi
+    elif command -v findmnt >/dev/null 2>&1; then
+        if findmnt -n -o TARGET "${CANONICAL_MOUNT}" >/dev/null 2>&1; then
+            IS_MOUNTED="true"
+        fi
+    fi
+
+    if [[ "${IS_MOUNTED}" != "true" ]]; then
+        echo "Lỗi: Ổ ngoài chưa được mount hoặc không tồn tại: ${BACKUP_MOUNT_POINT}" >&2
+        exit 1
+    fi
+
+    # Cấm mount point là root filesystem hoặc các mount hệ thống nội bộ
+    SYSTEM_MOUNTS=("/" "/boot" "/etc" "/home" "/root" "/usr" "/var" "/tmp" "/opt" "/sys" "/proc" "/dev" "/run")
+    for sm in "${SYSTEM_MOUNTS[@]}"; do
+        if [[ "${CANONICAL_MOUNT%/}" == "${sm}" ]]; then
+            echo "Lỗi bảo mật: Mount point không được là filesystem hệ thống nội bộ: ${BACKUP_MOUNT_POINT}" >&2
+            exit 1
+        fi
+    done
+fi
+
+# Chỉ tạo thư mục đích sau khi toàn bộ điều kiện mount, mã hóa và an toàn đường dẫn đã được xác minh
 mkdir -p "${BACKUP_DIR}"
 CANONICAL_BACKUP_DIR="$(cd "${BACKUP_DIR}" && pwd -P)"
 
