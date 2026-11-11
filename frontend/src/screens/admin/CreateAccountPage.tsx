@@ -208,7 +208,6 @@ export function CreateAccountPage(): React.ReactElement {
               <option value="ACCOUNTANT">Kế toán</option>
               <option value="ADMIN">Ban quản trị</option>
             </select>
-            <span className="field-hint">Vai trò Cơ quan chức năng chưa có đường cấp.</span>
           </div>
           {form.role === 'RESIDENT' ? (
             <div className="form-field span-2">

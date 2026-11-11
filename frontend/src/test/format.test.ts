@@ -52,13 +52,11 @@ describe('format utilities & numerical integrity', () => {
     expect(defaultHomeByRole('ADMIN')).toBe('/admin/households');
     expect(defaultHomeByRole('ACCOUNTANT')).toBe('/accountant/collections');
     expect(defaultHomeByRole('RESIDENT')).toBe('/resident/invoices');
-    expect(defaultHomeByRole('AUTHORITY')).toBe('/authority/reports');
   });
 
   it('provides correct Vietnamese display names for roles', () => {
     expect(roleDisplayName('ADMIN')).toBe('Ban quản trị');
     expect(roleDisplayName('ACCOUNTANT')).toBe('Kế toán');
     expect(roleDisplayName('RESIDENT')).toBe('Cư dân');
-    expect(roleDisplayName('AUTHORITY')).toBe('Cơ quan chức năng');
   });
 });

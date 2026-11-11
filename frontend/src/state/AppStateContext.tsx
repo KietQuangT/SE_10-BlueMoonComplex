@@ -33,7 +33,6 @@ import {
   INITIAL_HOUSEHOLDS,
   INITIAL_INVOICES,
   INITIAL_PAYMENTS,
-  INITIAL_REPORT_PACKAGES,
   INITIAL_RESIDENCY_CHANGES,
   INITIAL_RESIDENTS,
   INITIAL_VOLUNTARY_CAMPAIGNS,
@@ -47,7 +46,6 @@ import type {
   Household,
   InvoiceRecord,
   PaymentTransaction,
-  ReportPackage,
   ResidencyChangeRecord,
   ResidentMember,
   SessionUser,
@@ -96,7 +94,6 @@ interface AppStateValue {
   invoices: InvoiceRecord[];
   payments: PaymentTransaction[];
   voluntaryCampaigns: VoluntaryCampaign[];
-  reportPackages: ReportPackage[];
   collectionRate: CollectionRateSummary;
 
   // Real-API data loading (api mode only)
@@ -152,7 +149,6 @@ interface AppStateValue {
   ) => Promise<void>;
   collectInvoiceCashDemo: (invoiceId: number, note?: string) => PaymentTransaction | null;
   publishVoluntaryCampaignDemo: (name: string, description: string, opensOn: string, closesOn: string) => void;
-  approveReportPackageDemo: (period: string, allowedFields: string[]) => void;
 }
 
 const AppStateContext = createContext<AppStateValue | null>(null);
@@ -191,7 +187,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [payments, setPayments] = useState<PaymentTransaction[]>(INITIAL_PAYMENTS);
   const [voluntaryCampaigns, setVoluntaryCampaigns] =
     useState<VoluntaryCampaign[]>(INITIAL_VOLUNTARY_CAMPAIGNS);
-  const [reportPackages, setReportPackages] = useState<ReportPackage[]>(INITIAL_REPORT_PACKAGES);
   const [collectionRate] = useState<CollectionRateSummary>(INITIAL_COLLECTION_RATE);
 
   useEffect(() => {
@@ -768,22 +763,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     ]);
   };
 
-  const approveReportPackageDemo = (period: string, allowedFields: string[]) => {
-    setReportPackages((prev) => [
-      {
-        id: prev.length + 10,
-        type: 'DANH_SACH_LUU_TRU',
-        typeLabel: 'Danh sách lưu trú',
-        period,
-        status: 'APPROVED',
-        approvedBy: user?.fullName || 'Demo Ban Quản Trị',
-        approvedAt: new Date().toISOString(),
-        allowedFields,
-      },
-      ...prev,
-    ]);
-  };
-
   const value = useMemo<AppStateValue>(
     () => ({
       mode,
@@ -812,7 +791,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       invoices,
       payments,
       voluntaryCampaigns,
-      reportPackages,
       collectionRate,
       provisionAccount,
       dataLoadError,
@@ -834,7 +812,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       decideAbsenceDemo,
       collectInvoiceCashDemo,
       publishVoluntaryCampaignDemo,
-      approveReportPackageDemo,
     }),
     [
       mode,
@@ -853,7 +830,6 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       invoices,
       payments,
       voluntaryCampaigns,
-      reportPackages,
       collectionRate,
       absenceCount,
     ],
