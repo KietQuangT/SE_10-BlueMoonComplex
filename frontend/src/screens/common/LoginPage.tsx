@@ -347,9 +347,6 @@ export function LoginPage(): React.ReactElement {
                   >
                     Cư dân lần đầu (bắt đổi mật khẩu)
                   </button>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => loginDemoAs('authority')}>
-                    Cơ quan chức năng
-                  </button>
                 </div>
               </section>
             ) : null}

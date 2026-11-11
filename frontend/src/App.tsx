@@ -43,7 +43,6 @@ import { AbsencePage } from './screens/resident/AbsencePage';
 import { ResidentVoluntaryPage } from './screens/resident/ResidentVoluntaryPage';
 
 // Authority Screen
-import { AuthorityReportsPage } from './screens/authority/AuthorityReportsPage';
 
 function RootIndexRedirect(): React.ReactElement {
   const { user, authLoading } = useAppState();
@@ -173,10 +172,6 @@ export function App(): React.ReactElement {
             <Route path="/resident/voluntary" element={mode === 'api' ? <ApiVoluntaryPage /> : <ResidentVoluntaryPage />} />
           </Route>
 
-          {/* AUTHORITY Routes */}
-          <Route element={<RequireRole roles={['AUTHORITY']} />}>
-            <Route path="/authority/reports" element={<AuthorityReportsPage />} />
-          </Route>
         </Route>
 
         {/* Catch-all 404 */}
