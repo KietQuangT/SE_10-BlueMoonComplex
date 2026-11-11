@@ -4,8 +4,8 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ReportPackagesPage } from '../screens/admin/ReportPackagesPage';
 
 const state = vi.hoisted(() => ({ mode: 'api', dataLoadError: false, reloadHouseholds: vi.fn(), households: [
-  { id: 11, status: 'ACTIVE', apartmentCode: 'A01', householdCode: 'H01', currentResidents: 1 },
-  { id: 12, status: 'INACTIVE', apartmentCode: 'A02', householdCode: 'H02', currentResidents: 1 },
+  { id: 11, status: 'ACTIVE', apartmentCode: 'A01', householdCode: 'H01', currentResidents: 1 as number | null },
+  { id: 12, status: 'INACTIVE', apartmentCode: 'A02', householdCode: 'H02', currentResidents: 1 as number | null },
 ] }));
 const api = vi.hoisted(() => ({ fetchAgencyPackages: vi.fn(), fetchAgencyPackage: vi.fn(), fetchAgencyPackagePreview: vi.fn(), createAgencyPackage: vi.fn(), actOnAgencyPackage: vi.fn(), downloadAgencyPackage: vi.fn() }));
 vi.mock('../state/AppStateContext', () => ({ useAppState: () => state }));
@@ -16,6 +16,10 @@ const page = (content: unknown[]) => ({ content, page: 0, size: 20, totalElement
 
 beforeEach(() => {
   vi.clearAllMocks();
+  state.households = [
+    { id: 11, status: 'ACTIVE', apartmentCode: 'A01', householdCode: 'H01', currentResidents: 1 },
+    { id: 12, status: 'INACTIVE', apartmentCode: 'A02', householdCode: 'H02', currentResidents: 1 },
+  ];
   api.fetchAgencyPackages.mockResolvedValue(page([]));
   api.fetchAgencyPackage.mockResolvedValue(draft);
   api.fetchAgencyPackagePreview.mockResolvedValue({ content: [{ householdCode: 'H01', apartmentCode: 'A01', fullName: 'Test Person', residencyStatus: 'TEMPORARILY_ABSENT' }], page: 0, totalElements: 1, totalPages: 1 });
@@ -38,6 +42,7 @@ it('requires an explicit active household before creating a package', async () =
   expect(api.createAgencyPackage).not.toHaveBeenCalled();
   api.createAgencyPackage.mockResolvedValue(draft);
   fireEvent.click(screen.getByRole('checkbox'));
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Tạo bản nháp' }));
   expect(api.createAgencyPackage).toHaveBeenCalledWith({ householdIds: [11], recipientAgencyCode: 'AG-1', requestReference: 'REQ-1', licenceReference: 'LIC-1' });
   expect(await screen.findByText(/Đã tạo bản nháp gói #7/)).toBeInTheDocument();
@@ -69,4 +74,56 @@ it('requires confirmation and submits the displayed version and hash for approva
   fireEvent.click(within(dialog).getByRole('button', { name: 'Duyệt gói' }));
   expect(api.actOnAgencyPackage).toHaveBeenCalledWith(7, 'approve', 3, 'abc123');
   expect(await screen.findByRole('status')).toHaveTextContent('Duyệt gói: gói #7');
+});
+
+it('clears household validation error when selection changes to a valid nonempty set', async () => {
+  render(<MemoryRouter><ReportPackagesPage /></MemoryRouter>);
+  await screen.findByText('Chưa có gói dữ liệu');
+  fireEvent.click(screen.getAllByRole('button', { name: 'Tạo gói dữ liệu' })[0]);
+
+  fireEvent.change(screen.getByLabelText('Mã cơ quan nhận gói'), { target: { value: 'AG-1' } });
+  fireEvent.change(screen.getByLabelText('Mã tham chiếu yêu cầu'), { target: { value: 'REQ-1' } });
+  fireEvent.change(screen.getByLabelText('Mã tham chiếu giấy phép'), { target: { value: 'LIC-1' } });
+
+  fireEvent.click(screen.getByRole('button', { name: 'Tạo bản nháp' }));
+  expect(screen.getByRole('alert')).toHaveTextContent('Chọn ít nhất một hộ đang hoạt động.');
+
+  fireEvent.click(screen.getByRole('checkbox'));
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
+it('hides resident count when currentResidents is null and shows genuine count when present', async () => {
+  state.households = [
+    { id: 11, status: 'ACTIVE', apartmentCode: 'A01', householdCode: 'H01', currentResidents: 2 },
+    { id: 13, status: 'ACTIVE', apartmentCode: 'A101', householdCode: 'SMK-A101', currentResidents: null },
+    { id: 14, status: 'ACTIVE', apartmentCode: 'A102', householdCode: 'SMK-A102', currentResidents: 0 },
+  ];
+  render(<MemoryRouter><ReportPackagesPage /></MemoryRouter>);
+  await screen.findByText('Chưa có gói dữ liệu');
+  fireEvent.click(screen.getAllByRole('button', { name: 'Tạo gói dữ liệu' })[0]);
+
+  const nullHouseholdLabel = screen.getByText(/SMK-A101/).closest('label')!;
+  expect(within(nullHouseholdLabel).queryByText(/nhân khẩu/)).not.toBeInTheDocument();
+  expect(within(nullHouseholdLabel).queryByText(/0 nhân khẩu/)).not.toBeInTheDocument();
+  expect(within(nullHouseholdLabel).getByText(/SMK-A101/)).toBeInTheDocument();
+
+  const activeHouseholdLabel = screen.getByText(/H01/).closest('label')!;
+  expect(within(activeHouseholdLabel).getByText(/2 nhân khẩu/)).toBeInTheDocument();
+
+  const zeroHouseholdLabel = screen.getByText(/SMK-A102/).closest('label')!;
+  expect(within(zeroHouseholdLabel).getByText(/0 nhân khẩu/)).toBeInTheDocument();
+});
+
+it('enforces approved contract maxLength on package inputs: 50 for agency code, 100 for references', async () => {
+  render(<MemoryRouter><ReportPackagesPage /></MemoryRouter>);
+  await screen.findByText('Chưa có gói dữ liệu');
+  fireEvent.click(screen.getAllByRole('button', { name: 'Tạo gói dữ liệu' })[0]);
+
+  const agencyInput = screen.getByLabelText('Mã cơ quan nhận gói');
+  const requestInput = screen.getByLabelText('Mã tham chiếu yêu cầu');
+  const licenceInput = screen.getByLabelText('Mã tham chiếu giấy phép');
+
+  expect(agencyInput).toHaveAttribute('maxLength', '50');
+  expect(requestInput).toHaveAttribute('maxLength', '100');
+  expect(licenceInput).toHaveAttribute('maxLength', '100');
 });
