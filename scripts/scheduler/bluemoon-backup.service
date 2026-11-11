@@ -1,0 +1,13 @@
+[Unit]
+Description=BlueMoon S13 Database Backup Dispatcher
+After=docker.service network-online.target
+Wants=docker.service
+
+[Service]
+Type=oneshot
+User=root
+# Đường dẫn tuyệt đối tới script và file cấu hình ngoài repository
+ExecStart=/opt/bluemoon/scripts/backup-dispatch.sh --config /etc/bluemoon/backup.conf
+StandardOutput=journal
+StandardError=journal
+TimeoutSec=1800
