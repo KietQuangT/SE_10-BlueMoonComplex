@@ -331,3 +331,8 @@ Sơn chấp nhận và yêu cầu tick S13, S14 dựa trên các file S13, QA tr
 ## Sửa tra cứu email theo username — 11/11/2026
 
 - `bash tests/scripts/test-mock-email.sh`: xác minh username hợp lệ và từ chối đầu vào không hợp lệ với Docker giả lập.
+
+## Script email mô phỏng --all — 11/11/2026
+
+- `bash tests/scripts/test-mock-email.sh` và `bash -n scripts/mock-email.sh tests/scripts/test-mock-email.sh`: đạt.
+- `./scripts/mock-email.sh --all | wc -l`: truy vấn MySQL Compose thành công; chỉ ghi số dòng, không ghi mật khẩu.

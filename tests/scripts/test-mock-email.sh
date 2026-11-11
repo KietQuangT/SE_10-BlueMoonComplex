@@ -20,4 +20,10 @@ output="$(bash "$root/scripts/mock-email.sh" accountant)"
 grep -q "u.username = 'accountant'" "$MOCK_SQL"
 grep -q 'must_change_password' "$MOCK_SQL"
 grep -q 'compose exec -T db' "$MOCK_ARGS"
+output="$(bash "$root/scripts/mock-email.sh" --all)"
+[[ "$output" == *'synthetic-test-only'* ]]
+grep -q 'u.username' "$MOCK_SQL"
+grep -q 'must_change_password' "$MOCK_SQL"
+grep -q 'Mật khẩu tạm:' "$MOCK_SQL"
+grep -q 'ROW_NUMBER()' "$MOCK_SQL"
 echo 'mock-email tests passed'
