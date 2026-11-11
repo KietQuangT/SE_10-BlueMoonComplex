@@ -37,6 +37,7 @@ class AgencyDataPackageIT {
     void ac1_scopeIsolationAndFieldAllowlist() throws IOException {
         String marker = UUID.randomUUID().toString().substring(0, 8);
         long adminId = createAdminUser("adm_" + marker);
+        long otherAdminId = createAdminUser("adm_other_" + marker);
 
         long householdA = createHousehold("H_A_" + marker, "APT_A_" + marker, "ACTIVE");
         long householdB = createHousehold("H_B_" + marker, "APT_B_" + marker, "ACTIVE");
@@ -55,7 +56,11 @@ class AgencyDataPackageIT {
         assertEquals(1, detail.householdCount());
         assertEquals(1, detail.residentCount());
 
-        byte[] bytes = packageService.downloadPackage(detail.id(), adminId);
+        PackageActionRequest approveReq = new PackageActionRequest(detail.version(), detail.contentSha256());
+        PackageDetail approved = packageService.approvePackage(detail.id(), approveReq, otherAdminId);
+        assertEquals("APPROVED", approved.status());
+
+        byte[] bytes = packageService.downloadPackage(approved.id(), adminId);
         try (XSSFWorkbook wb = new XSSFWorkbook(new ByteArrayInputStream(bytes))) {
             XSSFSheet sheet = wb.getSheet("CuTru");
             assertNotNull(sheet);
