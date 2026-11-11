@@ -283,3 +283,8 @@ S11 đã được tick trong `docs/sprint-1/TASKS.md` sau khi đủ bằng chứ
 - Worktree `hhoangsonnw/feat-s12`, commit `65449ec194dcd60d3bf835fc5678eeb3e364b4da`; dùng JDK 21. Chạy `cd backend && ./mvnw -B -ntp -Pintegration verify` với MySQL 8.4 trên cổng `3319`, container mới không gắn volume và dữ liệu trong tmpfs. **416 unit/API + 179 integration, 0 failure/error/skipped; BUILD SUCCESS (1m26s)**. `AgencyDataPackageIT`: 5/5 pass. Log: `/Users/hoangson/Downloads/SE_10-BlueMoonComplex/_agents_workspace/S12/integration-isolated.log`.
 - Lần chạy trước trên DB dev có 4 failure và 1 error trong test billing/payment; suite cô lập chạy sạch, gồm các test từng lỗi. Không reset hoặc sửa DB dev. Container tạm đã được dừng tự động sau khi chạy.
 - Đây là bằng chứng backend build/integration; chưa đánh dấu S12 hoàn thành bằng riêng kết quả này.
+
+### S12 UI — ADMIN quản lý gói, 11/11/2026
+
+- Nhánh `hhoangsonnw/feat-s12-ui`: `/admin/reports/packages` nối các thao tác danh sách/lọc, tạo bản nháp theo hộ đang hoạt động, xem trước có phân trang, duyệt khác người tạo, từ chối nháp, thu hồi, tải XLSX và ghi nhận bàn giao. Route và lựa chọn role/account `AUTHORITY` đã bỏ; cơ quan không đăng nhập.
+- Chưa chạy `npm run build`, test frontend hoặc browser walkthrough trên nhánh UI; phần UI chưa được nghiệm thu và S12 vẫn chưa tick.

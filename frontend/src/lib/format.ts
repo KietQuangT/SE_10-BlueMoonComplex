@@ -78,8 +78,6 @@ export function roleDisplayName(role: string): string {
       return 'Kế toán';
     case 'RESIDENT':
       return 'Cư dân';
-    case 'AUTHORITY':
-      return 'Cơ quan chức năng';
     default:
       return role;
   }
@@ -107,8 +105,6 @@ export function defaultHomeByRole(role: string): string {
       return '/accountant/collections';
     case 'RESIDENT':
       return '/resident/invoices';
-    case 'AUTHORITY':
-      return '/authority/reports';
     default:
       return '/login';
   }
