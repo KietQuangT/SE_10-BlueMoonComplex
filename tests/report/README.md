@@ -49,3 +49,23 @@ Báo cáo chi tiết và kết quả thực thi tại [resident-invoices.md](res
 - Backend unit/API: **25 test pass** (Surefire: `ResidentInvoiceApiTest`, `ResidentInvoiceServiceTest`, `ResidentInvoicePrivacyTest`).
 - Frontend Vitest: **51 test pass** (5 test files: `s10-api.test.ts`, `s10-invoices.test.tsx`, `s10-detail.test.tsx`, `s10-routes.test.tsx`, `s10-session.test.tsx`).
 - Giới hạn: kiểm thử tích hợp DB thật và NFR 10.000 hồ sơ xem tại `docs/VALIDATION.md` (chuyển S14).
+
+## QA S11 (Feature 11: Xuất báo cáo Excel thu phí, tiền mặt và cư trú) ngày 10/11/2026
+
+Báo cáo chi tiết và kết quả thực thi tại [s11-reports.md](s11-reports.md):
+
+- Phạm vi: 22 ca kiểm thử đặc tả từ `REP-01.1` đến `REP-06.4` (Feature 11 / S11, WBS 2.4.1.3, PBI-021, PBI-022, PBI-023).
+- Kết quả đặc tả: **22 Pass**, 0 Fail, 0 Blocked (**100% Pass**).
+- Backend unit/API: **32 test pass** (Surefire: `ReportApiTest`, `ReportingReadStoreTest`, `ReportingServiceTest`, `ReportingWorkbookLimitQaTest`, `ReportingWorkbookQaTest`, `XlsxReportWriterTest`).
+- Frontend Vitest: **31 test pass** (4 test files: `s11-ui-api.test.ts`, `s11-ui-page.test.tsx`, `s11-ui-routes.test.tsx`, `s11-ui-session.test.tsx`).
+- Bằng chứng và kiểm thử tích hợp: `docs/VALIDATION.md`.
+
+## S12 (Feature 12: Gói dữ liệu cơ quan chức năng) ngày 11/11/2026
+
+Báo cáo chi tiết và kết quả thực thi tại [s12-agency-packages.md](s12-agency-packages.md):
+
+- Phạm vi: 38 ca kiểm thử đặc tả từ `AGP-01.1` đến `AGP-09.4` (Feature 12 / S12, WBS 2.4.1.4, PBI-023, quyết định D13); chỉ backend, giao diện ADMIN S12 chưa có.
+- Kết quả đặc tả: **38 Pass** (bằng test tự động), 0 Fail, 0 Blocked (**100% Pass**).
+- Toàn bộ `./mvnw -Pintegration verify` trên MySQL 8.4 trống: **464 unit và 193 integration**, 0 lỗi; thêm 62 test (23 + 7 unit, 18 WebMvc, 14 integration). 8/8 kiểm thử đột biến làm test thất bại.
+- Quan sát: nhãn metadata của tệp gói không được in đậm (`createBoldStyle` không gán font); xem mục 4 của báo cáo.
+
