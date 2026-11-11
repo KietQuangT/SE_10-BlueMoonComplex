@@ -283,3 +283,12 @@ S11 đã được tick trong `docs/sprint-1/TASKS.md` sau khi đủ bằng chứ
 - Worktree `hhoangsonnw/feat-s12`, commit `65449ec194dcd60d3bf835fc5678eeb3e364b4da`; dùng JDK 21. Chạy `cd backend && ./mvnw -B -ntp -Pintegration verify` với MySQL 8.4 trên cổng `3319`, container mới không gắn volume và dữ liệu trong tmpfs. **416 unit/API + 179 integration, 0 failure/error/skipped; BUILD SUCCESS (1m26s)**. `AgencyDataPackageIT`: 5/5 pass. Log: `/Users/hoangson/Downloads/SE_10-BlueMoonComplex/_agents_workspace/S12/integration-isolated.log`.
 - Lần chạy trước trên DB dev có 4 failure và 1 error trong test billing/payment; suite cô lập chạy sạch, gồm các test từng lỗi. Không reset hoặc sửa DB dev. Container tạm đã được dừng tự động sau khi chạy.
 - Đây là bằng chứng backend build/integration; chưa đánh dấu S12 hoàn thành bằng riêng kết quả này.
+
+## S12 — Bằng chứng kiểm thử bổ sung (QA), 11/11/2026
+
+- Nhánh `test/s12-agency-packages` từ `main` tại `08d42ad`. JDK 21.0.12.1; MySQL 8.4 (container Compose `bluemoon-db-1`, cổng 3306) với schema trống tạm `bluemoon_s12`, đã xóa sau lượt chạy. Lệnh: `cd backend && ./mvnw -B -ntp -Pintegration verify` (không lọc test).
+- Kết quả: **464 unit và 193 integration, 0 failure/error/skipped, BUILD SUCCESS.** Trước lượt này là 416 và 179.
+- Thêm 62 test, không đổi `backend/src/main`: `AgencyDataPackageCaseGapTest` (23), `AgencyDataPackageWriterGapTest` (7), `AgencyDataPackageErrorMappingApiTest` (18), `AgencyDataPackageCaseIT` (14, `@SpringBootTest` thuần để không thêm Spring context và connection pool; dữ liệu commit và dọn theo ID). Ca đặc tả và kết quả: `tests/cases/s12-agency-packages.md`, `tests/report/s12-agency-packages.md` (38 ca Pass bằng test tự động).
+- Tám đột biến thử trên `src/main` (hạn tải +8 ngày, giới hạn 50.001 dòng, bỏ khóa `status` trong audit bàn giao, mã băm chữ hoa, bỏ `markContentsDeleted`, snapshot gồm `MOVED_OUT`, audit hết hạn sau 1 tháng, bỏ `FOR UPDATE`) đều làm test thất bại, đã hoàn nguyên.
+- Quan sát: nhãn metadata của tệp gói không in đậm vì `createBoldStyle` không gán font; `parseWorkbookRows` coi mọi nhãn trạng thái lạ là "Tạm vắng". Chưa sửa mã nguồn.
+- Chưa kiểm: giao diện S12, trình duyệt thật, CI trên GitHub sau lượt này, tải 50.000 dòng thật trên MySQL (S14). Không tick S12 trong `TASKS.md`: dòng đó chờ UI và nghiệm thu.
