@@ -442,8 +442,6 @@ class AgencyDataPackageCaseIT {
                 assertTrue(changes.contains("\"" + key + "\""), key);
             }
         }
-        // Dọn dẹp chỉ dọn các dòng audit dọn dẹp do chính test này (hoặc scheduler) tạo ra khi chạy ở lần sau; không để lại rác.
-        jdbc.update("DELETE FROM audit_log WHERE action = 'AGENCY_PACKAGE_RETENTION_CLEANUP' AND id > ? AND actor_user_id IS NULL", lastAuditBefore);
     }
 
     @Test
