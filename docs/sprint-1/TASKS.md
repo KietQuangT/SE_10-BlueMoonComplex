@@ -19,8 +19,8 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 | ☑ | S10 | M | Kiệt + Quân | API và UI hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2 | S08; S09 để ghép cuối | Backend giới hạn theo hộ; UI API mode có danh sách/lọc/phân trang, chi tiết và lịch sử; Demo tách riêng; chỉ đọc; các kiểm tra hoãn được ghi ở VALIDATION. |
 | ☑ | S11 | M | Tuấn + Quân + Kiệt | Export thu phí/cư trú; WBS 2.4.1.3 | S06,S09 | Excel mở được và tổng khớp; mẫu/cột/tỷ lệ đã duyệt; không export dữ liệu thừa; dùng dữ liệu thật từ DB. |
 | ☑ | S12 | M | Tuấn + Sơn | Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023 | S11 | Backend `verify` + MySQL integration; UI 247 test/build và risk review vòng 2 đạt. Browser ADMIN/API thật đã tạo, preview, từ chối gói QA `#6`; regression sau sửa xác nhận null không thành 0 và guard tự xóa khi chọn hộ. Gói synthetic `#7` do Account #1859 tạo; ADMIN `Son` duyệt chéo (POST 200), tải XLSX thành công (GET 200; file hợp lệ, 3 dòng). Creator không thấy nút duyệt. Còn thu hồi, handoff thực, deadline và các trạng thái lỗi/tải. BQT xử lý yêu cầu/giấy phép ngoài hệ thống; không tạo account/role cơ quan. Sơn yêu cầu đánh dấu hoàn thành ngày 11/11/2026; các kiểm tra UI còn hoãn ghi trong `VALIDATION.md`. |
-| ☐ | S13 | M | Tuấn; Sơn hỗ trợ | Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4 | F02; dữ liệu mẫu S09 | Job backup có lịch/retention được chốt; restore vào DB thử riêng rồi đối chiếu; không xóa DB gốc. |
-| ☐ | S14 | L | Cả nhóm; Tuấn điều phối | Hồi quy/quyền/hiệu năng nền; WBS 2.4.1.4 | S02–S13 hoàn tất; có thể chuẩn bị trước | E2E hộ→kỳ→thu→báo cáo; ca sai/IDOR/duplicate; 10k và thời gian có cấu hình đo; sửa và test lại. |
+| ☑ | S13 | M | Tuấn; Sơn hỗ trợ | Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4 | F02; dữ liệu mẫu S09 | Job backup có lịch/retention được chốt; restore vào DB thử riêng rồi đối chiếu; không xóa DB gốc. |
+| ☑ | S14 | L | Cả nhóm; Tuấn điều phối | Hồi quy/quyền/hiệu năng nền; WBS 2.4.1.4 | S02–S13 hoàn tất; có thể chuẩn bị trước | E2E hộ→kỳ→thu→báo cáo; ca sai/IDOR/duplicate; 10k và thời gian có cấu hình đo; sửa và test lại. |
 | ☐ | S15 | S | Cả nhóm; Kiệt tổng hợp | Đóng gói/bàn giao v1; WBS 2.4.1.4 | S14 | Cài từ máy sạch, dữ liệu giả, hướng dẫn, kết quả test và lỗi còn lại có PO chấp nhận; không còn blocker. |
 | ☐ | S11-UI | M | Sơn; Quân/Tuấn hỗ trợ kiểm tra | UI tải ba báo cáo S11; WBS 2.4.1.3 | S11 backend | Dùng đúng API/template đã duyệt; UI theo quyền server; lọc hợp lệ, tải file và lỗi dễ hiểu; test theo G1. |
 
@@ -43,8 +43,8 @@ S08 và S09 được Sơn yêu cầu đánh dấu hoàn thành; các giới hạ
 - [x] S10 — API và UI hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2 (NFR chuyển S14; kiểm tra hoãn xem `docs/VALIDATION.md`)
 - [x] S11 — Export thu phí/cư trú; WBS 2.4.1.3
 - [x] S12 — Backend đã kiểm chứng; UI ADMIN 247 test/build pass; risk review vòng 2 không blocker. Browser ADMIN/API thật đã tạo/preview/từ chối gói QA `#6`; regression sau sửa xác nhận số null không thành 0 và guard tự xóa. Walkthrough ADMIN thứ hai duyệt chéo/tải XLSX đã đạt. Sơn yêu cầu đánh dấu hoàn thành ngày 11/11/2026; các kiểm tra UI còn hoãn xem `docs/VALIDATION.md`. Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023.
-- [ ] S13 — Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4
-- [ ] S14 — Hồi quy/quyền/hiệu năng nền; WBS 2.4.1.4
+- [x] S13 — Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4
+- [x] S14 — Hồi quy/quyền/hiệu năng nền; WBS 2.4.1.4
 - [ ] S15 — Đóng gói/bàn giao v1; WBS 2.4.1.4
 - [ ] S11-UI — Giao diện tải ba báo cáo S11; WBS 2.4.1.3
 
@@ -371,3 +371,7 @@ Bằng chứng: backend 355 test + 174 integration MySQL 8.4 cô lập; frontend
 Browser ADMIN: danh sách tải lại thành công, lọc vai trò Kế toán đúng; đã xem desktop và giả lập iPhone 14. Chưa thực hiện thao tác ghi trên dữ liệu đang chạy.
 Còn mở: review và PR. Chưa tick thêm task.
 ```
+
+### S13 và S14 — người dùng chấp nhận ngày 11/11/2026
+
+Sơn yêu cầu tick dựa trên mã và test S13 cùng QA xuyên suốt và `tests/`. Đây là quyết định chấp nhận của người dùng, không phải bằng chứng mọi AC đã chạy: diễn tập restore MySQL thật, scheduler Linux và đo hiệu năng 10.000 hồ sơ chưa có bằng chứng trong hồ sơ hiện tại. Xem `docs/VALIDATION.md` và `tests/report/`.

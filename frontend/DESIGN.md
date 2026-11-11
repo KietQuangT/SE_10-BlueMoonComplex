@@ -1,7 +1,6 @@
 # DESIGN.md — BlueMoon Complex Frontend Design System
 
 **Project:** SE_10 — BlueMoon Complex Residential & Fee Management System
-**Visual References:** `/fe-reference/dashboard-desktop.png` (Dark Mode) & `/fe-reference/dashboard-responsive.png` (Light Mode)
 **Theme Persistence:** `<html data-theme="dark|light">`, `localStorage['bm-theme']` (`src/lib/theme.ts`, `src/components/ThemeToggle.tsx`)
 
 ---

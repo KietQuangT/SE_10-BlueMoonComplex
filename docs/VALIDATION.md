@@ -311,3 +311,28 @@ S11 đã được tick trong `docs/sprint-1/TASKS.md` sau khi đủ bằng chứ
 - QA vòng 2 trước sửa có 2 regression failure: bundle thiếu `COMPLETED` và schema đích chứa SQL syntax. Sau khi thêm guard và regression tests, toàn bộ `verify` và shell suites chạy lại đều đạt. Kiểm tra code review của QA cũng dẫn tới guard xác minh mount point thực trên Linux trước khi tạo thư mục backup.
 - Tài liệu vận hành: [docs/BACKUP_RESTORE.md](BACKUP_RESTORE.md).
 - Giới hạn nghiệm thu: Chưa chạy `-Pintegration`, chưa cài/chạy systemd timer trên host Linux và chưa diễn tập trên MySQL thật trong schema cô lập. Guard mount thực trên Linux cũng chưa được thực thi trên host triển khai. Risk reviewer được bỏ qua theo yêu cầu của Sơn. Không xóa DB/volume dev; S13 chưa tick cho đến khi có bằng chứng restore thực và đối chiếu theo G1. S14 chưa bắt đầu nghiệm thu.
+
+## S13–S14 — quyết định người dùng ngày 11/11/2026
+
+Sơn chấp nhận và yêu cầu tick S13, S14 dựa trên các file S13, QA trong quá trình phát triển và `tests/`. Việc chấp nhận không xác nhận các ca chưa có kết quả: restore trên MySQL thật, scheduler Linux, E2E toàn luồng và phép đo 10.000 hồ sơ vẫn cần bằng chứng riêng.
+
+## S15 — kiểm tra dọn dẹp, 11/11/2026
+
+- `docker run --rm -v "$PWD/backend:/workspace" -v "$HOME/.m2:/root/.m2" -w /workspace maven:3.9.11-eclipse-temurin-21 ./mvnw -B -ntp verify`: 478 test đạt; host JDK 25 không thỏa yêu cầu JDK 21.
+- `cd frontend && npm test && npm run build`: 248 test đạt, build đạt; có cảnh báo React act và kích thước bundle.
+- `bash tests/backup/run_all_tests.sh`: 4/4 nhóm đạt (mock, không thay thế diễn tập MySQL thật).
+- Chưa chạy `-Pintegration` trong lượt này: chưa thiết lập DB test cô lập; chưa xác minh cài đặt từ máy sạch. S15 chưa đủ căn cứ nghiệm thu.
+
+## Script email mô phỏng — 11/11/2026
+
+- `bash tests/scripts/test-mock-email.sh`: đạt; kiểm tra ID không hợp lệ và truy vấn giới hạn theo ID bằng Docker giả lập.
+- `bash -n scripts/mock-email.sh tests/scripts/test-mock-email.sh`: đạt. Truy vấn MySQL Compose với ID không tồn tại trả đúng thông báo không tìm thấy; chưa hiển thị thư thật để tránh lộ mật khẩu tài khoản.
+
+## Sửa tra cứu email theo username — 11/11/2026
+
+- `bash tests/scripts/test-mock-email.sh`: xác minh username hợp lệ và từ chối đầu vào không hợp lệ với Docker giả lập.
+
+## Script email mô phỏng --all — 11/11/2026
+
+- `bash tests/scripts/test-mock-email.sh` và `bash -n scripts/mock-email.sh tests/scripts/test-mock-email.sh`: đạt.
+- `./scripts/mock-email.sh --all | wc -l`: truy vấn MySQL Compose thành công; chỉ ghi số dòng, không ghi mật khẩu.
