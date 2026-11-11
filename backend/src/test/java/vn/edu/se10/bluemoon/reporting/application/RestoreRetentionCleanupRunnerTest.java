@@ -67,6 +67,20 @@ class RestoreRetentionCleanupRunnerTest {
     }
 
     @Test
+    @DisplayName("Ném ngoại lệ khi DataSource null")
+    void shouldThrowWhenDataSourceIsNull() {
+        AgencyDataPackageService packageService = mock(AgencyDataPackageService.class);
+
+        RestoreRetentionCleanupRunner runner =
+                new RestoreRetentionCleanupRunner(packageService, null, "bluemoon_restore_s13_test");
+        assertThatThrownBy(runner::run)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("DataSource bat buoc phai ton tai");
+
+        verifyNoInteractions(packageService);
+    }
+
+    @Test
     @DisplayName("Ném ngoại lệ khi catalog thực tế từ connection trỏ về bluemoon")
     void shouldThrowWhenActualCatalogIsBluemoon() throws SQLException {
         AgencyDataPackageService packageService = mock(AgencyDataPackageService.class);
@@ -105,7 +119,26 @@ class RestoreRetentionCleanupRunnerTest {
     }
 
     @Test
-    @DisplayName("Chạy cleanup thành công khi target DB hợp lệ")
+    @DisplayName("Ném ngoại lệ khi catalog thực tế và DB_NAME không khớp nhau dù cùng có tiền tố hợp lệ")
+    void shouldThrowWhenCatalogAndDbNameMismatch() throws SQLException {
+        AgencyDataPackageService packageService = mock(AgencyDataPackageService.class);
+        DataSource dataSource = mock(DataSource.class);
+        Connection connection = mock(Connection.class);
+
+        when(dataSource.getConnection()).thenReturn(connection);
+        when(connection.getCatalog()).thenReturn("bluemoon_restore_s13_other_target");
+
+        RestoreRetentionCleanupRunner runner =
+                new RestoreRetentionCleanupRunner(packageService, dataSource, "bluemoon_restore_s13_test");
+        assertThatThrownBy(runner::run)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("khong khop voi DB_NAME target");
+
+        verifyNoInteractions(packageService);
+    }
+
+    @Test
+    @DisplayName("Chạy cleanup thành công khi target DB hợp lệ và catalog khớp hoàn toàn")
     void shouldExecuteCleanupWhenTargetDbIsValid() throws SQLException {
         AgencyDataPackageService packageService = mock(AgencyDataPackageService.class);
         DataSource dataSource = mock(DataSource.class);

@@ -11,6 +11,8 @@ RESTORE_SCRIPT="${PROJECT_ROOT}/scripts/restore-rehearsal.sh"
 TEST_TMP="$(mktemp -d /tmp/bluemoon_test_restore_guards_XXXXXX)"
 trap 'rm -rf "${TEST_TMP}"' EXIT
 
+export BACKUP_LOCK_FILE="${TEST_TMP}/backup.lock"
+
 PASSED=0
 FAILED=0
 
@@ -51,7 +53,6 @@ assert_eq() {
 
 echo "=== Chạy kiểm tra Restore Rehearsal Guards (V1 & V2) ==="
 
-# Tạo synthetic valid bundle
 BUNDLE_DIR="${TEST_TMP}/bundle_valid"
 mkdir -p "${BUNDLE_DIR}"
 DUMP_FILE="${BUNDLE_DIR}/dump.sql"
@@ -102,7 +103,7 @@ assert_fails_with "Target DB là database hệ thống mysql phải bị từ ch
     --target-user "test_u" \
     --target-password "test_p"
 
-# 4. Test: Checksum SHA-256 bị sai lệch (artifact bị sửa đổi hoặc hỏng) -> Từ chối
+# 4. Test: Checksum SHA-256 bị sai lệch -> Từ chối
 BUNDLE_CORRUPT="${TEST_TMP}/bundle_corrupt"
 mkdir -p "${BUNDLE_CORRUPT}"
 cp "${BUNDLE_DIR}/dump.sql" "${BUNDLE_CORRUPT}/dump.sql"
@@ -118,7 +119,7 @@ assert_fails_with "Checksum SHA-256 không khớp phải báo lỗi và dừng n
     --target-user "test_u" \
     --target-password "test_p"
 
-# 5. Test: Artifact chứa SPRING_SESSION (vi phạm Q4) -> Từ chối
+# 5. Test: Artifact chứa SPRING_SESSION -> Từ chối
 BUNDLE_LEAK="${TEST_TMP}/bundle_leak"
 mkdir -p "${BUNDLE_LEAK}"
 cat <<EOF > "${BUNDLE_LEAK}/dump.sql"
@@ -155,14 +156,18 @@ MOCK_RESTORE_MODE="true" "${RESTORE_SCRIPT}" \
 
 assert_eq "File evidence.json được tạo thành công" "true" "$([[ -f "${EVIDENCE_OUT}" ]] && echo "true" || echo "false")"
 
-VERDICT=$(jq -r '.verdict' "${EVIDENCE_OUT}")
-SESSION_ROWS=$(jq -r '.pre_cleanup.session_row_count' "${EVIDENCE_OUT}")
-ORPHAN_COUNT=$(jq -r '.pre_cleanup.orphan_fk_violations' "${EVIDENCE_OUT}")
+HAS_SHA256=$(jq 'has("sha256")' "${EVIDENCE_OUT}")
+HAS_PRE_TABLES=$(jq 'has("pre_cleanup_table_count")' "${EVIDENCE_OUT}")
+HAS_PRE_ROWS=$(jq 'has("pre_cleanup_total_row_count")' "${EVIDENCE_OUT}")
+HAS_TARGET_SCHEMA=$(jq 'has("target_schema")' "${EVIDENCE_OUT}")
+HAS_VERDICT=$(jq 'has("verdict")' "${EVIDENCE_OUT}")
 HAS_PII=$(jq 'has("user") or has("password") or has("sql") or has("raw_data")' "${EVIDENCE_OUT}")
 
-assert_eq "Verdict diễn tập là SUCCESS" "SUCCESS" "${VERDICT}"
-assert_eq "Số dòng session trước cleanup bắt buộc bằng 0" "0" "${SESSION_ROWS}"
-assert_eq "Số vi phạm orphan FK bằng 0" "0" "${ORPHAN_COUNT}"
+assert_eq "Evidence có sha256" "true" "${HAS_SHA256}"
+assert_eq "Evidence có pre_cleanup_table_count" "true" "${HAS_PRE_TABLES}"
+assert_eq "Evidence có pre_cleanup_total_row_count" "true" "${HAS_PRE_ROWS}"
+assert_eq "Evidence không có target_schema (chuẩn Q5)" "false" "${HAS_TARGET_SCHEMA}"
+assert_eq "Evidence không có verdict (chuẩn Q5)" "false" "${HAS_VERDICT}"
 assert_eq "Evidence tuyệt đối không chứa PII hoặc dữ liệu thô" "false" "${HAS_PII}"
 
 echo "Kết quả Restore Rehearsal Guards: ${PASSED} đạt, ${FAILED} lỗi."

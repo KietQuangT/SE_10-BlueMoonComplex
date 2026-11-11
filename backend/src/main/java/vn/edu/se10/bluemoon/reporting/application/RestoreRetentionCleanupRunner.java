@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 public class RestoreRetentionCleanupRunner implements CommandLineRunner {
     private static final Logger log = LoggerFactory.getLogger(RestoreRetentionCleanupRunner.class);
     public static final String REQUIRED_PREFIX = "bluemoon_restore_";
-    public static final String S13_PREFIX = "bluemoon_restore_s13_";
     public static final String FORBIDDEN_DEFAULT_DB = "bluemoon";
 
     private final AgencyDataPackageService packageService;
@@ -56,22 +55,29 @@ public class RestoreRetentionCleanupRunner implements CommandLineRunner {
                     "DB_NAME target phai co tien to hop le bat dau bang '" + REQUIRED_PREFIX + "'. Thuc te: " + dbName);
         }
 
-        if (dataSource != null) {
-            try (Connection conn = dataSource.getConnection()) {
-                String catalog = conn.getCatalog();
-                if (catalog != null && !catalog.isBlank()) {
-                    String trimmedCatalog = catalog.trim();
-                    if (FORBIDDEN_DEFAULT_DB.equalsIgnoreCase(trimmedCatalog)) {
-                        throw new IllegalStateException("Ket noi thuc te toi catalog dev goc 'bluemoon' bi cam.");
-                    }
-                    if (!trimmedCatalog.startsWith(REQUIRED_PREFIX)) {
-                        throw new IllegalStateException(
-                                "Catalog ket noi thuc te '" + catalog + "' khong co tien to hop le '" + REQUIRED_PREFIX + "'.");
-                    }
-                }
-            } catch (SQLException e) {
-                throw new IllegalStateException("Khong the xac minh catalog tu ket noi target: " + e.getMessage(), e);
+        if (dataSource == null) {
+            throw new IllegalStateException("DataSource bat buoc phai ton tai de xac minh ket noi.");
+        }
+
+        try (Connection conn = dataSource.getConnection()) {
+            String catalog = conn.getCatalog();
+            if (catalog == null || catalog.isBlank()) {
+                throw new IllegalStateException("Khong the xac dinh catalog tu ket noi thuc te.");
             }
+            String trimmedCatalog = catalog.trim();
+            if (FORBIDDEN_DEFAULT_DB.equalsIgnoreCase(trimmedCatalog)) {
+                throw new IllegalStateException("Ket noi thuc te toi catalog dev goc 'bluemoon' bi cam.");
+            }
+            if (!trimmedCatalog.startsWith(REQUIRED_PREFIX)) {
+                throw new IllegalStateException(
+                        "Catalog ket noi thuc te '" + catalog + "' khong co tien to hop le '" + REQUIRED_PREFIX + "'.");
+            }
+            if (!trimmedCatalog.equalsIgnoreCase(trimmed)) {
+                throw new IllegalStateException(
+                        "Catalog ket noi thuc te '" + catalog + "' khong khop voi DB_NAME target '" + trimmed + "'.");
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Khong the xac minh catalog tu ket noi target: " + e.getMessage(), e);
         }
     }
 }
