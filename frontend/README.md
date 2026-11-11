@@ -32,7 +32,7 @@ Frontend trong nhánh hiện tại gồm các màn xác thực/account, hộ/nh�
 - Preview số tiền dùng số nguyên/BigInt. Các lệnh chưa rõ kết quả giữ UUID và payload trong sessionStorage theo username để retry cùng lệnh.
 - Lý do nhập lùi ngày, hủy receipt và đảo phân bổ không hiển thị nguyên văn trong lịch sử; UI chỉ hiện cờ “Có lý do”.
 
-S12 UI đang được nối tại `/admin/reports/packages` với API `/api/v1/agency-data-packages`; form yêu cầu mã cơ quan và mã tham chiếu yêu cầu/giấy phép do BQT xử lý ngoài hệ thống. Không tạo route/account cho cơ quan. Tiến độ và giới hạn kiểm chứng được ghi tại [docs/VALIDATION.md](../docs/VALIDATION.md).
+S12 UI được triển khai trên nhánh `hhoangsonnw/feat-s12-ui` tại `/admin/reports/packages` với API `/api/v1/agency-data-packages`. ADMIN tạo nháp, chọn hộ, xem trước, duyệt/từ chối, thu hồi, tải XLSX và ghi nhận bàn giao. Form chỉ nhận mã cơ quan và mã tham chiếu yêu cầu/giấy phép do BQT xử lý ngoài hệ thống. Không có route/account cho cơ quan. Sau sửa vòng 2, QA độc lập đạt `npm test -- --run` 41 file/247 test, TypeScript và Vite build; risk review vòng 2 không có lỗi chặn. BrowserSkill trên tab ADMIN/API thật đã tạo, preview và từ chối gói QA `#6`; regression UI xác nhận API trả số nhân khẩu null không bị hiện thành 0, cảnh báo chọn hộ rỗng tự xóa khi chọn hộ hợp lệ, và không gửi POST khi chạy regression local-only. Gói synthetic `#7` được tạo thành công qua API thật (POST 201, preview 3 dòng); creator không có nút duyệt. ADMIN khác đã duyệt gói `#7` qua API thật và tải XLSX thành công; còn thu hồi, handoff thực và biên lỗi/deadline cần kiểm. Xem [docs/VALIDATION.md](../docs/VALIDATION.md).
 
 ## Cấu trúc
 

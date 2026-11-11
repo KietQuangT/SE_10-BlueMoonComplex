@@ -177,7 +177,6 @@ export function AccountsPage(): React.ReactElement {
                 <option value="ADMIN">Ban quản trị</option>
                 <option value="ACCOUNTANT">Kế toán</option>
                 <option value="RESIDENT">Cư dân</option>
-                <option value="AUTHORITY">Cơ quan chức năng</option>
               </select>
             </label>
             <label className="inline-field">

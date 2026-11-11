@@ -15,7 +15,7 @@ React 19 + TypeScript + Vite (dev server port 5173, `/api` proxy to `http://loca
 - **Ban quản trị (`ADMIN`):** Thành viên Ban quản trị / Ban quản lý chung cư BlueMoon làm việc trên máy tính tại văn phòng BQL. Chịu trách nhiệm cấp và khóa tài khoản, quản lý hồ sơ hộ gia đình và nhân khẩu, duyệt khai báo tạm vắng, ghi nhận chuyển đi/lưu trữ, mở đợt đóng góp tự nguyện, tạo kỳ thu hàng loạt (chờ chốt quy tắc chi tiết), xuất báo cáo lưu trú và phê duyệt gói dữ liệu cho cơ quan chức năng.
 - **Kế toán (`ACCOUNTANT`):** Kế toán chung cư làm việc trên máy tính văn phòng, đặc biệt cao điểm vào cuối tháng. Thiết lập đơn giá theo loại phí, tra cứu mã căn hộ để ghi nhận thu tiền mặt và gạch nợ, xuất báo cáo tỷ lệ thu theo tháng. Không xem hồ sơ nhân khẩu chi tiết (quyền xem hộ của Kế toán đang ở trạng thái chờ chốt).
 - **Cư dân (`RESIDENT`):** Chủ hộ hoặc thành viên đại diện hộ gia đình tại BlueMoon (nhiều người dùng lớn tuổi, thao tác chủ yếu bằng một tay trên điện thoại màn hình ~360 px). Gắn cố định với đúng một hộ (`users.household_id`). Kiểm tra số tiền còn nợ, hạn nộp, xem chi tiết thành phần hóa đơn và lịch sử đóng phí của hộ mình, kiểm tra danh sách nhân khẩu trong hộ, gửi đơn khai báo tạm vắng và xem các đợt đóng góp tự nguyện.
-- **Cơ quan chức năng (vai trò thứ tư, tên mã DB chờ chốt ở S12):** Cán bộ thanh tra / cơ quan quản lý nhà nước chỉ xem và tải về các gói báo cáo lưu trú đã được Ban quản trị xác thực và phê duyệt theo danh sách trường cho phép (whitelist), tuyệt đối không truy cập dữ liệu thô.
+- **Cơ quan chức năng (bên nhận ngoài hệ thống, theo D13):** Không có vai trò hay tài khoản trong hệ thống. Ban quản trị tiếp nhận yêu cầu, kiểm tra giấy phép và bàn giao gói dữ liệu ngoài hệ thống; ứng dụng chỉ cho phép Ban quản trị tạo, xem trước, duyệt và kiểm toán gói dữ liệu theo danh sách trường cho phép (whitelist), tuyệt đối không truy cập dữ liệu thô.
 
 ## Product Purpose
 
@@ -44,7 +44,7 @@ Hệ thống vận hành nội bộ chuyên biệt cho Ban quản trị chung c�
   - Mọi lỗi đăng nhập `401` chỉ hiển thị đúng một thông điệp chung *"Tên đăng nhập hoặc mật khẩu không đúng."* kèm hướng dẫn liên hệ Ban quản lý; không đoán lý do khóa hay tồn tại tài khoản, không hứa "thử lại sau ít phút".
   - Không dùng `float`/`double` để cộng/nhân tiền trên giao diện; tiền tệ hiển thị định dạng `500.000 đ`, diện tích `50,00 m²`, ngày `dd/MM/yyyy`, thời điểm `dd/MM/yyyy HH:mm` (múi giờ `Asia/Ho_Chi_Minh`), kỳ thu `MM/yyyy`.
   - Mặc định che CCCD (chỉ hiện 4 số cuối `********1234`), không lộ số giấy tờ hoặc chi tiết lỗi thô 5xx (chỉ hiện mã `X-Request-Id` khi có).
-- **Các quyết định nghiệp vụ còn mở (ghi nhận rõ trên UI, không tự bịa thành quy tắc cứng):** Q1 và Q2 đã được trả lời trong D20/D24; còn danh mục loại phí chính thức giữa phí quản lý/dịch vụ/rác (Q6), hiệu lực đơn giá & làm tròn (Q7), thu thiếu/thừa/sửa/hủy giao dịch (Q8), công thức mẫu số tỷ lệ thu (Q10), mẫu cột pháp lý báo cáo lưu trú (Q17), mã vai trò thứ tư & đường cấp tài khoản tương ứng (Q15/Q19).
+- **Các quyết định nghiệp vụ còn mở (ghi nhận rõ trên UI, không tự bịa thành quy tắc cứng):** Q1 và Q2 đã được trả lời trong D20/D24; còn danh mục loại phí chính thức giữa phí quản lý/dịch vụ/rác (Q6), hiệu lực đơn giá & làm tròn (Q7), thu thiếu/thừa/sửa/hủy giao dịch (Q8), công thức mẫu số tỷ lệ thu (Q10), mẫu cột pháp lý báo cáo lưu trú (Q17).
 
 ## Brand Commitments
 

@@ -119,13 +119,8 @@ function useNavGroups(role: RoleCode): NavGroup[] {
           ],
         },
       ];
-    case 'AUTHORITY':
-      return [
-        {
-          heading: 'Báo cáo',
-          items: [{ to: '/authority/reports', label: 'Báo cáo đã duyệt', icon: 'shield' }],
-        },
-      ];
+    default:
+      return [];
   }
 }
 

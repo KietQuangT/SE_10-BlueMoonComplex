@@ -42,9 +42,6 @@ vi.mock('../screens/admin/ReportPackagesPage', () => ({
   ReportPackagesPage: () => <div>S12 REPORT PACKAGES PAGE</div>,
 }));
 
-vi.mock('../screens/authority/AuthorityReportsPage', () => ({
-  AuthorityReportsPage: () => <div>S12 AUTHORITY REPORTS PAGE</div>,
-}));
 
 vi.mock('../screens/reporting/ReportDownloadsPage', () => ({
   ReportDownloadsPage: () => <div>S11-UI REPORT DOWNLOADS PAGE</div>,
@@ -112,7 +109,7 @@ describe('S11-UI Routes and Access Guards', () => {
     expect(screen.getByText('LEGACY DEMO RESIDENCY PAGE')).toBeInTheDocument();
   });
 
-  it('preserves S12 packages and authority report screens untouched', () => {
+  it('preserves the S12 package page for ADMIN', () => {
     state.mode = 'api';
     state.role = 'ADMIN';
     window.history.pushState({}, '', '/admin/reports/packages');

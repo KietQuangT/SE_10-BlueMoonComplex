@@ -11,6 +11,7 @@ interface ScreenHeaderProps {
   contract: ContractBadgeKind;
   tierLabel?: 'Mức A' | 'Mức B' | 'Mức C';
   actions?: React.ReactNode;
+  showMockNote?: boolean;
 }
 
 export function ScreenHeader({
@@ -20,6 +21,7 @@ export function ScreenHeader({
   contract,
   tierLabel,
   actions,
+  showMockNote = true,
 }: ScreenHeaderProps): React.ReactElement {
   return (
     <>
@@ -39,7 +41,7 @@ export function ScreenHeader({
         </div>
         {actions ? <div className="filter-row">{actions}</div> : null}
       </header>
-      {SHOW_DEV_TOOLS && contract !== 'api-live' ? (
+      {SHOW_DEV_TOOLS && contract !== 'api-live' && showMockNote ? (
         <p className="mock-note">
           <Icon name="info" size={15} />
           Màn này dùng dữ liệu mẫu (mock-data.json) vì backend chưa có API tương ứng. Thao tác chỉ
