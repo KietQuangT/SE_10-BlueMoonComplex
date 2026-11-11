@@ -287,4 +287,4 @@ S11 đã được tick trong `docs/sprint-1/TASKS.md` sau khi đủ bằng chứ
 ### S12 UI — ADMIN quản lý gói, 11/11/2026
 
 - Nhánh `hhoangsonnw/feat-s12-ui`: `/admin/reports/packages` nối các thao tác danh sách/lọc, tạo bản nháp theo hộ đang hoạt động, xem trước có phân trang, duyệt khác người tạo, từ chối nháp, thu hồi, tải XLSX và ghi nhận bàn giao. Route và lựa chọn role/account `AUTHORITY` đã bỏ; cơ quan không đăng nhập.
-- Chưa chạy `npm run build`, test frontend hoặc browser walkthrough trên nhánh UI; phần UI chưa được nghiệm thu và S12 vẫn chưa tick.
+- Trên nhánh UI, Sơn chạy `cd frontend && npm run build`: TypeScript/Vite **BUILD SUCCESS**; bundle JS 567.91 kB (gzip 156.85 kB), CSS 53.96 kB (gzip 10.79 kB), build 954 ms. Vite cảnh báo chunk JS vượt 500 kB. Chưa chạy test frontend hoặc browser walkthrough; phần UI chưa được nghiệm thu và S12 vẫn chưa tick.
