@@ -32,6 +32,9 @@ it('opens campaign creation from the empty list and restores focus on cancel', (
 it('requires API mode for agency data packages and does not create agency demo accounts', () => {
   render(<MemoryRouter><ReportPackagesPage /></MemoryRouter>);
   expect(screen.getByText(/chuyển sang API mode/i)).toBeInTheDocument();
+  expect(screen.getByText(/chỉ khả dụng ở chế độ Backend thật/i)).toBeInTheDocument();
+  expect(screen.queryByText(/backend chưa có API tương ứng/i)).not.toBeInTheDocument();
+  expect(screen.queryByText(/thao tác chỉ thay đổi trạng thái trong trình duyệt/i)).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Tạo gói dữ liệu' })).not.toBeInTheDocument();
 });
 
