@@ -18,7 +18,7 @@ Mã F/S là task kỹ thuật trong harness, không phải mã WBS mới. S/M/L 
 | ☑ | S09 | L | Quân + Sơn | Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1 | S05,S08 | Thu đúng số tiền, nợ giảm đúng, transaction/audit; duplicate/concurrent không thu hai lần; chốt thu thiếu/thừa/sửa/hủy. |
 | ☑ | S10 | M | Kiệt + Quân | API và UI hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2 | S08; S09 để ghép cuối | Backend giới hạn theo hộ; UI API mode có danh sách/lọc/phân trang, chi tiết và lịch sử; Demo tách riêng; chỉ đọc; các kiểm tra hoãn được ghi ở VALIDATION. |
 | ☑ | S11 | M | Tuấn + Quân + Kiệt | Export thu phí/cư trú; WBS 2.4.1.3 | S06,S09 | Excel mở được và tổng khớp; mẫu/cột/tỷ lệ đã duyệt; không export dữ liệu thừa; dùng dữ liệu thật từ DB. |
-| ☐ | S12 | M | Tuấn + Sơn | Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023 | S11 | Backend `verify` + MySQL integration và UI build đã pass; UI chưa test/walkthrough. BQT xử lý yêu cầu/giấy phép ngoài hệ thống; không tạo account/role cơ quan. Chưa tick đến khi nghiệm thu hoàn tất. |
+| ☐ | S12 | M | Tuấn + Sơn | Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023 | S11 | Backend `verify` + MySQL integration và UI build/234 frontend tests đã pass; browser walkthrough còn chờ. BQT xử lý yêu cầu/giấy phép ngoài hệ thống; không tạo account/role cơ quan. Chưa tick đến khi nghiệm thu hoàn tất. |
 | ☐ | S13 | M | Tuấn; Sơn hỗ trợ | Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4 | F02; dữ liệu mẫu S09 | Job backup có lịch/retention được chốt; restore vào DB thử riêng rồi đối chiếu; không xóa DB gốc. |
 | ☐ | S14 | L | Cả nhóm; Tuấn điều phối | Hồi quy/quyền/hiệu năng nền; WBS 2.4.1.4 | S02–S13 hoàn tất; có thể chuẩn bị trước | E2E hộ→kỳ→thu→báo cáo; ca sai/IDOR/duplicate; 10k và thời gian có cấu hình đo; sửa và test lại. |
 | ☐ | S15 | S | Cả nhóm; Kiệt tổng hợp | Đóng gói/bàn giao v1; WBS 2.4.1.4 | S14 | Cài từ máy sạch, dữ liệu giả, hướng dẫn, kết quả test và lỗi còn lại có PO chấp nhận; không còn blocker. |
@@ -42,7 +42,7 @@ S08 và S09 được Sơn yêu cầu đánh dấu hoàn thành; các giới hạ
 - [x] S09 — Ghi nhận thu tiền/gạch nợ; WBS 2.4.1.1
 - [x] S10 — API và UI hóa đơn/lịch sử cho cư dân; WBS 2.4.1.2 (NFR chuyển S14; kiểm tra hoãn xem `docs/VALIDATION.md`)
 - [x] S11 — Export thu phí/cư trú; WBS 2.4.1.3
-- [ ] S12 — Backend đã kiểm chứng; UI ADMIN build pass, còn test/walkthrough. Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023.
+- [ ] S12 — Backend đã kiểm chứng; UI ADMIN build và test pass, còn browser walkthrough. Gói dữ liệu cơ quan; WBS 2.4.1.4, PBI-023.
 - [ ] S13 — Backup tự động/restore, NFR-008; gắn DoD 2.4.1.4
 - [ ] S14 — Hồi quy/quyền/hiệu năng nền; WBS 2.4.1.4
 - [ ] S15 — Đóng gói/bàn giao v1; WBS 2.4.1.4

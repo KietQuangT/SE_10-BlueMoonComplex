@@ -287,4 +287,6 @@ S11 đã được tick trong `docs/sprint-1/TASKS.md` sau khi đủ bằng chứ
 ### S12 UI — ADMIN quản lý gói, 11/11/2026
 
 - Nhánh `hhoangsonnw/feat-s12-ui`: `/admin/reports/packages` nối các thao tác danh sách/lọc, tạo bản nháp theo hộ đang hoạt động, xem trước có phân trang, duyệt khác người tạo, từ chối nháp, thu hồi, tải XLSX và ghi nhận bàn giao. Route và lựa chọn role/account `AUTHORITY` đã bỏ; cơ quan không đăng nhập.
-- Trên nhánh UI, Sơn chạy `cd frontend && npm run build`: TypeScript/Vite **BUILD SUCCESS**; bundle JS 567.91 kB (gzip 156.85 kB), CSS 53.96 kB (gzip 10.79 kB), build 954 ms. Vite cảnh báo chunk JS vượt 500 kB. Chưa chạy test frontend hoặc browser walkthrough; phần UI chưa được nghiệm thu và S12 vẫn chưa tick.
+- Trên nhánh UI, Sơn chạy `cd frontend && npm run build`: TypeScript/Vite **BUILD SUCCESS**; bundle JS 567.91 kB (gzip 156.85 kB), CSS 53.96 kB (gzip 10.79 kB), build 954 ms. Vite cảnh báo chunk JS vượt 500 kB.
+- Sơn chạy `cd frontend && npm test -- --run`: **39 file, 234 test pass**, 5.54 s. Test runner in cảnh báo React `act(...)` ở test FeeRatesPage/AppStateContext và cảnh báo Node localStorage experimental; không có test thất bại.
+- Chưa walkthrough browser hoặc kiểm thử luồng UI S12 với backend thật; phần UI chưa nghiệm thu và S12 vẫn chưa tick.

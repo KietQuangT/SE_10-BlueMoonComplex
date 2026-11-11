@@ -32,7 +32,7 @@ Frontend trong nhánh hiện tại gồm các màn xác thực/account, hộ/nh�
 - Preview số tiền dùng số nguyên/BigInt. Các lệnh chưa rõ kết quả giữ UUID và payload trong sessionStorage theo username để retry cùng lệnh.
 - Lý do nhập lùi ngày, hủy receipt và đảo phân bổ không hiển thị nguyên văn trong lịch sử; UI chỉ hiện cờ “Có lý do”.
 
-S12 UI được triển khai trên nhánh `hhoangsonnw/feat-s12-ui` tại `/admin/reports/packages` với API `/api/v1/agency-data-packages`. ADMIN tạo nháp, chọn hộ, xem trước, duyệt/từ chối, thu hồi, tải XLSX và ghi nhận bàn giao. Form chỉ nhận mã cơ quan và mã tham chiếu yêu cầu/giấy phép do BQT xử lý ngoài hệ thống. Không có route/account cho cơ quan. `npm run build` đã pass; còn cảnh báo chunk JS >500 kB. Test frontend và browser walkthrough chưa chạy; xem [docs/VALIDATION.md](../docs/VALIDATION.md).
+S12 UI được triển khai trên nhánh `hhoangsonnw/feat-s12-ui` tại `/admin/reports/packages` với API `/api/v1/agency-data-packages`. ADMIN tạo nháp, chọn hộ, xem trước, duyệt/từ chối, thu hồi, tải XLSX và ghi nhận bàn giao. Form chỉ nhận mã cơ quan và mã tham chiếu yêu cầu/giấy phép do BQT xử lý ngoài hệ thống. Không có route/account cho cơ quan. `npm run build` pass (cảnh báo chunk JS >500 kB); `npm test -- --run` pass 39 file/234 test. Browser walkthrough chưa thực hiện; xem [docs/VALIDATION.md](../docs/VALIDATION.md).
 
 ## Cấu trúc
 
