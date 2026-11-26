@@ -1,0 +1,263 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="SD-06: Phân bổ số dư có, Hủy biên lai &amp; Đảo phân bổ công nợ" id="sd06">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="frag_0" value="&lt;b&gt;[alt]&lt;/b&gt; Phân bổ số dư có vào hóa đơn còn nợ" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;fillOpacity=28;strokeColor=#B08900;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="21.0" y="118.0" width="1239.5" height="1050.0" as="geometry" />
+        </mxCell>
+        <mxCell id="frag_0_else_0" value="[else] Hủy biên lai thu tiền mặt" style="line;strokeWidth=1;dashed=1;dashPattern=6 4;strokeColor=#B08900;html=1;fillColor=none;verticalAlign=top;align=left;spacingLeft=8;fontStyle=2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="21.0" y="490.0" width="1239.5" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="frag_0_else_1" value="[else] Đảo giao dịch phân bổ số dư có" style="line;strokeWidth=1;dashed=1;dashPattern=6 4;strokeColor=#B08900;html=1;fillColor=none;verticalAlign=top;align=left;spacingLeft=8;fontStyle=2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="21.0" y="850.0" width="1239.5" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="head_Accountant" value="Kế toán (ACCOUNTANT)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="77.0" y="18.0" width="36" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_Accountant" value="Accountant" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="63.0" y="1200.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_Accountant" target="foot_Accountant">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_PayCtrl" value="PaymentController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="194.0" y="24.0" width="135" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_PayCtrl" value="PayCtrl" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="229.5" y="1200.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_PayCtrl" target="foot_PayCtrl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_PaySvc" value="PaymentService&#10;(READ_COMMITTED)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="373.0" y="24.0" width="145" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_PaySvc" value="PaySvc" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="413.5" y="1200.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_PaySvc" target="foot_PaySvc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_Access" value="PaymentInvoiceAccess &amp;&#10;CreditAllocationAmounts" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="562.0" y="24.0" width="165" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_Access" value="Access" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="612.5" y="1200.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_Access" target="foot_Access">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_Guard" value="BillingReceiptGuard" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="771.0" y="24.0" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_Guard" value="Guard" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="809.0" y="1200.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_Guard" target="foot_Guard">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_Audit" value="AuditService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="955.0" y="24.0" width="115" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_Audit" value="Audit" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="980.5" y="1200.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_Audit" target="foot_Audit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_DB" value="MySQL (payment_* /&#10;invoices)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="1114.0" y="24.0" width="145" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_DB" value="DB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1154.5" y="1200.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_DB" target="foot_DB">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v9" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="91.0" y="154.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v10" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="257.5" y="154.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="POST /api/v1/payments/credit-allocations (Idempotency-Key)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v9" target="v10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v12" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="257.5" y="200.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v13" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="200.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" value="allocateCredit(actor, key, request)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v12" target="v13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v15" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="246.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v16" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1182.5" y="246.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e17" value="lockHousehold() &amp; đọc credit balance khả dụng" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v15" target="v16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v18" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="292.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v19" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="640.5" y="292.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e20" value="Kiểm tra hóa đơn mở và tính phần phân bổ" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v18" target="v19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v21" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="338.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v22" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1182.5" y="338.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e23" value="Lưu payment_credit_allocations &amp; sources, giảm dư nợ invoice" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v21" target="v22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v24" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="384.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v25" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1008.5" y="384.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e26" value="record(CREDIT_ALLOCATED)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v24" target="v25">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v27" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="430.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v28" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="91.0" y="430.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e29" value="201 Created" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v27" target="v28">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v30" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="91.0" y="514.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v31" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="257.5" y="514.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e32" value="POST /api/v1/payments/receipts/{id}/void" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v30" target="v31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v33" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="257.5" y="560.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v34" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="560.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e35" value="voidReceipt(actor, receiptId, reason)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v33" target="v34">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v36" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="606.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v37" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1182.5" y="606.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e38" value="lockHousehold() &amp; kiểm tra biên lai chưa bị void/dùng hết" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v36" target="v37">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v39" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="652.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v40" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1182.5" y="652.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e41" value="Đánh dấu VOIDED, khôi phục dư nợ invoices &amp; credit balance" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v39" target="v40">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v42" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="698.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v43" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="837.0" y="698.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e44" value="Giảm bộ đếm biên lai hợp lệ của kỳ thu liên quan" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v42" target="v43">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v45" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="744.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v46" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1008.5" y="744.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e47" value="record(PAYMENT_RECEIPT_VOIDED)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v45" target="v46">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v48" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="790.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v49" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="91.0" y="790.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e50" value="200 OK" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v48" target="v49">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v51" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="91.0" y="874.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v52" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="257.5" y="874.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e53" value="POST /api/v1/payments/credit-allocations/{id}/reverse" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v51" target="v52">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v54" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="257.5" y="920.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v55" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="920.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e56" value="reverseAllocation(actor, allocationId)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v54" target="v55">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v57" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="966.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v58" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1182.5" y="966.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e59" value="lockHousehold() &amp; hoàn lại credit balance cho hộ khẩu" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v57" target="v58">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v60" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="1012.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v61" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1182.5" y="1012.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e62" value="Cập nhật trạng thái allocation REVERSED &amp; dư nợ invoice" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v60" target="v61">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v63" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="1058.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v64" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1008.5" y="1058.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e65" value="record(CREDIT_ALLOCATION_REVERSED)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v63" target="v64">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v66" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="441.5" y="1104.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v67" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="91.0" y="1104.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e68" value="200 OK" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v66" target="v67">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

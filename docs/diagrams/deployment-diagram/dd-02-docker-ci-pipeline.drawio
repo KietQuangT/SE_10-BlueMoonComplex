@@ -1,0 +1,78 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="DD-02: Quy trình Build Multi-stage Docker &amp; CI Pipeline (GitHub Actions)" id="dd02">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="src" value="GitHub Repository (IT3180-SE_10)" style="swimlane;html=1;startSize=28;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=left;spacingLeft=10;container=1;collapsible=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="40" width="300" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="repo" value="Source Code &amp; .github/CODEOWNERS&#10;(@KietQuangT, @hhoangsonnw)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="src">
+          <mxGeometry x="25" y="52" width="250" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="wf" value=".github/workflows/backend.yml&#10;(Push / PR -&gt; main)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="src">
+          <mxGeometry x="25" y="148" width="250" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="ci" value="GitHub Actions Runner (ubuntu-latest)" style="swimlane;html=1;startSize=28;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=left;spacingLeft=10;container=1;collapsible=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="370" y="20" width="620" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="checkout" value="actions/checkout + setup-java temurin 21&#10;(cache maven)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="ci">
+          <mxGeometry x="25" y="44" width="260" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="testcmd" value="mvn verify&#10;Chạy Unit &amp; Integration Tests (Testcontainers / MySQL)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2F0D9;strokeColor=#548235;fontSize=11;spacing=4;" vertex="1" parent="ci">
+          <mxGeometry x="325" y="44" width="270" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="dk" value="Docker Multi-stage Build (backend/Dockerfile)" style="swimlane;html=1;startSize=28;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=left;spacingLeft=10;container=1;collapsible=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="370" y="180" width="730" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="stage1" value="Stage 1 (build): maven:3.9.11-eclipse-temurin-21&#10;mvn -B package -DskipTests" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="dk">
+          <mxGeometry x="20" y="46" width="230" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="jar" value="Artifact: target/*.jar&#10;(app.jar)" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=14;fillColor=#FFF2CC;strokeColor=#B08900;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fontSize=10;" vertex="1" parent="dk">
+          <mxGeometry x="280" y="46" width="160" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="stage2" value="Stage 2 (runtime): eclipse-temurin:21-jre&#10;COPY app.jar -&gt; EXPOSE 8080" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="dk">
+          <mxGeometry x="470" y="46" width="240" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="deploy" value="Triển khai Runtime (compose.yaml)" style="swimlane;html=1;startSize=28;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=left;spacingLeft=10;container=1;collapsible=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="180" width="280" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="compose_up" value="docker compose up -d&#10;(backend + db mysql:8.4)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2F0D9;strokeColor=#548235;fontSize=11;spacing=4;" vertex="1" parent="deploy">
+          <mxGeometry x="25" y="46" width="230" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="repo" target="wf">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="wf" target="checkout">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="345" y="220" />
+              <mxPoint x="345" y="94" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="checkout" target="testcmd">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="repo" target="stage1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="345" y="126" />
+              <mxPoint x="345" y="257" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="stage1" target="jar">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="jar" target="stage2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="stage2" target="compose_up">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
