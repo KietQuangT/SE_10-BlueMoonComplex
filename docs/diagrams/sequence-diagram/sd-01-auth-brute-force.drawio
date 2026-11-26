@@ -1,0 +1,324 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="SD-01: CSRF, Đăng nhập, Chống brute-force &amp; Đổi mật khẩu lần đầu" id="sd01">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="frag_0" value="&lt;b&gt;[alt]&lt;/b&gt; Sai mật khẩu" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;fillOpacity=28;strokeColor=#B08900;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="16.0" y="570.0" width="1267.0" height="520.0" as="geometry" />
+        </mxCell>
+        <mxCell id="frag_0_else_0" value="[else] Đúng mật khẩu" style="line;strokeWidth=1;dashed=1;dashPattern=6 4;strokeColor=#B08900;html=1;fillColor=none;verticalAlign=top;align=left;spacingLeft=8;fontStyle=2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="16.0" y="804.0" width="1267.0" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="frag_1" value="&lt;b&gt;[alt]&lt;/b&gt; Đang bị khóa tạm" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;fillOpacity=28;strokeColor=#B08900;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="16.0" y="348.0" width="1267.0" height="770.0" as="geometry" />
+        </mxCell>
+        <mxCell id="frag_1_else_0" value="[else] Cho phép xác thực" style="line;strokeWidth=1;dashed=1;dashPattern=6 4;strokeColor=#B08900;html=1;fillColor=none;verticalAlign=top;align=left;spacingLeft=8;fontStyle=2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="16.0" y="490.0" width="1267.0" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="frag_2" value="&lt;b&gt;[opt]&lt;/b&gt; Tài khoản có mustChangePassword = true" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;fillOpacity=28;strokeColor=#B08900;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="16.0" y="1138.0" width="1267.0" height="436.0" as="geometry" />
+        </mxCell>
+        <mxCell id="head_User" value="Người dùng (SPA)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="72.0" y="18.0" width="36" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_User" value="User" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="58.0" y="1606.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_User" target="foot_User">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_Filters" value="CurrentAccountFilter /&#10;MustChangePasswordFilter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="184.0" y="24.0" width="165" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_Filters" value="Filters" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="234.5" y="1606.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_Filters" target="foot_Filters">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_Auth" value="AuthController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="393.0" y="24.0" width="130" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_Auth" value="Auth" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="426.0" y="1606.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_Auth" target="foot_Auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_Attempt" value="LoginAttemptService &amp;&#10;LoginLockPolicy" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="567.0" y="24.0" width="155" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_Attempt" value="Attempt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="612.5" y="1606.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_Attempt" target="foot_Attempt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_PwdCtrl" value="PasswordController &amp;&#10;PasswordChangeService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="766.0" y="24.0" width="160" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_PwdCtrl" value="PwdCtrl" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="814.0" y="1606.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_PwdCtrl" target="foot_PwdCtrl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_Audit" value="AuditService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="970.0" y="24.0" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_Audit" value="Audit" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="998.0" y="1606.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_Audit" target="foot_Audit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_DB" value="MySQL (users /&#10;SPRING_SESSION)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="1134.0" y="24.0" width="150" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_DB" value="DB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1177.0" y="1606.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_DB" target="foot_DB">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v9" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="86.0" y="108.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v10" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="108.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="GET /api/v1/auth/csrf" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v9" target="v10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v12" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="154.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v13" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="86.0" y="154.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" value="200 OK (CSRF Token trong cookie/header)" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v12" target="v13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v15" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="86.0" y="200.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v16" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="200.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e17" value="POST /api/v1/auth/login (username, password, X-CSRF-TOKEN)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v15" target="v16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v18" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="246.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v19" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="640.5" y="246.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e20" value="Kiểm tra trạng thái khóa tạm (ADMIN miễn trừ)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v18" target="v19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v21" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="640.5" y="292.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v22" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1205.0" y="292.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e23" value="Đọc locked_until và failed_attempts" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v21" target="v22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v24" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="640.5" y="384.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v25" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="384.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e26" value="LockedException (còn thời gian khóa)" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v24" target="v25">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v27" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="430.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v28" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="86.0" y="430.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e29" value="423 Locked / 401 Unauthorized" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v27" target="v28">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v30" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="514.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v31" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1205.0" y="514.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e32" value="Nạp user và kiểm tra BCryptPasswordEncoder" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v30" target="v31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v33" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="606.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v34" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="640.5" y="606.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e35" value="recordFailure() -&gt; bậc 1/5/10/15/30/60/+60 phút" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v33" target="v34">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v36" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="640.5" y="652.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v37" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1205.0" y="652.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e38" value="Cập nhật locked_until" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v36" target="v37">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v39" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="698.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v40" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1026.0" y="698.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e41" value="record(LOGIN_FAILED)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v39" target="v40">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v42" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="744.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v43" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="86.0" y="744.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e44" value="401 Unauthorized" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v42" target="v43">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v45" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="828.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v46" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="640.5" y="828.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e47" value="resetFailures()" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v45" target="v46">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v48" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="874.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v49" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="902.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e50" value="sessionStrategy.onAuthentication() (đổi Session ID &amp; CSRF)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v48" target="v49">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="514.0" y="878.0" />
+              <mxPoint x="514.0" y="906.0" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v51" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="934.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v52" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1205.0" y="934.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e53" value="Lưu SPRING_SESSION mới" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v51" target="v52">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v54" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="980.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v55" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1026.0" y="980.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e56" value="record(LOGIN_SUCCESS)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v54" target="v55">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v57" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="454.0" y="1026.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v58" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="86.0" y="1026.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e59" value="200 OK (user info, mustChangePassword)" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v57" target="v58">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v60" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="86.0" y="1174.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v61" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="262.5" y="1174.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e62" value="Gọi API nghiệp vụ (vd: GET /api/v1/households)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v60" target="v61">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v63" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="262.5" y="1220.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v64" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="86.0" y="1220.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e65" value="403 Forbidden (bắt buộc đổi mật khẩu)" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v63" target="v64">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v66" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="86.0" y="1266.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v67" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="842.0" y="1266.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e68" value="POST /api/v1/auth/change-password" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v66" target="v67">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v69" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="842.0" y="1312.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v70" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="842.0" y="1340.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e71" value="Kiểm tra &gt;= 8 ký tự và &lt;= 72 UTF-8 bytes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v69" target="v70">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="902.0" y="1316.0" />
+              <mxPoint x="902.0" y="1344.0" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v72" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="842.0" y="1372.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v73" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1205.0" y="1372.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e74" value="Cập nhật hash BCrypt mới, tắt mustChangePassword" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v72" target="v73">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v75" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="842.0" y="1418.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v76" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1205.0" y="1418.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e77" value="Xóa toàn bộ SPRING_SESSION của user hiện tại" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v75" target="v76">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v78" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="842.0" y="1464.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v79" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1026.0" y="1464.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e80" value="record(PASSWORD_CHANGED)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v78" target="v79">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v81" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="842.0" y="1510.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v82" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="86.0" y="1510.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e83" value="200 OK (buộc đăng nhập lại)" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v81" target="v82">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

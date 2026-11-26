@@ -1,0 +1,172 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="DD-01: Kiến trúc Triển khai Runtime (Local / Staging Host &amp; Docker Compose)" id="dd01">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="node_client" value="Node 1: Client Workstation (Trình duyệt Web)" style="swimlane;html=1;startSize=28;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=left;spacingLeft=10;container=1;collapsible=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="420" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="browser" value="Web Browser (React + TypeScript SPA)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="node_client">
+          <mxGeometry x="60" y="48" width="300" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="node_fe" value="Node 2: Frontend Host (Vite Dev Server :5173 hoặc Static Host)" style="swimlane;html=1;startSize=28;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=left;spacingLeft=10;container=1;collapsible=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="500" y="20" width="520" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="vite" value="Vite Dev Server / Built Assets&#10;Proxy /api/* sang localhost:8080" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="node_fe">
+          <mxGeometry x="70" y="46" width="380" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="node_docker" value="Node 3: Docker Compose Host (compose.yaml)" style="swimlane;html=1;startSize=28;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=left;spacingLeft=10;container=1;collapsible=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="180" width="1000" height="390" as="geometry" />
+        </mxCell>
+        <mxCell id="app_cnt" value="Container: backend (eclipse-temurin:21-jre) - Port 8080" style="swimlane;html=1;startSize=26;fillColor=#E6ECF5;swimlaneFillColor=#FFFFFF;strokeColor=#3D5A80;fontStyle=1;align=left;spacingLeft=8;container=1;collapsible=0;fontSize=11;" vertex="1" parent="node_docker">
+          <mxGeometry x="20" y="44" width="460" height="326" as="geometry" />
+        </mxCell>
+        <mxCell id="sec" value="Spring Security Filter Chain&#10;Session + CSRF + CORS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="app_cnt">
+          <mxGeometry x="45" y="42" width="370" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="spring" value="Spring Boot 4.0.9 App&#10;BlueMoon REST API" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="app_cnt">
+          <mxGeometry x="45" y="118" width="370" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="flyway" value="Flyway Migrations V1..V11&#10;(26 tables)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2F0D9;strokeColor=#548235;fontSize=11;spacing=4;" vertex="1" parent="app_cnt">
+          <mxGeometry x="20" y="204" width="195" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="sched" value="AgencyPackageRetentionScheduler&#10;fixedDelay 60000ms" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="app_cnt">
+          <mxGeometry x="235" y="204" width="205" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="db_cnt" value="Container: db (mysql:8.4) - Port 3306" style="swimlane;html=1;startSize=26;fillColor=#E6ECF5;swimlaneFillColor=#FFFFFF;strokeColor=#3D5A80;fontStyle=1;align=left;spacingLeft=8;container=1;collapsible=0;fontSize=11;" vertex="1" parent="node_docker">
+          <mxGeometry x="520" y="44" width="460" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="mysql" value="MySQL 8.4 Instance - Schema bluemoon" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="db_cnt">
+          <mxGeometry x="55" y="40" width="350" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="session_tbl" value="SPRING_SESSION &amp;&#10;SPRING_SESSION_ATTRIBUTES" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2F0D9;strokeColor=#548235;fontSize=11;spacing=4;" vertex="1" parent="db_cnt">
+          <mxGeometry x="20" y="118" width="200" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="domain_tbl" value="Domain, Audit &amp; Agency&#10;Package Tables (24 tables)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2F0D9;strokeColor=#548235;fontSize=11;spacing=4;" vertex="1" parent="db_cnt">
+          <mxGeometry x="240" y="118" width="200" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="vol" value="Docker Persistent Volume: mysql_data" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="node_docker">
+          <mxGeometry x="585" y="304" width="330" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="node_ops" value="Node 4: Host OS Operations &amp; Scripts (scripts/)" style="swimlane;html=1;startSize=28;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=left;spacingLeft=10;container=1;collapsible=0;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="20" y="610" width="1000" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="timer" value="systemd Timer: bluemoon-backup.timer&#10;02:00 Asia/Ho_Chi_Minh" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="node_ops">
+          <mxGeometry x="25" y="44" width="280" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="dispatch" value="scripts/backup-dispatch.sh&#10;+ scripts/backup.sh" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="node_ops">
+          <mxGeometry x="25" y="122" width="280" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="bak_store" value="Backup Directory&#10;.sql.gz + .sha256 + COMPLETED (7 bản)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2F0D9;strokeColor=#548235;fontSize=11;spacing=4;" vertex="1" parent="node_ops">
+          <mxGeometry x="345" y="44" width="300" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rehearsal" value="scripts/restore-rehearsal.sh&#10;-&gt; DB tạm bluemoon_restore_s13_*" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="node_ops">
+          <mxGeometry x="345" y="130" width="300" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="cleanup_cli" value="Spring Profile: restore-cleanup&#10;RestoreRetentionCleanupRunner" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="node_ops">
+          <mxGeometry x="685" y="44" width="290" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="boot_cli" value="Spring Profile: bootstrap&#10;BootstrapAdminRunner (CLI TTY)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="node_ops">
+          <mxGeometry x="685" y="112" width="290" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="mock_mail" value="scripts/mock-email.sh&#10;Đọc bảng mock_emails" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=14;fillColor=#FFF2CC;strokeColor=#B08900;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fontSize=10;" vertex="1" parent="node_ops">
+          <mxGeometry x="685" y="178" width="290" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="HTTP/HTTPS (Port 5173 dev hoặc static)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="browser" target="vite">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="HTTP Proxy /api/* + Cookie + X-CSRF-TOKEN" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.75;entryY=0;" edge="1" parent="1" source="vite" target="sec">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="760" y="158" />
+              <mxPoint x="362" y="158" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="CORS trực tiếp (http://localhost:5173 -&gt; :8080)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.25;entryY=0;" edge="1" parent="1" source="browser" target="sec">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="230" y="158" />
+              <mxPoint x="177" y="158" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="sec" target="spring">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.25;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="spring" target="flyway">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.75;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="spring" target="sched">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="JDBC MySQL Port 3306" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="spring" target="mysql">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;dashed=1;strokeColor=#555555;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.25;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="mysql" target="session_tbl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;dashed=1;strokeColor=#555555;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.75;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="mysql" target="domain_tbl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;dashed=1;strokeColor=#555555;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="mysql" target="vol">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="timer" target="dispatch">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" value="mysqldump (loại trừ SPRING_SESSION*)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.25;entryX=0;entryY=1;" edge="1" parent="1" source="dispatch" target="mysql">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="340" y="588" />
+              <mxPoint x="585" y="588" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="dispatch" target="bak_store">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="bak_store" target="rehearsal">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" value="Nạp dump + Flyway V1 session rỗng" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=0;entryX=0.25;entryY=1;" edge="1" parent="1" source="rehearsal" target="mysql">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="515" y="594" />
+              <mxPoint x="665" y="594" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.25;entryX=0;entryY=0.5;" edge="1" parent="1" source="rehearsal" target="cleanup_cli">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e18" value="Dọn gói S12 quá hạn trên DB diễn tập" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=0;entryX=0.75;entryY=1;" edge="1" parent="1" source="cleanup_cli" target="mysql">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="850" y="588" />
+              <mxPoint x="850" y="480" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e19" value="Interactive System.console() tạo ADMIN đầu tiên" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="boot_cli" target="mysql">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1050" y="748" />
+              <mxPoint x="1050" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e20" value="Truy vấn mật khẩu tạm trong dev/mock" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=1;entryY=0.75;" edge="1" parent="1" source="mock_mail" target="mysql">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1070" y="813" />
+              <mxPoint x="1070" y="304" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

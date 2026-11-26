@@ -1,0 +1,129 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="AD-06: Xuất báo cáo XLSX và chu trình phê duyệt 2 Admin (S12)" id="ad06">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="lane_req" value="Kế toán / Tổ trưởng" style="swimlane;html=1;startSize=32;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=center;container=1;collapsible=0;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="320" height="1225" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_adm" value="Admin 1 &amp; Admin 2 (ADMIN)" style="swimlane;html=1;startSize=32;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=center;container=1;collapsible=0;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="340" y="20" width="330" height="1225" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_sys" value="Reporting, Writer &amp; AgencyPackageRetentionScheduler" style="swimlane;html=1;startSize=32;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=center;container=1;collapsible=0;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="670" y="20" width="380" height="1225" as="geometry" />
+        </mxCell>
+        <mxCell id="Q1" value="Yêu cầu báo cáo hoặc gói dữ liệu cơ quan" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#E2F0D9;strokeColor=#548235;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="lane_req">
+          <mxGeometry x="45.0" y="70.0" width="230" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="Q2" value="Tải 1 trong 3 báo cáo XLSX (thu phí, biên lai, cư trú)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="lane_req">
+          <mxGeometry x="40.0" y="190.0" width="240" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="R1" value="Số dòng truy vấn &lt;= 50.000?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#B08900;fontSize=11;spacing=2;" vertex="1" parent="lane_sys">
+          <mxGeometry x="80.0" y="181" width="220" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="R2" value="Stream SXSSFWorkbook(100) trả về HTTP 200 (.xlsx)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2F0D9;strokeColor=#548235;fontSize=11;spacing=4;" vertex="1" parent="lane_sys">
+          <mxGeometry x="70.0" y="316.0" width="240" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="Q3" value="Tạo yêu cầu Agency Data Package (loại gói, lý do)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="lane_req">
+          <mxGeometry x="40.0" y="440.0" width="240" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="A1" value="Admin 1 xem xét và phê duyệt lần 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="lane_adm">
+          <mxGeometry x="45.0" y="440.0" width="240" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="A2" value="Admin 2 khác Admin 1 phê duyệt lần 2?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#B08900;fontSize=11;spacing=2;" vertex="1" parent="lane_adm">
+          <mxGeometry x="55.0" y="556" width="220" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="A3" value="Từ chối yêu cầu gói dữ liệu" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#E2F0D9;strokeColor=#548235;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="lane_adm">
+          <mxGeometry x="50.0" y="695.0" width="230" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="R3" value="Đóng gói dữ liệu hộ khẩu ZIP, tính SHA-256, lưu DB" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2F0D9;strokeColor=#548235;fontSize=11;spacing=4;" vertex="1" parent="lane_sys">
+          <mxGeometry x="70.0" y="691.0" width="240" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="R4" value="Trong cửa sổ tải 7 ngày?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#B08900;fontSize=11;spacing=2;" vertex="1" parent="lane_sys">
+          <mxGeometry x="80.0" y="806" width="220" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="A4" value="Tải tệp ZIP kèm kiểm tra checksum SHA-256" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#E2F0D9;strokeColor=#548235;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="lane_adm">
+          <mxGeometry x="50.0" y="820.0" width="230" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="R5" value="Cơ chế định kỳ mỗi 60 giây kiểm tra hạn lưu trữ 30 ngày" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="lane_sys">
+          <mxGeometry x="70.0" y="940.0" width="240" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="R6" value="Xóa nội dung nhị phân, giữ metadata và audit_log 5 năm" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2F0D9;strokeColor=#548235;fontSize=11;spacing=4;" vertex="1" parent="lane_sys">
+          <mxGeometry x="70.0" y="1066.0" width="240" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="Q1" target="Q2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Q2" target="R1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="Vượt 50.000 dòng" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="R1" target="Q2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="860" y="175" />
+              <mxPoint x="240" y="175" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="Đạt ngưỡng" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="R1" target="R2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Q1" target="Q3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="25" y="108" />
+              <mxPoint x="25" y="482" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Q3" target="A1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="A1" target="A2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" value="Trùng người duyệt (bị chặn)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="A2" target="A2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="360" y="608" />
+              <mxPoint x="360" y="545" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="Từ chối" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="A2" target="A3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="Chấp thuận (Admin 2)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="A2" target="R3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="695" y="608" />
+              <mxPoint x="695" y="732" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="R3" target="R4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" value="Còn hạn" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="R4" target="A4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" value="Hết 7 ngày tải" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="R4" target="R5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="R3" target="R5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1035" y="732" />
+              <mxPoint x="1035" y="982" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="R5" target="R6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

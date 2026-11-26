@@ -1,0 +1,288 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="SD-05: Đóng góp tự nguyện &amp; Thu tiền mặt tại quầy (Idempotency + FIFO)" id="sd05">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="frag_0" value="&lt;b&gt;[opt]&lt;/b&gt; Ghi nhận đóng góp tự nguyện" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;fillOpacity=28;strokeColor=#B08900;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="21.0" y="118.0" width="1403.5" height="238.0" as="geometry" />
+        </mxCell>
+        <mxCell id="frag_1" value="&lt;b&gt;[opt]&lt;/b&gt; Tiền thu lớn hơn tổng nợ hiện tại" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;fillOpacity=28;strokeColor=#B08900;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="573.0" y="972.0" width="513.5" height="114.0" as="geometry" />
+        </mxCell>
+        <mxCell id="frag_2" value="&lt;b&gt;[alt]&lt;/b&gt; Đã tồn tại Idempotency-Key và khớp payload hash" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF2CC;fillOpacity=28;strokeColor=#B08900;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="21.0" y="514.0" width="1403.5" height="830.0" as="geometry" />
+        </mxCell>
+        <mxCell id="frag_2_else_0" value="[else] Khác payload hash" style="line;strokeWidth=1;dashed=1;dashPattern=6 4;strokeColor=#B08900;html=1;fillColor=none;verticalAlign=top;align=left;spacingLeft=8;fontStyle=2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="21.0" y="656.0" width="1403.5" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="frag_2_else_1" value="[else] Giao dịch mới" style="line;strokeWidth=1;dashed=1;dashPattern=6 4;strokeColor=#B08900;html=1;fillColor=none;verticalAlign=top;align=left;spacingLeft=8;fontStyle=2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="21.0" y="786.0" width="1403.5" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="head_Accountant" value="Kế toán (ACCOUNTANT)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="77.0" y="18.0" width="36" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_Accountant" value="Accountant" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="63.0" y="1376.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_Accountant" target="foot_Accountant">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_VolCtrl" value="VoluntaryController &amp;&#10;VoluntaryContributionService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="194.0" y="24.0" width="165" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_VolCtrl" value="VolCtrl" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="244.5" y="1376.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_VolCtrl" target="foot_VolCtrl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_PayCtrl" value="PaymentController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="403.0" y="24.0" width="130" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_PayCtrl" value="PayCtrl" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="436.0" y="1376.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_PayCtrl" target="foot_PayCtrl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_PaySvc" value="PaymentService&#10;(READ_COMMITTED)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="577.0" y="24.0" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_PaySvc" value="PaySvc" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="615.0" y="1376.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_PaySvc" target="foot_PaySvc">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_Query" value="PaymentInvoiceQuery" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="761.0" y="24.0" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_Query" value="Query" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="799.0" y="1376.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_Query" target="foot_Query">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_Guard" value="BillingReceiptGuard" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="945.0" y="24.0" width="135" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_Guard" value="Guard" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="980.5" y="1376.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_Guard" target="foot_Guard">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_Audit" value="AuditService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="1124.0" y="24.0" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_Audit" value="Audit" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1147.0" y="1376.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_Audit" target="foot_Audit">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="head_DB" value="MySQL (payment_* /&#10;invoices)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="1">
+          <mxGeometry x="1278.0" y="24.0" width="145" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="foot_DB" value="DB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#888888;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1318.5" y="1376.0" width="64" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" value="" style="edgeStyle=none;html=1;endArrow=none;dashed=1;dashPattern=6 4;strokeColor=#888888;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="head_DB" target="foot_DB">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v10" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="91.0" y="154.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v11" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="272.5" y="154.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" value="POST /api/v1/voluntary-campaigns/{id}/contributions" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v10" target="v11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v13" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="272.5" y="200.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v14" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1346.5" y="200.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" value="Lưu voluntary_contributions" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v13" target="v14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v16" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="272.5" y="246.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v17" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1175.0" y="246.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e18" value="record(VOLUNTARY_CONTRIBUTION_RECORDED)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v16" target="v17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v19" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="272.5" y="292.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v20" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="91.0" y="292.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e21" value="201 Created" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v19" target="v20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v22" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="91.0" y="366.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v23" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="464.0" y="366.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e24" value="POST /api/v1/payments/receipt (header: Idempotency-Key)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v22" target="v23">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v25" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="464.0" y="412.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v26" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="412.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e27" value="recordReceipt(actor, idempotencyKey, request)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v25" target="v26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v28" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="458.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v29" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1346.5" y="458.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e30" value="command(): kiểm tra payment_commands theo (actor, key)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v28" target="v29">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v31" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="550.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v32" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="464.0" y="550.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e33" value="Trả về biên lai đã lưu (replay)" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v31" target="v32">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v34" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="464.0" y="596.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v35" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="91.0" y="596.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e36" value="200 OK" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v34" target="v35">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v37" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="680.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v38" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="464.0" y="680.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e39" value="IdempotencyConflictException" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v37" target="v38">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v40" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="464.0" y="726.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v41" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="91.0" y="726.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e42" value="409 Conflict" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v40" target="v41">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v43" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="810.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v44" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1346.5" y="810.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e45" value="lockHousehold(): khóa hàng trong payment_household_locks" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v43" target="v44">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v46" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="856.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v47" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="827.0" y="856.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e48" value="Tìm hóa đơn UNPAID/PARTIAL theo thứ tự FIFO" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v46" target="v47">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v49" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="902.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v50" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="930.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e51" value="Phân bổ tiền mặt vào các hóa đơn từ cũ đến mới" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v49" target="v50">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="703.0" y="906.0" />
+              <mxPoint x="703.0" y="934.0" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v52" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="1008.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v53" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="1036.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e54" value="Ghi phần dư vào credit balance của hộ khẩu" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v52" target="v53">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="703.0" y="1012.0" />
+              <mxPoint x="703.0" y="1040.0" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="v55" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="1096.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v56" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1008.5" y="1096.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e57" value="incrementReceiptCount(affectedBillingPeriods)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v55" target="v56">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v58" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="1142.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v59" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1346.5" y="1142.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e60" value="Lưu payment_receipts, cập nhật invoices &amp; payment_commands" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v58" target="v59">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v61" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="1188.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v62" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1175.0" y="1188.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e63" value="record(PAYMENT_RECEIPT_CREATED)" style="edgeStyle=none;html=1;endArrow=block;endFill=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="v61" target="v62">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v64" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="643.0" y="1234.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v65" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="464.0" y="1234.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e66" value="ReceiptResponse" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v64" target="v65">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="v67" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="464.0" y="1280.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="v68" value="" style="ellipse;whiteSpace=wrap;html=1;fillColor=#3D5A80;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="91.0" y="1280.0" width="8" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="e69" value="201 Created" style="edgeStyle=none;html=1;dashed=1;dashPattern=6 4;endArrow=open;endFill=0;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;verticalAlign=bottom;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="v67" target="v68">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

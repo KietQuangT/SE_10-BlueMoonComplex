@@ -1,0 +1,91 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="AD-07: Sao lưu định kỳ và diễn tập phục hồi thảm họa (S13)" id="ad07">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="lane_sched" value="Systemd Timer &amp; Dispatcher" style="swimlane;html=1;startSize=32;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=center;container=1;collapsible=0;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="320" height="1225" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_bak" value="Backup Script &amp; Storage" style="swimlane;html=1;startSize=32;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=center;container=1;collapsible=0;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="340" y="20" width="330" height="1225" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_reh" value="Restore Rehearsal &amp; RestoreRetentionCleanupRunner" style="swimlane;html=1;startSize=32;fillColor=#EEEEEE;swimlaneFillColor=#FAFAFA;strokeColor=#888888;fontStyle=1;align=center;container=1;collapsible=0;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="670" y="20" width="380" height="1225" as="geometry" />
+        </mxCell>
+        <mxCell id="T1" value="Kích hoạt 02:00 Asia/Ho_Chi_Minh hoặc catch-up &gt;24h" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#E2F0D9;strokeColor=#548235;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="lane_sched">
+          <mxGeometry x="45.0" y="70.0" width="230" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="T2" value="Gọi backup.sh đọc cấu hình backup.conf" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="lane_sched">
+          <mxGeometry x="40.0" y="190.0" width="240" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="B1" value="Dump MySQL ngoại trừ SPRING_SESSION và SPRING_SESSION_ATTRIBUTES" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="lane_bak">
+          <mxGeometry x="45.0" y="190.0" width="240" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="B2" value="Tạo tệp .sql.gz, checksum SHA-256 và marker COMPLETED" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2F0D9;strokeColor=#548235;fontSize=11;spacing=4;" vertex="1" parent="lane_bak">
+          <mxGeometry x="45.0" y="316.0" width="240" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="B3" value="Xoay vòng giữ lại tối đa 7 bản sao lưu gần nhất" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="lane_bak">
+          <mxGeometry x="45.0" y="440.0" width="240" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="H1" value="Chạy restore-rehearsal.sh kiểm chứng bản sao lưu" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="lane_reh">
+          <mxGeometry x="70.0" y="440.0" width="240" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="H2" value="Xác nhận SHA-256, marker và DB đích khác DB nguồn?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#B08900;fontSize=11;spacing=2;" vertex="1" parent="lane_reh">
+          <mxGeometry x="80.0" y="556" width="220" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="H3" value="Tạo DB tạm bluemoon_restore_s13_* và nạp dữ liệu dump" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="lane_reh">
+          <mxGeometry x="70.0" y="690.0" width="240" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="H4" value="Chạy Flyway V1 tạo lại bảng SPRING_SESSION rỗng" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#3D5A80;fontSize=11;spacing=4;" vertex="1" parent="lane_reh">
+          <mxGeometry x="70.0" y="815.0" width="240" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="H5" value="Kích hoạt Spring profile restore-cleanup dọn gói S12 quá hạn" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E2F0D9;strokeColor=#548235;fontSize=11;spacing=4;" vertex="1" parent="lane_reh">
+          <mxGeometry x="70.0" y="941.0" width="240" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="H6" value="Xuất JSON bằng chứng Q5 và giữ hoặc xóa DB diễn tập" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fillColor=#E2F0D9;strokeColor=#548235;fontStyle=1;fontSize=11;spacing=4;" vertex="1" parent="lane_reh">
+          <mxGeometry x="75.0" y="1070.0" width="230" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="T1" target="T2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="T2" target="B1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="B1" target="B2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="B2" target="B3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="B3" target="H1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="H1" target="H2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="Sai lệch hoặc trùng DB nguồn (Fail)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="H2" target="H1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1030" y="608" />
+              <mxPoint x="1030" y="482" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="An toàn" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="H2" target="H3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="H3" target="H4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="H4" target="H5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="H5" target="H6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
